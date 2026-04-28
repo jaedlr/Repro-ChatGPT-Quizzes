@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prenatal Care Interactive Quiz Randomized</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = [{"id": 1, "stem": "A patient is documenting her obstetric history. She has been pregnant 4 times total, including the current pregnancy. How should gravidity be interpreted", "topic": "Gravidity", "options": {"A": "Number of deliveries after 20 weeks", "B": "Number of pregnancies", "C": "Number of living children only", "D": "Number of term births only"}, "correct": "B", "explanation": "Gravidity is the total number of pregnancies, including the current pregnancy.", "optionExplanations": {"A": "Deliveries after 20 weeks define parity, not gravidity.", "B": "Correct. Gravidity counts total pregnancies.", "C": "Living children are recorded under L in TPAL.", "D": "Term births are recorded under T in TPAL."}}, {"id": 2, "stem": "A patient delivered one infant at 39 weeks, one at 35 weeks, had one miscarriage at 10 weeks, and has two living children. Which TPAL component represents the miscarriage", "topic": "TPAL system", "options": {"A": "P", "B": "L", "C": "A", "D": "T"}, "correct": "C", "explanation": "In the TPAL system, A represents abortions or pregnancy losses before 20 weeks.", "optionExplanations": {"A": "P represents preterm deliveries from 20 to 36.6 weeks.", "B": "L represents living children.", "C": "Correct. A represents abortions or losses before 20 weeks.", "D": "T represents term deliveries at 37 weeks or later."}}, {"id": 3, "stem": "A pregnant patient has a certain LMP and regular cycles. Which formula is used to estimate the due date by Naegele’s rule", "topic": "Naegele rule", "options": {"A": "Conception date + 7 days only", "B": "LMP - 7 days + 3 months", "C": "First ultrasound date + 20 weeks", "D": "LMP + 7 days - 3 months"}, "correct": "D", "explanation": "Naegele’s rule estimates EDD as LMP plus 7 days minus 3 months. Dating should still be confirmed with ultrasound.", "optionExplanations": {"A": "Conceptional dating is 266 days or 38 weeks from conception, not this formula.", "B": "This reverses the formula.", "C": "Ultrasound dating depends on fetal measurements, not simply adding 20 weeks.", "D": "Correct. Naegele’s rule is LMP + 7 days - 3 months."}}, {"id": 4, "stem": "A patient is 8 weeks pregnant and unsure of her LMP. Which dating method is most accurate at this stage", "topic": "Pregnancy dating", "options": {"A": "Third-trimester femur length only", "B": "Fundal height", "C": "Maternal weight gain", "D": "First-trimester ultrasound crown-rump length"}, "correct": "D", "explanation": "Ultrasound is most accurate in the first trimester, and crown-rump length is the most accurate measurement in early pregnancy.", "optionExplanations": {"A": "Third-trimester biometry is less accurate for dating.", "B": "Fundal height is useful later and approximates 1 cm per week after early teens weeks.", "C": "Maternal weight gain is not a dating method.", "D": "Correct. First-trimester CRL is the most accurate early dating method."}}, {"id": 5, "stem": "A 5 week pregnancy ultrasound shows an intrauterine structure that should normally be visible around this time. Which structure is expected at 5 weeks", "topic": "Early ultrasound findings", "options": {"A": "Cardiac activity always at 3 weeks", "B": "Group B strep culture", "C": "Yolk sac", "D": "Fundal height at the umbilicus"}, "correct": "C", "explanation": "Early ultrasound findings include gestational sac at 4 to 5 weeks, yolk sac at 5 weeks, and cardiac activity at 5 to 6 weeks.", "optionExplanations": {"A": "Cardiac activity is typically seen around 5 to 6 weeks, not always at 3 weeks.", "B": "GBS culture is done at 36 to 37 weeks.", "C": "Correct. Yolk sac is expected around 5 weeks.", "D": "Fundal height reaches the umbilicus around 20 cm/20 weeks."}}, {"id": 6, "stem": "A patient at 20 weeks gestation has fundal height measured at the umbilicus. Which principle explains this finding", "topic": "Fundal height", "options": {"A": "Fundal height is never useful in pregnancy", "B": "Fundal height replaces all prenatal ultrasound", "C": "Fundal height should always be 40 cm at 20 weeks", "D": "Fundal height around 20 cm is at the umbilicus"}, "correct": "D", "explanation": "Fundal height approximates gestational age in centimeters after early teens weeks, and 20 cm is around the umbilicus.", "optionExplanations": {"A": "Fundal height is used to assess fetal growth.", "B": "Fundal height does not replace ultrasound when indicated.", "C": "40 cm would be expected much later near term.", "D": "Correct. 20 cm at 20 weeks is near the umbilicus."}}, {"id": 7, "stem": "A patient at 24 weeks gestation asks how often routine prenatal visits usually occur at this stage without comorbidities", "topic": "Prenatal visit schedule", "options": {"A": "Every 2 weeks", "B": "Every 4 weeks", "C": "Every day", "D": "Weekly"}, "correct": "B", "explanation": "Routine prenatal visits are every 4 weeks from 0 to 24/28 weeks, every 2 weeks from 28 to 35 weeks, and weekly at 35 weeks or later.", "optionExplanations": {"A": "Every 2 weeks is typical from 28 to 35 weeks.", "B": "Correct. Visits are typically every 4 weeks before 24/28 weeks.", "C": "Daily visits are not routine prenatal care.", "D": "Weekly visits begin around 35 weeks or later."}}, {"id": 8, "stem": "A patient at 30 weeks gestation without medical complications asks when she should return for routine prenatal care. Which interval is typical", "topic": "Prenatal visit schedule", "options": {"A": "Every 2 weeks", "B": "Every 6 months", "C": "Only at delivery", "D": "Every 4 weeks"}, "correct": "A", "explanation": "Routine prenatal visit frequency from 28 to 35 weeks is every 2 weeks.", "optionExplanations": {"A": "Correct. At 30 weeks, visits are typically every 2 weeks.", "B": "Every 6 months is inappropriate during pregnancy.", "C": "Prenatal follow-up is needed before delivery.", "D": "Every 4 weeks is typical earlier in pregnancy."}}, {"id": 9, "stem": "A patient presents for her first prenatal visit. Which laboratory pair is specifically done for every pregnancy at the first visit", "topic": "First prenatal visit labs", "options": {"A": "RPR and Pap smear only", "B": "Blood type and antibody screen", "C": "PSA and DRE", "D": "CA-125 and AFP tumor marker"}, "correct": "B", "explanation": "The first prenatal visit includes blood type and antibody screen for every pregnancy, along with other labs such as CBC, CMP, rubella, hepatitis, HIV, TSH, and RPR.", "optionExplanations": {"A": "RPR is included, and Pap smear if indicated, but blood type/antibody screen are specifically emphasized for every pregnancy.", "B": "Correct. Blood type and antibody screen are done every pregnancy.", "C": "PSA and DRE are prostate evaluation tools.", "D": "CA-125 and AFP tumor marker are not routine first prenatal labs."}}, {"id": 10, "stem": "A pregnant patient’s first prenatal labs include screening for syphilis. Which test is listed in the lecture", "topic": "Prenatal infectious screening", "options": {"A": "PSA", "B": "KOH prep only", "C": "CA-125", "D": "VDRL/RPR"}, "correct": "D", "explanation": "Syphilis screening in pregnancy is performed with VDRL or RPR.", "optionExplanations": {"A": "PSA is a prostate marker.", "B": "KOH prep evaluates Candida or whiff testing, not syphilis screening.", "C": "CA-125 is associated with ovarian cancer contexts.", "D": "Correct. VDRL/RPR are prenatal syphilis screening tests."}}, {"id": 11, "stem": "A patient asks when noninvasive prenatal testing can first be performed. Which timing is correct", "topic": "Cell-free fetal DNA", "options": {"A": "Only during labor", "B": "Only after 28 weeks", "C": "Only postpartum", "D": "At or after 10 weeks"}, "correct": "D", "explanation": "Cell-free fetal DNA testing, also called NIPT, can be done at or after 10 weeks and detects trisomies 13, 18, and 21 and fetal sex.", "optionExplanations": {"A": "NIPT is not a labor test.", "B": "28 weeks is when 1-hour GTT and Rhogam for Rh-negative patients are routine.", "C": "NIPT is prenatal, not postpartum.", "D": "Correct. NIPT can be performed ≥10 weeks."}}, {"id": 12, "stem": "A patient has a quad screen performed at 16 weeks. Which analytes are measured", "topic": "Quad screen", "options": {"A": "Creatinine, BUN, sodium, and potassium", "B": "AFP, estriol, inhibin-A, and hCG", "C": "PSA, CA-125, AFP, and CEA", "D": "TSH, T4, prolactin, and cortisol"}, "correct": "B", "explanation": "Quad screen is performed at 15 to 20 weeks and measures AFP, estriol, inhibin-A, and hCG.", "optionExplanations": {"A": "These are metabolic/renal labs, not fetal screening analytes.", "B": "Correct. These four markers make up the quad screen.", "C": "This mixes tumor markers and is not the prenatal quad screen.", "D": "These are endocrine labs, not quad screen analytes."}}, {"id": 13, "stem": "A 20 week prenatal visit includes the routine anatomy scan. Which set of items is assessed", "topic": "Anatomy scan", "options": {"A": "2-hour 75 g glucose tolerance test only", "B": "Postpartum depression screen only", "C": "Fetal anatomy, placental location, amniotic fluid, and cervical length", "D": "GBS culture only"}, "correct": "C", "explanation": "At around 20 weeks, the anatomy scan assesses fetal anatomy, placental location, amniotic fluid, and cervical length.", "optionExplanations": {"A": "2-hour 75 g GTT is postpartum follow-up for gestational diabetes.", "B": "Postpartum depression screening is part of postpartum care.", "C": "Correct. These are the anatomy scan components listed.", "D": "GBS culture is performed at 36 to 37 weeks."}}, {"id": 14, "stem": "A patient at 28 weeks gestation undergoes routine screening. Which test is performed at this gestational age", "topic": "28 week testing", "options": {"A": "1-hour 50 g glucose tolerance test", "B": "Group B strep culture", "C": "NIPT for the first time only", "D": "Postpartum 2-hour 75 g GTT"}, "correct": "A", "explanation": "At 28 weeks, routine testing includes the 1-hour glucose tolerance test with 50 g glucose. Rh-negative patients also receive Rhogam 300 mcg IM.", "optionExplanations": {"A": "Correct. The 1-hour 50 g GTT is done at 28 weeks.", "B": "GBS culture is done at 36 to 37 weeks.", "C": "NIPT can be done at or after 10 weeks.", "D": "The 2-hour 75 g GTT is done about 6 weeks postpartum after gestational diabetes."}}, {"id": 15, "stem": "An Rh-negative pregnant patient reaches 28 weeks gestation. Which intervention is routinely given according to the lecture", "topic": "Rhogam", "options": {"A": "Rituximab", "B": "Rhogam 300 mcg IM", "C": "Methotrexate", "D": "Gardasil"}, "correct": "B", "explanation": "Rh-negative patients receive Rhogam 300 mcg IM at 28 weeks.", "optionExplanations": {"A": "Rituximab is an anti-CD20 monoclonal antibody, not routine prenatal Rh prophylaxis.", "B": "Correct. Rhogam is given at 28 weeks to Rh-negative patients.", "C": "Methotrexate is contraindicated in normal pregnancy.", "D": "Gardasil is HPV vaccination and is not the routine 28-week Rh intervention."}}, {"id": 16, "stem": "A patient at 36 to 37 weeks gestation presents for routine prenatal care. Which screening is due", "topic": "GBS screening", "options": {"A": "Crown-rump length", "B": "NIPT", "C": "Quad screen", "D": "Group B Streptococcus culture"}, "correct": "D", "explanation": "Group B Strep culture is routinely done at 36 to 37 weeks. HIV and STI testing may be repeated if high risk.", "optionExplanations": {"A": "CRL is used in early pregnancy dating.", "B": "NIPT can be done at or after 10 weeks.", "C": "Quad screen is done at 15 to 20 weeks.", "D": "Correct. GBS culture is due at 36 to 37 weeks."}}, {"id": 17, "stem": "A pregnant patient at 29 weeks asks how to monitor fetal movement. Which instruction matches the lecture", "topic": "Kick counts", "options": {"A": "Kick counts are only done in the first trimester", "B": "Expect 1 kick in 12 hours", "C": "Start kick counts only after delivery", "D": "Start kick counts at 28 weeks and expect 10 kicks within 2 hours"}, "correct": "D", "explanation": "Kick counts start at 28 weeks. Normal is 10 kicks within 2 hours, ideally done at the same time of day.", "optionExplanations": {"A": "Fetal movement monitoring is later pregnancy, not first trimester.", "B": "One kick in 12 hours would be concerning.", "C": "Kick counts are prenatal, not postpartum.", "D": "Correct. Start at 28 weeks; 10 kicks within 2 hours is reassuring."}}, {"id": 18, "stem": "A patient at 34 weeks reports headache, swelling, vision changes, and right upper quadrant pain. Which warning category is most concerning", "topic": "Preeclampsia warning signs", "options": {"A": "Normal round ligament pain only", "B": "Physiologic fetal hiccups", "C": "Preeclampsia symptoms", "D": "Expected first-trimester nausea"}, "correct": "C", "explanation": "Preeclampsia warning symptoms include headache, swelling, vision changes, and right upper quadrant pain.", "optionExplanations": {"A": "Round ligament pain does not explain headache, visual changes, RUQ pain, and swelling.", "B": "Fetal hiccups do not cause maternal preeclampsia symptoms.", "C": "Correct. These are preeclampsia warning signs.", "D": "This patient is 34 weeks and symptoms are concerning."}}, {"id": 19, "stem": "A pregnant patient asks what supplement components are emphasized in prenatal vitamins. Which set matches the lecture", "topic": "Prenatal supplements", "options": {"A": "Folic acid, DHA, and iron", "B": "Only vitamin A megadose", "C": "Only calcium carbonate", "D": "Only testosterone"}, "correct": "A", "explanation": "The lecture lists prenatal vitamins as including folic acid, DHA, and iron.", "optionExplanations": {"A": "Correct. PNVs include folic acid, DHA, and iron.", "B": "Vitamin A megadosing is not the prenatal vitamin emphasis.", "C": "Calcium may be relevant nutritionally but is not the listed PNV triad.", "D": "Testosterone is not a prenatal supplement."}}, {"id": 20, "stem": "A patient had gestational diabetes during pregnancy. At about 6 weeks postpartum, which follow-up test is recommended", "topic": "Postpartum GDM follow-up", "options": {"A": "NIPT", "B": "2-hour 75 g glucose tolerance test", "C": "Quad screen", "D": "Group B strep culture"}, "correct": "B", "explanation": "After gestational diabetes, postpartum follow-up includes a 2-hour 75 g glucose tolerance test at about 6 weeks to evaluate for overt diabetes.", "optionExplanations": {"A": "NIPT is prenatal cell-free fetal DNA testing.", "B": "Correct. GDM requires postpartum 2-hour 75 g GTT.", "C": "Quad screen is a 15 to 20 week prenatal screen.", "D": "GBS culture is a late pregnancy screening test."}}];
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>

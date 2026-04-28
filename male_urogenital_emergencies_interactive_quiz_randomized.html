@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Male Urogenital Emergencies Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = 
+[
+  {
+    "id": 1,
+    "stem": "A 16 year old male presents with sudden severe unilateral scrotal pain, nausea, and vomiting after strenuous activity. Exam shows a high riding testicle with horizontal lie and absent cremasteric reflex. What is the most likely diagnosis",
+    "topic": "Testicular torsion",
+    "options": {
+      "A": "Testicular torsion",
+      "B": "Epididymitis",
+      "C": "Fournier gangrene",
+      "D": "Appendiceal torsion"
+    },
+    "correct": "A",
+    "explanation": "Testicular torsion presents with acute severe scrotal pain, high riding horizontal testicle, absent cremasteric reflex, nausea/vomiting, and no relief with elevation.",
+    "optionExplanations": {
+      "A": "Correct. The sudden pain, high lie, horizontal orientation, and absent cremasteric reflex are classic.",
+      "B": "Epididymitis is usually subacute with fever, pyuria, epididymal tenderness, and relief with elevation.",
+      "C": "Fournier gangrene causes necrotizing infection with toxic appearance, crepitus, bullae, and pain out of proportion.",
+      "D": "Appendiceal torsion causes superior pole pain with blue dot sign and usually intact cremasteric reflex."
+    }
+  },
+  {
+    "id": 2,
+    "stem": "A teenage boy has suspected testicular torsion. While awaiting surgery, manual detorsion is attempted. Which maneuver is classically used",
+    "topic": "Manual detorsion",
+    "options": {
+      "A": "Rotate lateral to medial like closing a book",
+      "B": "Apply steady pressure over the inguinal canal",
+      "C": "Rotate medial to lateral like opening a book",
+      "D": "Elevate the testicle until pain improves"
+    },
+    "correct": "C",
+    "explanation": "Manual detorsion can be attempted while awaiting surgery and is performed like opening a book, rotating the testis medial to lateral.",
+    "optionExplanations": {
+      "A": "This is the opposite of the classic manual detorsion maneuver.",
+      "B": "Steady pressure over a hernia is used for reduction, not torsion.",
+      "C": "Correct. Manual detorsion is classically medial to lateral, like opening a book.",
+      "D": "Pain relief with elevation is Prehn sign and suggests epididymitis, not torsion treatment."
+    }
+  },
+  {
+    "id": 3,
+    "stem": "An 11 year old boy has acute scrotal pain. Exam shows a small blue nodule visible through the skin on the superior aspect of the testis. Cremasteric reflex is intact and testicular lie is normal. What is the best management",
+    "topic": "Appendiceal torsion",
+    "options": {
+      "A": "Immediate orchiopexy",
+      "B": "Broad spectrum IV antibiotics and debridement",
+      "C": "Ceftriaxone plus doxycycline",
+      "D": "NSAIDs, ice packs, and rest"
+    },
+    "correct": "D",
+    "explanation": "Appendiceal torsion is usually benign and treated conservatively with NSAIDs, ice packs, and rest. The blue dot sign is pathognomonic.",
+    "optionExplanations": {
+      "A": "Immediate surgery is required for testicular torsion, not uncomplicated appendiceal torsion.",
+      "B": "This is management for Fournier gangrene.",
+      "C": "Ceftriaxone plus doxycycline treats STI-associated epididymitis.",
+      "D": "Correct. Appendiceal torsion is managed conservatively."
+    }
+  },
+  {
+    "id": 4,
+    "stem": "A 24 year old sexually active male has gradual scrotal pain, fever, pyuria, and exquisite epididymal tenderness. Pain improves with scrotal elevation. Which treatment is most appropriate",
+    "topic": "Epididymitis under 35",
+    "options": {
+      "A": "Immediate surgical exploration",
+      "B": "Ceftriaxone IM plus doxycycline PO",
+      "C": "Observation only",
+      "D": "Levofloxacin monotherapy"
+    },
+    "correct": "B",
+    "explanation": "In men under 35, epididymitis is usually sexually transmitted from Chlamydia or N. gonorrhoeae, so treatment is ceftriaxone plus doxycycline and partner treatment.",
+    "optionExplanations": {
+      "A": "Surgical exploration is for torsion or uncertain emergent cases, not clear STI epididymitis.",
+      "B": "Correct. Treat gonorrhea and chlamydia coverage in younger sexually active men.",
+      "C": "Antibiotic treatment is required.",
+      "D": "Levofloxacin is more appropriate for older men with UTI-associated epididymitis."
+    }
+  },
+  {
+    "id": 5,
+    "stem": "A 58 year old male has scrotal pain, fever, swelling, urinary symptoms, normal testicular lie, and positive Prehn sign. Which pathogen category is most likely",
+    "topic": "Epididymitis over 35",
+    "options": {
+      "A": "Haemophilus ducreyi",
+      "B": "Gram negative rods such as E. coli",
+      "C": "HSV-2",
+      "D": "Treponema pallidum"
+    },
+    "correct": "B",
+    "explanation": "In men over 35, epididymitis is usually caused by urinary tract pathogens, especially gram negative rods such as E. coli.",
+    "optionExplanations": {
+      "A": "Haemophilus ducreyi causes chancroid.",
+      "B": "Correct. Older men typically have UTI/prostatitis-associated epididymitis.",
+      "C": "HSV causes painful vesicular genital ulcers, not typical epididymitis in older men.",
+      "D": "Treponema pallidum causes syphilis."
+    }
+  },
+  {
+    "id": 6,
+    "stem": "A 60 year old diabetic man develops fever and severe perineal pain 10 days after catheter placement. Skin appears only mildly dusky, but he looks toxic. Exam reveals crepitus and dark bullae. What is the next best management",
+    "topic": "Fournier gangrene",
+    "options": {
+      "A": "Outpatient oral fluoroquinolone",
+      "B": "Immediate Foley catheterization only",
+      "C": "NSAIDs, ice, and rest",
+      "D": "Prompt surgical debridement plus broad spectrum IV antibiotics"
+    },
+    "correct": "D",
+    "explanation": "Fournier gangrene is a life-threatening necrotizing fasciitis of the perineal/subcutaneous tissues requiring urgent surgical debridement and broad spectrum IV antibiotics.",
+    "optionExplanations": {
+      "A": "Oral outpatient antibiotics are inadequate for necrotizing infection.",
+      "B": "Foley catheterization treats urinary retention, not Fournier gangrene.",
+      "C": "Conservative therapy is for appendiceal torsion, not necrotizing fasciitis.",
+      "D": "Correct. This is a surgical emergency requiring debridement."
+    }
+  },
+  {
+    "id": 7,
+    "stem": "A patient with Fournier gangrene has severe pain despite minimal early skin changes. Which anatomic explanation best accounts for this presentation",
+    "topic": "Fournier pathophysiology",
+    "options": {
+      "A": "Only subcutaneous tissue may be involved initially",
+      "B": "Only lymph nodes are infected",
+      "C": "Only the urethral mucosa is inflamed",
+      "D": "Only the testicular parenchyma is ischemic"
+    },
+    "correct": "A",
+    "explanation": "Fournier gangrene is necrotizing fasciitis of the perineum and subcutaneous tissues, so superficial skin may initially look normal or only mildly red/dusky despite severe deep infection.",
+    "optionExplanations": {
+      "A": "Correct. Subcutaneous necrotizing infection explains pain out of proportion to skin findings.",
+      "B": "Lymph node infection alone would not cause necrotizing fasciitis with crepitus.",
+      "C": "Fournier gangrene is not limited to urethral mucosa.",
+      "D": "Testicular ischemia is more relevant to torsion."
+    }
+  },
+  {
+    "id": 8,
+    "stem": "A 62 year old male with BPH has been taking cold medications and now cannot urinate for 18 hours. He is afebrile but distressed with a palpable distended bladder. What is the immediate treatment",
+    "topic": "Acute urinary retention",
+    "options": {
+      "A": "Emergent hernia repair",
+      "B": "Broad spectrum antibiotics",
+      "C": "Immediate Foley catheterization",
+      "D": "CT cystoscopy"
+    },
+    "correct": "C",
+    "explanation": "Acute urinary retention commonly occurs in men with BPH and can be precipitated by antihistamines or nasal drops. Immediate Foley catheterization is the treatment.",
+    "optionExplanations": {
+      "A": "No hernia is described.",
+      "B": "He is afebrile without infectious symptoms; antibiotics do not relieve obstruction.",
+      "C": "Correct. A Foley catheter immediately decompresses the bladder.",
+      "D": "CT and cystoscopy are used to evaluate painless hematuria for renal/bladder cancer."
+    }
+  },
+  {
+    "id": 9,
+    "stem": "A 59 year old male presents with new painless hematuria. He is not on anticoagulants and has stable vitals. What is the major concern and appropriate evaluation",
+    "topic": "Painless hematuria",
+    "options": {
+      "A": "UTI; urinalysis and antibiotics only",
+      "B": "Testicular torsion; Doppler ultrasound",
+      "C": "Renal or bladder cancer; CT and cystoscopy",
+      "D": "Epididymitis; ceftriaxone and doxycycline"
+    },
+    "correct": "C",
+    "explanation": "Painless hematuria in an older male requires evaluation for renal or bladder cancer using CT and cystoscopy.",
+    "optionExplanations": {
+      "A": "UTI can cause hematuria but painless hematuria must prompt cancer workup.",
+      "B": "Torsion presents with acute scrotal pain, not painless hematuria.",
+      "C": "Correct. Rule out renal/bladder malignancy.",
+      "D": "Epididymitis presents with scrotal pain, swelling, fever, and urinary symptoms."
+    }
+  },
+  {
+    "id": 10,
+    "stem": "A patient presents with acute scrotal pain. Which finding most strongly favors epididymitis over testicular torsion",
+    "topic": "Prehn sign",
+    "options": {
+      "A": "Horizontal testicular lie",
+      "B": "High riding testis",
+      "C": "Absent cremasteric reflex",
+      "D": "Relief of pain with scrotal elevation"
+    },
+    "correct": "D",
+    "explanation": "Positive Prehn sign, meaning pain improves with scrotal elevation, favors epididymitis. Torsion typically has no relief with elevation.",
+    "optionExplanations": {
+      "A": "Horizontal lie favors torsion due to bell-clapper deformity.",
+      "B": "High riding testis favors torsion.",
+      "C": "Absent cremasteric reflex favors torsion.",
+      "D": "Correct. Pain relief with elevation is consistent with epididymitis."
+    }
+  },
+  {
+    "id": 11,
+    "stem": "A 14 year old presents with sudden unilateral testicular pain and swelling. Doppler ultrasound shows absent blood flow. Which sequence best describes the pathophysiology",
+    "topic": "Testicular torsion pathophysiology",
+    "options": {
+      "A": "Spermatic cord twisting → venous obstruction → congestion → arterial compromise → hemorrhagic infarction",
+      "B": "Ascending urethral infection → epididymal inflammation → reactive hydrocele",
+      "C": "Subcutaneous infection → gas formation → fascial necrosis",
+      "D": "Lymphatic obstruction → cystic hygroma → reduced testicular flow"
+    },
+    "correct": "A",
+    "explanation": "Testicular torsion twists the spermatic cord, first blocking venous drainage, then causing venous congestion, arterial compromise, and irreversible hemorrhagic infarction.",
+    "optionExplanations": {
+      "A": "Correct. Venous outflow obstruction progresses to arterial compromise and infarction.",
+      "B": "This describes epididymitis.",
+      "C": "This describes Fournier gangrene.",
+      "D": "This describes a mechanism linked to Turner syndrome/cystic hygroma, not torsion."
+    }
+  },
+  {
+    "id": 12,
+    "stem": "A boy with acute scrotal pain has a normal testicular lie and a small tender nodule at the superior pole. Which diagnosis is the leading cause of acute scrotum in boys aged 7 to 14",
+    "topic": "Appendix testis torsion epidemiology",
+    "options": {
+      "A": "Fournier gangrene",
+      "B": "Appendix testis torsion",
+      "C": "Testicular torsion",
+      "D": "Incarcerated hernia"
+    },
+    "correct": "B",
+    "explanation": "Appendix testis torsion is the leading cause of acute scrotum in boys aged 7 to 14 and may show the blue dot sign.",
+    "optionExplanations": {
+      "A": "Fournier gangrene is a necrotizing infection, usually in high risk adults.",
+      "B": "Correct. Appendix testis torsion is common in boys aged 7 to 14.",
+      "C": "Testicular torsion is a surgical emergency but is not listed as the leading cause in this age range in the notes.",
+      "D": "Hernia can cause groin/scrotal symptoms but is not the leading acute scrotum cause in this group."
+    }
+  },
+  {
+    "id": 13,
+    "stem": "A weightlifter develops groin swelling during a heavy lift. The swelling enlarges with increased intra-abdominal pressure and can be manually returned into the abdomen. What type of hernia severity is this",
+    "topic": "Reducible hernia",
+    "options": {
+      "A": "Strangulated",
+      "B": "Reducible",
+      "C": "Incarcerated",
+      "D": "Necrotizing"
+    },
+    "correct": "B",
+    "explanation": "A reducible hernia can return contents back into the abdominal cavity spontaneously or manually and often enlarges with increased intra-abdominal pressure.",
+    "optionExplanations": {
+      "A": "Strangulated means vascular supply is compromised with systemic toxicity risk.",
+      "B": "Correct. Reducible means it can be returned to the abdomen.",
+      "C": "Incarcerated means not reducible but blood supply is not yet compromised.",
+      "D": "Necrotizing refers tissue death/infection, not hernia severity classification."
+    }
+  },
+  {
+    "id": 14,
+    "stem": "A man has a painful groin swelling that cannot be reduced. He has vomiting and symptoms of bowel obstruction but no systemic toxicity. What is the best classification",
+    "topic": "Incarcerated hernia",
+    "options": {
+      "A": "Reducible hernia",
+      "B": "Strangulated hernia",
+      "C": "Incarcerated hernia",
+      "D": "Direct uncomplicated hernia"
+    },
+    "correct": "C",
+    "explanation": "An incarcerated hernia is not reducible and commonly causes bowel obstruction symptoms, but vascular supply is not yet compromised.",
+    "optionExplanations": {
+      "A": "Reducible hernias can be returned to the abdominal cavity.",
+      "B": "Strangulated hernia has vascular compromise and toxic appearance.",
+      "C": "Correct. Nonreducible with obstruction symptoms but no toxicity fits incarcerated hernia.",
+      "D": "Direct describes anatomic route, not severity, and uncomplicated would be reducible/asymptomatic."
+    }
+  },
+  {
+    "id": 15,
+    "stem": "A patient with an incarcerated hernia now appears toxic with severe pain and signs of vascular compromise. What complication is most concerning if missed",
+    "topic": "Strangulated hernia",
+    "options": {
+      "A": "Benign reabsorption within one week",
+      "B": "Infertility from seminiferous tubule atrophy",
+      "C": "Primary bladder cancer",
+      "D": "Bowel necrosis, perforation, and peritonitis"
+    },
+    "correct": "D",
+    "explanation": "Strangulated hernia has compromised vascular supply. If missed, it can progress to bowel necrosis, perforation, and peritonitis.",
+    "optionExplanations": {
+      "A": "Benign reabsorption describes appendix testis torsion.",
+      "B": "Seminiferous tubule atrophy is linked to cryptorchidism/testicular damage, not hernia strangulation.",
+      "C": "Bladder cancer is a concern in painless hematuria, not strangulated hernia.",
+      "D": "Correct. Strangulation can cause ischemic bowel death and perforation."
+    }
+  },
+  {
+    "id": 16,
+    "stem": "Which hernia follows the inguinal canal and can extend into the scrotal sac",
+    "topic": "Indirect inguinal hernia",
+    "options": {
+      "A": "Indirect inguinal hernia",
+      "B": "Direct inguinal hernia",
+      "C": "Femoral hernia",
+      "D": "Umbilical hernia"
+    },
+    "correct": "A",
+    "explanation": "Indirect inguinal hernias follow the inguinal canal into the scrotal sac and are the most common type of inguinal hernia.",
+    "optionExplanations": {
+      "A": "Correct. Indirect hernias follow the inguinal canal and may enter the scrotum.",
+      "B": "Direct inguinal hernias occur due to weakness in the transversalis fascia in Hesselbach triangle.",
+      "C": "Femoral hernias pass below the inguinal ligament through the femoral canal.",
+      "D": "Umbilical hernias occur at the umbilicus, not through the inguinal canal."
+    }
+  },
+  {
+    "id": 17,
+    "stem": "A groin hernia occurs due to weakness in the transversalis fascia within Hesselbach triangle. Which type is this",
+    "topic": "Direct inguinal hernia",
+    "options": {
+      "A": "Femoral",
+      "B": "Obturator",
+      "C": "Indirect inguinal",
+      "D": "Direct inguinal"
+    },
+    "correct": "D",
+    "explanation": "Direct inguinal hernias occur because of weakness in the transversalis fascia in Hesselbach triangle.",
+    "optionExplanations": {
+      "A": "Femoral hernias pass below the inguinal ligament through the femoral canal.",
+      "B": "Obturator hernias are not the described groin hernia in these notes.",
+      "C": "Indirect hernias follow the inguinal canal into the scrotal sac.",
+      "D": "Correct. Direct hernias pass through Hesselbach triangle."
+    }
+  },
+  {
+    "id": 18,
+    "stem": "A patient has suspected epididymitis but the clinician cannot confidently exclude torsion. What should be done",
+    "topic": "Acute scrotum imaging",
+    "options": {
+      "A": "Obtain stat testicular ultrasound",
+      "B": "Wait 24 hours and repeat exam",
+      "C": "Perform cystoscopy",
+      "D": "Send home with NSAIDs only"
+    },
+    "correct": "A",
+    "explanation": "If there is doubt between epididymitis and torsion, a stat testicular ultrasound should be obtained because torsion is a surgical emergency.",
+    "optionExplanations": {
+      "A": "Correct. Stat ultrasound helps assess blood flow when diagnosis is uncertain.",
+      "B": "Waiting risks ischemic injury in torsion.",
+      "C": "Cystoscopy evaluates bladder/urethral pathology, not acute scrotal blood flow.",
+      "D": "NSAIDs alone are unsafe if torsion is possible."
+    }
+  },
+  {
+    "id": 19,
+    "stem": "A patient with suspected torsion asks about prognosis. Which factor best determines outcome",
+    "topic": "Torsion prognosis",
+    "options": {
+      "A": "Serum PSA level",
+      "B": "Duration of ischemia",
+      "C": "Presence of urinary frequency",
+      "D": "Degree of fever"
+    },
+    "correct": "B",
+    "explanation": "Outcome in testicular torsion is determined by duration of ischemia; manual untwisting or surgery must occur rapidly, ideally within about 6 hours.",
+    "optionExplanations": {
+      "A": "PSA is unrelated to torsion.",
+      "B": "Correct. Longer ischemia increases risk of irreversible hemorrhagic infarction.",
+      "C": "Urinary frequency suggests infection/epididymitis, not torsion prognosis.",
+      "D": "Fever is more associated with infection and is not the primary torsion outcome factor."
+    }
+  },
+  {
+    "id": 20,
+    "stem": "A hernia reduction is attempted in the emergency department. Which technique is most appropriate before applying firm steady pressure",
+    "topic": "Hernia reduction",
+    "options": {
+      "A": "Avoid reduction attempts in all cases",
+      "B": "Place the patient prone and apply heat",
+      "C": "Place the patient supine and use ice",
+      "D": "Give immediate oral antibiotics only"
+    },
+    "correct": "C",
+    "explanation": "Hernia reduction can be attempted by placing the patient supine, using ice, and applying firm steady pressure while avoiding mushrooming.",
+    "optionExplanations": {
+      "A": "Reduction may be attempted in appropriate cases, but failed attempts or strangulation require emergent surgery.",
+      "B": "Prone positioning and heat are not the recommended technique.",
+      "C": "Correct. Supine positioning and ice help reduce swelling before steady pressure.",
+      "D": "Antibiotics alone do not reduce a hernia."
+    }
+  }
+]
+;
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>

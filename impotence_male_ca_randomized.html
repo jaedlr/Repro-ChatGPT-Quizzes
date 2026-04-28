@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Impotence and Male CA Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+  {
+    "id": 1,
+    "stem": "A 56 year old man reports inability to maintain an erection sufficient for intercourse for the past 5 months. Which diagnosis best fits",
+    "topic": "Erectile dysfunction definition",
+    "options": {
+      "A": "Erectile dysfunction",
+      "B": "Priapism",
+      "C": "Peyronie disease",
+      "D": "Delayed ejaculation"
+    },
+    "correct": "A",
+    "explanation": "Erectile dysfunction is inability to achieve or sustain an erection sufficient for sexual activity for at least 3 months.",
+    "optionExplanations": {
+      "A": "Correct. Duration ≥3 months with inability to maintain erection fits ED.",
+      "B": "Priapism is a persistent painful erection >4 hours without stimulation.",
+      "C": "Peyronie disease causes penile curvature from tunica albuginea fibrosis.",
+      "D": "Delayed ejaculation is delay or absence of ejaculation, not erection failure."
+    }
+  },
+  {
+    "id": 2,
+    "stem": "A patient with erectile dysfunction has hypertension, cardiovascular disease, diabetes, and smoking history. Which ED category is most likely and also serves as a marker of cardiovascular disease",
+    "topic": "Vasculogenic ED",
+    "options": {
+      "A": "Congenital ED",
+      "B": "Vasculogenic ED",
+      "C": "Infectious ED",
+      "D": "Psychogenic ED only"
+    },
+    "correct": "B",
+    "explanation": "Vascular causes of ED include hypertension, cardiovascular disease, and smoking. Vasculogenic ED can be a marker for cardiovascular disease.",
+    "optionExplanations": {
+      "A": "Congenital ED is not the framework used here.",
+      "B": "Correct. ED from vascular disease is high-yield because it can signal systemic cardiovascular disease.",
+      "C": "Infection is not the primary category described.",
+      "D": "Psychogenic ED relates to depression/anxiety rather than these vascular risk factors."
+    }
+  },
+  {
+    "id": 3,
+    "stem": "A cyclist develops erectile dysfunction after long-distance biking. Which mechanism best explains this association",
+    "topic": "Cycling and ED",
+    "options": {
+      "A": "Direct CYP17 inhibition",
+      "B": "Increased venous drainage from the penis",
+      "C": "Increased hCG secretion",
+      "D": "Compression of penile nerves and vasculature"
+    },
+    "correct": "D",
+    "explanation": "Cycling can cause ED by compression of nerves and vasculature involved in erection.",
+    "optionExplanations": {
+      "A": "CYP17 inhibition is a mechanism of abiraterone.",
+      "B": "Erection requires decreased venous outflow, but cycling causes compression injury rather than intentionally increasing venous drainage.",
+      "C": "hCG secretion is relevant to some testicular tumors, not cycling ED.",
+      "D": "Correct. Mechanical compression can impair neurovascular function."
+    }
+  },
+  {
+    "id": 4,
+    "stem": "Which neural pathway is associated with psychogenic erections according to the lecture",
+    "topic": "Neural control of erection",
+    "options": {
+      "A": "CN III",
+      "B": "C3-C5",
+      "C": "T11-L2",
+      "D": "S2-S4"
+    },
+    "correct": "C",
+    "explanation": "The lecture lists psychogenic erection control through T11-L2 and reflex erection control through S2-S4.",
+    "optionExplanations": {
+      "A": "CN III is involved in eye movement and pupillary constriction.",
+      "B": "C3-C5 innervates the diaphragm.",
+      "C": "Correct. Psychogenic erections are associated with T11-L2.",
+      "D": "S2-S4 is associated with reflex erections."
+    }
+  },
+  {
+    "id": 5,
+    "stem": "Which neural pathway is associated with reflex erections according to the lecture",
+    "topic": "Neural control of erection",
+    "options": {
+      "A": "CN X",
+      "B": "T1-T4",
+      "C": "S2-S4",
+      "D": "T11-L2"
+    },
+    "correct": "C",
+    "explanation": "The lecture lists reflex erections as mediated by S2-S4.",
+    "optionExplanations": {
+      "A": "CN X is the vagus nerve and not the reflex erection pathway.",
+      "B": "T1-T4 is not the reflex erection pathway listed.",
+      "C": "Correct. Reflex erection pathway is S2-S4.",
+      "D": "T11-L2 is associated with psychogenic erections."
+    }
+  },
+  {
+    "id": 6,
+    "stem": "Which biochemical sequence best explains normal erection",
+    "topic": "NO-cGMP erection pathway",
+    "options": {
+      "A": "Arginine → NO → increased cGMP → smooth muscle relaxation → vasodilation",
+      "B": "PDE-5 inhibition → decreased cGMP → detumescence",
+      "C": "Norepinephrine depletion → normal detumescence",
+      "D": "Arginine → decreased NO → decreased cGMP → vasoconstriction"
+    },
+    "correct": "A",
+    "explanation": "NO synthase converts arginine to NO and citrulline. NO increases cGMP, causing smooth muscle relaxation, vasodilation, and erection.",
+    "optionExplanations": {
+      "A": "Correct. This is the high-yield NO-cGMP erection pathway.",
+      "B": "PDE-5 inhibitors increase cGMP by preventing breakdown.",
+      "C": "Norepinephrine contributes to detumescence; depletion can contribute to priapism.",
+      "D": "This reverses the normal pathway."
+    }
+  },
+  {
+    "id": 7,
+    "stem": "A patient takes sildenafil for ED. Which phrase best describes its pharmacologic effect in the lecture",
+    "topic": "PDE-5 inhibitors",
+    "options": {
+      "A": "CYP17 inhibitor",
+      "B": "Direct testosterone receptor agonist",
+      "C": "Inhibitor of detumescence",
+      "D": "5 alpha reductase inhibitor"
+    },
+    "correct": "C",
+    "explanation": "PDE-5 breaks down cGMP and contributes to detumescence. PDE-5 inhibitors such as sildenafil and tadalafil inhibit detumescence by maintaining cGMP.",
+    "optionExplanations": {
+      "A": "CYP17 inhibition is abiraterone.",
+      "B": "They do not directly act as testosterone receptor agonists.",
+      "C": "Correct. PDE-5 inhibitors prevent cGMP breakdown and inhibit detumescence.",
+      "D": "5 alpha reductase inhibitors include finasteride and dutasteride."
+    }
+  },
+  {
+    "id": 8,
+    "stem": "A man taking nitroglycerin for angina asks for sildenafil. Why is sildenafil contraindicated",
+    "topic": "PDE-5 inhibitor contraindication",
+    "options": {
+      "A": "It causes immediate prostate cancer",
+      "B": "It blocks all nitric oxide production",
+      "C": "It prevents sexual stimulation from being required",
+      "D": "Combined vasodilation can cause severe hypotension"
+    },
+    "correct": "D",
+    "explanation": "PDE-5 inhibitors increase vasodilation and are contraindicated with nitrates such as nitroglycerin because of severe hypotension risk.",
+    "optionExplanations": {
+      "A": "Sildenafil does not cause immediate prostate cancer.",
+      "B": "PDE-5 inhibitors enhance the NO-cGMP pathway rather than blocking NO production.",
+      "C": "PDE-5 inhibitors still require stimulation.",
+      "D": "Correct. Nitrates plus PDE-5 inhibitors can cause dangerous hypotension."
+    }
+  },
+  {
+    "id": 9,
+    "stem": "A man with ED cannot use PDE-5 inhibitors. Which treatment is a PGE1 analog, very effective, and does not require stimulation",
+    "topic": "Alprostadil",
+    "options": {
+      "A": "Sildenafil",
+      "B": "Finasteride",
+      "C": "Alprostadil injection",
+      "D": "Metaraminol"
+    },
+    "correct": "C",
+    "explanation": "Prostaglandin E1 injection, alprostadil, is very effective for ED and does not require sexual stimulation.",
+    "optionExplanations": {
+      "A": "Sildenafil is a PDE-5 inhibitor and requires stimulation.",
+      "B": "Finasteride treats BPH by lowering DHT.",
+      "C": "Correct. Alprostadil is a PGE1 analog used by injection for ED.",
+      "D": "Metaraminol is used in resistant priapism to increase norepinephrine-mediated vasoconstriction."
+    }
+  },
+  {
+    "id": 10,
+    "stem": "A 9 year old boy with sickle cell disease has a painful erection lasting 6 hours without stimulation. Which diagnosis is most likely",
+    "topic": "Priapism",
+    "options": {
+      "A": "Peyronie disease",
+      "B": "Priapism",
+      "C": "Erectile dysfunction",
+      "D": "Phimosis"
+    },
+    "correct": "B",
+    "explanation": "Priapism is persistent painful erection longer than 4 hours without stimulation. Sickle cell disease is the most common cause in the lecture.",
+    "optionExplanations": {
+      "A": "Peyronie disease causes penile curvature due to tunica albuginea fibrosis.",
+      "B": "Correct. Painful erection >4 hours in sickle cell disease is priapism.",
+      "C": "ED is inability to achieve or sustain erection, not persistent erection.",
+      "D": "Phimosis is inability to retract foreskin."
+    }
+  },
+  {
+    "id": 11,
+    "stem": "A patient with priapism is untreated for many hours. Which complication is most concerning",
+    "topic": "Priapism complication",
+    "options": {
+      "A": "Immediate cure of ED",
+      "B": "Endometrial hyperplasia",
+      "C": "Fibrosis leading to permanent ED",
+      "D": "Cervical stenosis"
+    },
+    "correct": "C",
+    "explanation": "Untreated priapism causes ischemia, fibrosis, and permanent erectile dysfunction; severe cases may require prosthesis.",
+    "optionExplanations": {
+      "A": "Priapism can worsen or cause ED, not cure it.",
+      "B": "Endometrial hyperplasia is a gynecologic condition.",
+      "C": "Correct. Ischemic priapism can cause fibrosis and permanent ED.",
+      "D": "Cervical stenosis is unrelated."
+    }
+  },
+  {
+    "id": 12,
+    "stem": "A patient with early priapism is treated orally with a beta-2 agonist. Which medication pair from the lecture fits this approach",
+    "topic": "Early priapism treatment",
+    "options": {
+      "A": "Sildenafil or tadalafil",
+      "B": "Terbutaline or salbutamol",
+      "C": "Finasteride or dutasteride",
+      "D": "Tamoxifen or raloxifene"
+    },
+    "correct": "B",
+    "explanation": "Early priapism may be treated with oral beta-2 agonists such as terbutaline or salbutamol.",
+    "optionExplanations": {
+      "A": "PDE-5 inhibitors can worsen erection persistence and are ED drugs.",
+      "B": "Correct. Terbutaline/salbutamol are beta-2 agonists listed for early priapism.",
+      "C": "Finasteride/dutasteride are 5 alpha reductase inhibitors for BPH.",
+      "D": "Tamoxifen/raloxifene are SERMs."
+    }
+  },
+  {
+    "id": 13,
+    "stem": "A case of priapism is resistant to initial therapy. The next medication increases norepinephrine to promote detumescence. Which drug is this",
+    "topic": "Resistant priapism",
+    "options": {
+      "A": "Sildenafil",
+      "B": "Clomiphene",
+      "C": "Metaraminol",
+      "D": "Alprostadil"
+    },
+    "correct": "C",
+    "explanation": "Resistant priapism may be treated with metaraminol, which increases norepinephrine and promotes vasoconstriction/detumescence.",
+    "optionExplanations": {
+      "A": "Sildenafil treats ED and may contribute to priapism.",
+      "B": "Clomiphene induces ovulation and is unrelated.",
+      "C": "Correct. Metaraminol increases norepinephrine in resistant cases.",
+      "D": "Alprostadil promotes erection and treats ED."
+    }
+  },
+  {
+    "id": 14,
+    "stem": "A 52 year old man has penile curvature, painful erections, and a palpable penile plaque. He also has Dupuytren contracture. Which process is most likely",
+    "topic": "Peyronie disease",
+    "options": {
+      "A": "HPV-related koilocytosis only",
+      "B": "DHT-driven prostate growth",
+      "C": "Venous congestion from spermatic cord twisting",
+      "D": "Fibrosis of the tunica albuginea"
+    },
+    "correct": "D",
+    "explanation": "Peyronie disease is associated with Dupuytren contracture and results from scarring/fibrosis of the tunica albuginea, causing penile plaque, curvature, and sometimes pain.",
+    "optionExplanations": {
+      "A": "HPV-related koilocytosis is seen in condyloma, not Peyronie disease.",
+      "B": "DHT-driven growth describes BPH.",
+      "C": "Spermatic cord twisting describes testicular torsion.",
+      "D": "Correct. Fibrous plaque in tunica albuginea causes curvature."
+    }
+  },
+  {
+    "id": 15,
+    "stem": "A 73 year old man is diagnosed with prostate cancer. Which epidemiologic statement is most accurate from the lecture",
+    "topic": "Prostate cancer epidemiology",
+    "options": {
+      "A": "Most common male cancer and second leading cause of cancer death in men",
+      "B": "Rare cancer only seen before puberty",
+      "C": "Most common cancer of women",
+      "D": "Always caused by vasectomy"
+    },
+    "correct": "A",
+    "explanation": "The lecture lists prostate cancer as the most common male cancer and the second leading cause of cancer death in men.",
+    "optionExplanations": {
+      "A": "Correct. This is the major epidemiology statement.",
+      "B": "Prostate cancer risk increases with age, especially >70.",
+      "C": "This is a male cancer.",
+      "D": "The lecture notes no known link with vasectomy."
+    }
+  },
+  {
+    "id": 16,
+    "stem": "Which factor is listed as increasing prostate cancer risk",
+    "topic": "Prostate cancer risk factors",
+    "options": {
+      "A": "Asian ethnicity",
+      "B": "Soy isoflavonoids",
+      "C": "African American race",
+      "D": "Plant-source vitamin A"
+    },
+    "correct": "C",
+    "explanation": "Prostate cancer risk factors include age over 70, African American race, Nordic/Scandinavian geography, family history, and diet high in animal fat or animal-source vitamin A.",
+    "optionExplanations": {
+      "A": "Asian background is listed as decreased risk.",
+      "B": "Isoflavonoids such as soy are listed as decreased risk.",
+      "C": "Correct. African American race is a listed risk factor.",
+      "D": "Plant-source vitamin A is listed as decreased risk."
+    }
+  },
+  {
+    "id": 17,
+    "stem": "A man has elevated PSA after a workup. Which statement is correct about PSA interpretation",
+    "topic": "PSA interpretation",
+    "options": {
+      "A": "PSA is never age-adjusted",
+      "B": "PSA can be increased by cancer, BPH, prostatitis, or vigorous prostate exam",
+      "C": "PSA alone definitively diagnoses prostate cancer",
+      "D": "Gentle DRE always markedly raises PSA"
+    },
+    "correct": "B",
+    "explanation": "PSA can increase with prostate cancer, BPH, prostatitis, or vigorous prostate exam. PSA/DRE lead to further evaluation, but cancer diagnosis requires biopsy.",
+    "optionExplanations": {
+      "A": "PSA must be adjusted with age.",
+      "B": "Correct. PSA is not specific for cancer.",
+      "C": "PSA alone cannot diagnose prostate cancer.",
+      "D": "The lecture notes DRE or gentle prostate exam does not raise PSA."
+    }
+  },
+  {
+    "id": 18,
+    "stem": "A patient has suspected prostate cancer after PSA and DRE. What confirms the diagnosis",
+    "topic": "Prostate cancer diagnosis",
+    "options": {
+      "A": "Urinalysis alone",
+      "B": "PSA alone",
+      "C": "Biopsy",
+      "D": "DRE alone"
+    },
+    "correct": "C",
+    "explanation": "Prostate cancer workup is PSA/DRE followed by ultrasound, biopsy, and staging. PSA and DRE cannot diagnose cancer by themselves.",
+    "optionExplanations": {
+      "A": "Urinalysis does not diagnose prostate cancer.",
+      "B": "PSA is a screening/evaluation tool, not diagnostic alone.",
+      "C": "Correct. Biopsy is required for diagnosis.",
+      "D": "DRE can detect abnormalities but cannot diagnose cancer alone."
+    }
+  },
+  {
+    "id": 19,
+    "stem": "A man with prostate cancer undergoes staging. Which metastatic site is classically favored",
+    "topic": "Prostate cancer metastasis",
+    "options": {
+      "A": "Bone",
+      "B": "Thyroid only",
+      "C": "Skin only",
+      "D": "Spleen only"
+    },
+    "correct": "A",
+    "explanation": "The lecture notes prostate cancer likes to metastasize to bone, and staging may include CT and bone scan.",
+    "optionExplanations": {
+      "A": "Correct. Bone metastasis is classic for prostate cancer.",
+      "B": "Thyroid-only spread is not typical.",
+      "C": "Skin-only spread is not typical.",
+      "D": "Spleen-only spread is not the classic metastatic pattern."
+    }
+  },
+  {
+    "id": 20,
+    "stem": "An older uncircumcised man has a single velvety bright red patch on the glans/prepuce. Which squamous cell carcinoma in situ lesion is most likely",
+    "topic": "Erythroplasia of Queyrat",
+    "options": {
+      "A": "Erythroplasia of Queyrat",
+      "B": "Bowen disease",
+      "C": "Bowenoid papulosis",
+      "D": "Condyloma acuminatum"
+    },
+    "correct": "A",
+    "explanation": "Erythroplasia of Queyrat occurs on mucous membranes such as glans/prepuce and presents as a single velvety bright red patch with high malignant risk.",
+    "optionExplanations": {
+      "A": "Correct. Velvety bright red patch on glans/prepuce is erythroplasia of Queyrat.",
+      "B": "Bowen disease is a single thick gray-white hyperkeratotic plaque on keratinized penile shaft skin.",
+      "C": "Bowenoid papulosis causes multiple red-brown or warty papules in younger sexually active patients and has low malignant risk.",
+      "D": "Condyloma acuminatum is HPV 6/11 wart with papillary architecture and koilocytosis."
+    }
+  }
+];
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>

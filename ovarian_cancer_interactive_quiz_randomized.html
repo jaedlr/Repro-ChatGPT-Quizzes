@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ovarian Cancer Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = 
+[
+  {
+    "id": 1,
+    "stem": "A 52 year old woman asks which factor most strongly decreases ovarian cancer risk by suppressing ovulation over time. Which option is highest yield from the lecture",
+    "topic": "Ovarian cancer risk reduction",
+    "options": {
+      "A": "Nulliparity",
+      "B": "Late menopause",
+      "C": "Long-term oral contraceptive use",
+      "D": "Early menarche"
+    },
+    "correct": "C",
+    "explanation": "Factors that decrease lifetime ovulation decrease ovarian cancer risk. Long-term oral contraceptive use suppresses ovulation and provides significant risk reduction.",
+    "optionExplanations": {
+      "A": "Nulliparity increases risk because ovulatory cycles are not interrupted by pregnancy.",
+      "B": "Late menopause increases lifetime ovulations and increases risk.",
+      "C": "Correct. OCP use is high yield because hormonal suppression of ovulation lowers risk.",
+      "D": "Early menarche increases lifetime ovulations and increases risk."
+    }
+  },
+  {
+    "id": 2,
+    "stem": "A BRCA1 mutation carrier wants the most effective preventive surgical strategy for ovarian cancer risk reduction. Which option is best",
+    "topic": "Genetic risk prevention",
+    "options": {
+      "A": "Appendectomy only",
+      "B": "Endometrial ablation",
+      "C": "Cervical conization",
+      "D": "Prophylactic salpingo-oophorectomy"
+    },
+    "correct": "D",
+    "explanation": "In high-risk patients such as those with BRCA mutations, prophylactic salpingo-oophorectomy provides major ovarian cancer risk reduction.",
+    "optionExplanations": {
+      "A": "Appendectomy alone does not substantially reduce hereditary ovarian cancer risk.",
+      "B": "Endometrial ablation treats uterine bleeding and does not prevent ovarian cancer.",
+      "C": "Cervical conization treats cervical lesions, not ovarian cancer risk.",
+      "D": "Correct. Removing fallopian tubes and ovaries is the major preventive surgical option."
+    }
+  },
+  {
+    "id": 3,
+    "stem": "A postmenopausal woman has abdominal bloating, increased girth, urinary urgency, and pelvic pain. Pelvic exam finds bilateral fixed irregular adnexal masses with ascites. Which interpretation is most concerning",
+    "topic": "Malignant ovarian mass features",
+    "options": {
+      "A": "Malignant ovarian neoplasm",
+      "B": "Physiologic corpus luteum cyst",
+      "C": "Benign ovarian cyst",
+      "D": "Normal postmenopausal ovaries"
+    },
+    "correct": "A",
+    "explanation": "Ovarian cancer is often vague until advanced disease. Malignant features include postmenopausal age, fixed irregular bilateral masses, rapid growth, solid/variegated appearance, and ascites.",
+    "optionExplanations": {
+      "A": "Correct. Bilateral fixed irregular masses with ascites in a postmenopausal patient are concerning for malignancy.",
+      "B": "Corpus luteum cysts occur in menstrual years, not postmenopausal years.",
+      "C": "Benign masses are usually smooth, mobile, cystic, unilateral, and slow-growing.",
+      "D": "Postmenopausal ovaries generally should not be palpable."
+    }
+  },
+  {
+    "id": 4,
+    "stem": "An ultrasound shows a unilateral, smooth, mobile, cystic ovarian mass less than 10 cm with thin septations under 3 mm and gravity-dependent layering. What is the most likely classification",
+    "topic": "Benign ultrasound features",
+    "options": {
+      "A": "Krukenberg tumor",
+      "B": "Benign neoplasm",
+      "C": "Malignant neoplasm",
+      "D": "Metastatic gastric carcinoma"
+    },
+    "correct": "B",
+    "explanation": "Benign ovarian neoplasms are usually cystic, smooth, mobile, unilateral, under 10 cm, and may have thin septations under 3 mm, calcifications such as teeth, or gravity-dependent layering.",
+    "optionExplanations": {
+      "A": "Krukenberg tumors are metastatic and usually bilateral with signet-ring cells.",
+      "B": "Correct. These ultrasound features are typical of benign ovarian lesions.",
+      "C": "Malignant lesions are more often solid/variegated, irregular, fixed, bilateral, with thick septations and ascites.",
+      "D": "Metastatic gastric carcinoma to ovary is a Krukenberg tumor, not described by benign cyst features."
+    }
+  },
+  {
+    "id": 5,
+    "stem": "A pathology report classifies an ovarian tumor as a surface epithelial-stromal tumor. What proportion/category relationship is most accurate",
+    "topic": "Ovarian tumor classification",
+    "options": {
+      "A": "Only occurs in children",
+      "B": "Rarest group, less than 1 percent",
+      "C": "Most common primary ovarian tumor group, about 65 to 70 percent",
+      "D": "Always metastatic from stomach"
+    },
+    "correct": "C",
+    "explanation": "Surface epithelial-stromal tumors are the most common primary ovarian tumor group, accounting for about 65 to 70 percent.",
+    "optionExplanations": {
+      "A": "Germ cell tumors are more common in younger patients, but epithelial tumors are not limited to children.",
+      "B": "This is too low and incorrect.",
+      "C": "Correct. Surface epithelial-stromal tumors are the most common category.",
+      "D": "Metastatic stomach cancer to ovary is Krukenberg tumor, not primary surface epithelial tumor."
+    }
+  },
+  {
+    "id": 6,
+    "stem": "A 24 year old woman has a 5 cm bilateral ovarian cyst in menstrual years. It is associated with occasional anovulation and persistently proliferative endometrium. Which functional cyst is most likely",
+    "topic": "Follicle cyst",
+    "options": {
+      "A": "Theca lutein cyst",
+      "B": "Endometriotic cyst",
+      "C": "Corpus luteum cyst",
+      "D": "Follicle cyst"
+    },
+    "correct": "D",
+    "explanation": "Follicle cysts are frequent in menstrual years, often under 6 cm and sometimes bilateral, and can cause occasional anovulation with persistently proliferative endometrium.",
+    "optionExplanations": {
+      "A": "Theca lutein cysts are linked to high hCG states such as hydatidiform mole, choriocarcinoma, gonadotropins, or clomiphene.",
+      "B": "Endometriotic cysts are associated with pelvic endometriosis and occur most often age 20 to 40.",
+      "C": "Corpus luteum cysts are usually unilateral and associated with delayed period/prolonged secretory phase.",
+      "D": "Correct. Follicle cysts fit menstrual years, small size, bilateral tendency, and anovulation."
+    }
+  },
+  {
+    "id": 7,
+    "stem": "A patient with a hydatidiform mole develops massively enlarged bilateral multicystic ovaries due to elevated hCG. Which cyst type is most likely",
+    "topic": "Theca lutein cyst",
+    "options": {
+      "A": "Follicle cyst",
+      "B": "Theca lutein cyst",
+      "C": "Corpus luteum cyst",
+      "D": "Benign teratoma"
+    },
+    "correct": "B",
+    "explanation": "Theca lutein cysts occur with hydatidiform mole, choriocarcinoma, gonadotropin therapy, or clomiphene therapy due to elevated hCG/gonadotropin stimulation. Surgery should generally be avoided because they are functional.",
+    "optionExplanations": {
+      "A": "Follicle cysts are common functional cysts in menstrual years but are not specifically linked to molar pregnancy/hCG.",
+      "B": "Correct. Elevated hCG causing bilateral theca lutein cysts is classic.",
+      "C": "Corpus luteum cysts are unilateral functional cysts associated with delayed period.",
+      "D": "Benign teratomas are dermoid cysts containing mature tissues such as hair/teeth."
+    }
+  },
+  {
+    "id": 8,
+    "stem": "A woman with acute salpingitis develops a large painful adnexal mass with menometrorrhagia. Which tumor-like ovarian condition is most likely",
+    "topic": "Tubo-ovarian abscess",
+    "options": {
+      "A": "Tubo-ovarian abscess",
+      "B": "Dysgerminoma",
+      "C": "Brenner tumor",
+      "D": "Fibroma"
+    },
+    "correct": "A",
+    "explanation": "Inflammatory tubo-ovarian abscess occurs concomitantly with acute salpingitis, can be large and painful, often bilateral, and is associated with menometrorrhagia/anovulation.",
+    "optionExplanations": {
+      "A": "Correct. Acute salpingitis plus painful large adnexal mass fits tubo-ovarian abscess.",
+      "B": "Dysgerminoma is a malignant germ cell tumor.",
+      "C": "Brenner tumor is an epithelial ovarian tumor with transitional epithelium nests.",
+      "D": "Fibroma is a sex cord-stromal tumor and is typically solid."
+    }
+  },
+  {
+    "id": 9,
+    "stem": "A woman aged 30 has pelvic endometriosis and a 10 cm ovarian cyst filled with old blood. Which ovarian cyst is most likely",
+    "topic": "Endometriotic cyst",
+    "options": {
+      "A": "Corpus luteum cyst",
+      "B": "Endometriotic cyst",
+      "C": "Serous cystadenocarcinoma",
+      "D": "Theca lutein cyst"
+    },
+    "correct": "B",
+    "explanation": "Endometriotic cysts are associated with pelvic endometriosis, most common in women aged 20 to 40, can be up to 10 to 12 cm, and have very rare malignant potential.",
+    "optionExplanations": {
+      "A": "Corpus luteum cysts are functional cysts of menstrual years, usually 4 to 6 cm and unilateral.",
+      "B": "Correct. Endometriosis plus ovarian cyst with old hemorrhage fits endometriotic cyst.",
+      "C": "Serous cystadenocarcinoma is a malignant epithelial tumor with solid/variegated features and CA-125 elevation.",
+      "D": "Theca lutein cysts occur with elevated hCG states."
+    }
+  },
+  {
+    "id": 10,
+    "stem": "A 35 year old woman has a benign ovarian cyst containing teeth and hair. Which complication is specifically noted for this tumor",
+    "topic": "Benign teratoma",
+    "options": {
+      "A": "Aortic root dilation",
+      "B": "Cervical carcinoma in situ",
+      "C": "Torsion",
+      "D": "Jarisch-Herxheimer reaction"
+    },
+    "correct": "C",
+    "explanation": "Benign teratomas or dermoid cysts can occur from childhood to postmenopause, often contain mature tissues such as hair and teeth, and torsion can occur.",
+    "optionExplanations": {
+      "A": "Aortic root dilation is associated with tertiary syphilis.",
+      "B": "CIN III is cervical carcinoma in situ due to HPV.",
+      "C": "Correct. Torsion is a complication of benign teratomas.",
+      "D": "Jarisch-Herxheimer reaction occurs after syphilis treatment."
+    }
+  },
+  {
+    "id": 11,
+    "stem": "A postmenopausal woman has an ovarian malignancy. Pathology shows papillary structures and psammoma bodies with elevated CA-125. Which tumor is most likely",
+    "topic": "Serous cystadenocarcinoma",
+    "options": {
+      "A": "Yolk sac tumor",
+      "B": "Fibroma",
+      "C": "Mature teratoma",
+      "D": "Serous cystadenocarcinoma"
+    },
+    "correct": "D",
+    "explanation": "Serous cystadenocarcinoma is the most common malignant ovarian tumor and is associated with papillary structures, psammoma bodies, and CA-125 elevation.",
+    "optionExplanations": {
+      "A": "Yolk sac tumor is a germ cell tumor with AFP and Schiller-Duval bodies.",
+      "B": "Fibroma is a sex cord-stromal tumor and can cause Meigs syndrome.",
+      "C": "Mature teratoma is usually benign and contains mature tissues.",
+      "D": "Correct. Serous cystadenocarcinoma is the most common malignant ovarian tumor and often has CA-125 elevation."
+    }
+  },
+  {
+    "id": 12,
+    "stem": "A large multiloculated ovarian tumor is filled with thick gelatinous mucin. Which complication can occur if mucinous material spreads throughout the peritoneum, often from an appendiceal primary",
+    "topic": "Mucinous ovarian tumors",
+    "options": {
+      "A": "Pseudomyxoma peritonei",
+      "B": "Meigs syndrome",
+      "C": "Tabes dorsalis",
+      "D": "Immune reconstitution syndrome"
+    },
+    "correct": "A",
+    "explanation": "Mucinous tumors can be large and multiloculated with thick gelatinous mucin. Peritoneal mucin accumulation is pseudomyxoma peritonei, often associated with appendiceal primary.",
+    "optionExplanations": {
+      "A": "Correct. Pseudomyxoma peritonei is mucinous ascites/adhesions.",
+      "B": "Meigs syndrome is fibroma with ascites and pleural effusion.",
+      "C": "Tabes dorsalis is a neurosyphilis manifestation.",
+      "D": "IRIS occurs after ART initiation in HIV."
+    }
+  },
+  {
+    "id": 13,
+    "stem": "An ovarian tumor resembles endometrial glands and is associated with endometriosis. Which tumor is most likely",
+    "topic": "Endometrioid ovarian carcinoma",
+    "options": {
+      "A": "Brenner tumor",
+      "B": "Krukenberg tumor",
+      "C": "Choriocarcinoma",
+      "D": "Endometrioid carcinoma"
+    },
+    "correct": "D",
+    "explanation": "Endometrioid ovarian tumors resemble endometrial glands and are associated with endometriosis. Endometrial carcinoma can coexist in a subset of cases.",
+    "optionExplanations": {
+      "A": "Brenner tumor contains transitional epithelium nests in fibrous stroma.",
+      "B": "Krukenberg tumor is metastatic signet-ring cell carcinoma to the ovary.",
+      "C": "Choriocarcinoma is a germ cell tumor with hCG production.",
+      "D": "Correct. Endometrioid ovarian carcinoma is linked with endometriosis and glandular endometrial-like morphology."
+    }
+  },
+  {
+    "id": 14,
+    "stem": "A young woman has an ovarian tumor equivalent to seminoma. Histology shows primitive germ cells with clear cytoplasm, prominent nucleoli, distinct cell borders, and lymphocytic infiltrate. What is the diagnosis",
+    "topic": "Dysgerminoma",
+    "options": {
+      "A": "Dysgerminoma",
+      "B": "Yolk sac tumor",
+      "C": "Serous cystadenoma",
+      "D": "Granulosa tumor"
+    },
+    "correct": "A",
+    "explanation": "Dysgerminoma is the ovarian counterpart of seminoma and shows primitive germ cells with clear cytoplasm, distinct borders, prominent nucleoli, and lymphocytic infiltrates.",
+    "optionExplanations": {
+      "A": "Correct. Ovarian seminoma equivalent is dysgerminoma.",
+      "B": "Yolk sac tumor produces AFP and has Schiller-Duval bodies.",
+      "C": "Serous cystadenoma is a benign epithelial tumor.",
+      "D": "Granulosa tumor is a sex cord-stromal tumor with inhibin and Call-Exner bodies."
+    }
+  },
+  {
+    "id": 15,
+    "stem": "A child has an ovarian malignancy with elevated AFP and Schiller-Duval bodies. Which tumor is most likely",
+    "topic": "Yolk sac tumor",
+    "options": {
+      "A": "Dysgerminoma",
+      "B": "Choriocarcinoma",
+      "C": "Yolk sac tumor",
+      "D": "Fibroma"
+    },
+    "correct": "C",
+    "explanation": "Yolk sac tumor is a malignant germ cell tumor in children/young women, produces AFP, and has Schiller-Duval bodies.",
+    "optionExplanations": {
+      "A": "Dysgerminoma is the ovarian counterpart of seminoma and does not produce AFP.",
+      "B": "Choriocarcinoma produces hCG and contains cytotrophoblasts and syncytiotrophoblasts.",
+      "C": "Correct. AFP plus Schiller-Duval bodies identifies yolk sac tumor.",
+      "D": "Fibroma is a sex cord-stromal tumor and does not produce AFP."
+    }
+  },
+  {
+    "id": 16,
+    "stem": "A young woman has an ovarian tumor composed of cytotrophoblasts and syncytiotrophoblasts with high hCG. Which clinical effect may occur",
+    "topic": "Choriocarcinoma",
+    "options": {
+      "A": "Absent trophoblastic tissue",
+      "B": "Hyperthyroidism",
+      "C": "Low hCG",
+      "D": "Low AFP only"
+    },
+    "correct": "B",
+    "explanation": "Choriocarcinoma produces high hCG. Very high hCG can stimulate the TSH receptor and cause hyperthyroidism.",
+    "optionExplanations": {
+      "A": "Choriocarcinoma is composed of cytotrophoblasts and syncytiotrophoblasts.",
+      "B": "Correct. High hCG can cause hyperthyroidism.",
+      "C": "Choriocarcinoma produces high hCG.",
+      "D": "AFP is associated with yolk sac tumor, not choriocarcinoma."
+    }
+  },
+  {
+    "id": 17,
+    "stem": "A postmenopausal woman develops endometrial hyperplasia and abnormal bleeding. Ovarian tumor immunostain is positive for inhibin and histology shows Call-Exner bodies. Which tumor is most likely",
+    "topic": "Granulosa tumor",
+    "options": {
+      "A": "Yolk sac tumor",
+      "B": "Krukenberg tumor",
+      "C": "Granulosa tumor",
+      "D": "Brenner tumor"
+    },
+    "correct": "C",
+    "explanation": "Granulosa tumors are estrogen-producing sex cord-stromal tumors, inhibin-positive, and can show Call-Exner bodies. Estrogen can cause endometrial hyperplasia or carcinoma.",
+    "optionExplanations": {
+      "A": "Yolk sac tumor produces AFP and has Schiller-Duval bodies.",
+      "B": "Krukenberg tumor is metastatic signet-ring cell carcinoma to ovary.",
+      "C": "Correct. Inhibin plus Call-Exner bodies points to granulosa tumor.",
+      "D": "Brenner tumor has transitional epithelium nests and coffee-bean nuclei."
+    }
+  },
+  {
+    "id": 18,
+    "stem": "A woman has a solid ovarian fibroma with ascites and right-sided pleural effusion. What syndrome is present",
+    "topic": "Fibroma and Meigs syndrome",
+    "options": {
+      "A": "Turner syndrome",
+      "B": "Lynch syndrome",
+      "C": "Pseudomyxoma peritonei",
+      "D": "Meigs syndrome"
+    },
+    "correct": "D",
+    "explanation": "Meigs syndrome is ovarian fibroma with ascites and pleural effusion, usually right-sided. Fibromas are benign sex cord-stromal tumors.",
+    "optionExplanations": {
+      "A": "Turner syndrome involves 45,X gonadal dysgenesis, not this triad.",
+      "B": "Lynch syndrome increases colon and endometrial cancer risk.",
+      "C": "Pseudomyxoma peritonei is mucinous ascites from mucinous tumors, often appendiceal primary.",
+      "D": "Correct. Fibroma plus ascites and pleural effusion is Meigs syndrome."
+    }
+  },
+  {
+    "id": 19,
+    "stem": "A 28 year old woman develops defeminization and masculinization. Ovarian tumor is unilateral, androgen-producing, and contains Sertoli-like cords and Leydig cells with abundant pink cytoplasm. What is the diagnosis",
+    "topic": "Sertoli-Leydig tumor",
+    "options": {
+      "A": "Serous cystadenoma",
+      "B": "Sertoli-Leydig tumor",
+      "C": "Granulosa tumor",
+      "D": "Theca lutein cyst"
+    },
+    "correct": "B",
+    "explanation": "Sertoli-Leydig tumors are androgen-producing sex cord-stromal tumors that cause masculinization/defeminization, are usually benign and unilateral, and peak at ages 20 to 40.",
+    "optionExplanations": {
+      "A": "Serous cystadenoma is epithelial and typically benign cystic tumor.",
+      "B": "Correct. Androgen-producing unilateral tumor in age 20 to 40 fits Sertoli-Leydig tumor.",
+      "C": "Granulosa tumors produce estrogen and are inhibin-positive with Call-Exner bodies.",
+      "D": "Theca lutein cysts are functional cysts related to high hCG states."
+    }
+  },
+  {
+    "id": 20,
+    "stem": "A woman has bilateral ovarian enlargement. Histology shows signet-ring cells with large mucin vacuoles. Which primary site is most common",
+    "topic": "Krukenberg tumor",
+    "options": {
+      "A": "Stomach",
+      "B": "Thyroid",
+      "C": "Lung",
+      "D": "Cervix"
+    },
+    "correct": "A",
+    "explanation": "Krukenberg tumor is metastatic carcinoma to the ovary with signet-ring cells. It is usually bilateral, and the most common primary site is the stomach.",
+    "optionExplanations": {
+      "A": "Correct. Stomach is the most common primary source of Krukenberg tumor.",
+      "B": "Thyroid is not the classic primary site for Krukenberg tumor.",
+      "C": "Lung is not the most common primary listed.",
+      "D": "Cervix is not the classic primary site for signet-ring Krukenberg tumor."
+    }
+  }
+]
+;
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>

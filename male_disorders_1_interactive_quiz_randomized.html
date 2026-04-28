@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Male Disorders 1 Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap {
+      flex: 1;
+    }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active {
+      background: #e2e8f0;
+    }
+    .segment.answered {
+      background: #6fa8dc;
+    }
+    .segment.unanswered {
+      background: #334155;
+    }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover {
+      background: #f3f4f6;
+    }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p {
+      margin: 0 0 8px;
+    }
+    .green-text {
+      color: #15803d;
+    }
+    .red-text {
+      color: #b91c1c;
+    }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover {
+      background: #f3f4f6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+  {
+    "id": 1,
+    "stem": "A 17 year old male presents with delayed puberty, small testes, and gynecomastia. Labs show decreased testosterone with increased LH and FSH. Which karyotype is most likely",
+    "topic": "Klinefelter syndrome",
+    "options": {
+      "A": "47,XXY",
+      "B": "45,X",
+      "C": "47,XYY",
+      "D": "46,XY"
+    },
+    "correct": "A",
+    "explanation": "Klinefelter syndrome (47,XXY) presents with primary hypogonadism, small testes, infertility, and gynecomastia due to decreased testosterone and increased gonadotropins.",
+    "optionExplanations": {
+      "A": "Correct. XXY causes testicular failure leading to hypogonadism and infertility.",
+      "B": "Turner syndrome (45,X) occurs in females and presents with streak ovaries.",
+      "C": "47,XYY males are typically tall with normal sexual development and fertility.",
+      "D": "46,XY is a normal male karyotype."
+    }
+  },
+  {
+    "id": 2,
+    "stem": "A 30 year old infertile male has azoospermia and testicular atrophy. Which mechanism explains this condition in Klinefelter syndrome",
+    "topic": "Klinefelter pathophysiology",
+    "options": {
+      "A": "Hyperactive Leydig cells",
+      "B": "Excess androgen production",
+      "C": "Seminiferous tubule fibrosis and hyalinization",
+      "D": "Increased Sertoli cell proliferation"
+    },
+    "correct": "C",
+    "explanation": "Klinefelter syndrome leads to degeneration and fibrosis of seminiferous tubules resulting in azoospermia.",
+    "optionExplanations": {
+      "A": "Leydig cells are dysfunctional leading to low testosterone.",
+      "B": "Testosterone is decreased, not increased.",
+      "C": "Correct. Tubular damage leads to infertility.",
+      "D": "Sertoli cell function is impaired, not increased."
+    }
+  },
+  {
+    "id": 3,
+    "stem": "A tall male with learning difficulties has a 47,XYY karyotype. Which feature is most likely",
+    "topic": "XYY syndrome",
+    "options": {
+      "A": "Infertility",
+      "B": "Severe intellectual disability",
+      "C": "Ambiguous genitalia",
+      "D": "Normal fertility"
+    },
+    "correct": "D",
+    "explanation": "XYY males typically have normal sexual development and fertility but may have mild learning difficulties.",
+    "optionExplanations": {
+      "A": "Infertility is more typical of Klinefelter.",
+      "B": "Cognitive impairment is usually mild.",
+      "C": "Genitalia are normal male.",
+      "D": "Correct. Fertility is usually normal."
+    }
+  },
+  {
+    "id": 4,
+    "stem": "A testicular tumor composed of uniform cells with clear cytoplasm and central nuclei is identified. Which tumor marker may be mildly elevated",
+    "topic": "Seminoma",
+    "options": {
+      "A": "CEA",
+      "B": "hCG",
+      "C": "PSA",
+      "D": "AFP"
+    },
+    "correct": "B",
+    "explanation": "Seminoma may produce mild elevations of hCG but does not produce AFP.",
+    "optionExplanations": {
+      "A": "CEA is not relevant.",
+      "B": "Correct. Some seminomas produce hCG.",
+      "C": "PSA is for prostate cancer.",
+      "D": "AFP is not elevated in pure seminoma."
+    }
+  },
+  {
+    "id": 5,
+    "stem": "A 25 year old male has a testicular tumor with hemorrhage and necrosis that metastasizes early via blood. Which tumor is most likely",
+    "topic": "Choriocarcinoma",
+    "options": {
+      "A": "Spermatocytic tumor",
+      "B": "Choriocarcinoma",
+      "C": "Teratoma",
+      "D": "Seminoma"
+    },
+    "correct": "B",
+    "explanation": "Choriocarcinoma is highly aggressive with early hematogenous spread and significant hemorrhage and necrosis.",
+    "optionExplanations": {
+      "A": "Spermatocytic tumor is low grade.",
+      "B": "Correct. Highly aggressive tumor.",
+      "C": "Teratoma is less aggressive.",
+      "D": "Seminoma spreads slower."
+    }
+  },
+  {
+    "id": 6,
+    "stem": "A young boy presents with a testicular mass. Histology shows Schiller-Duval bodies. Which marker is elevated",
+    "topic": "Yolk sac tumor",
+    "options": {
+      "A": "hCG",
+      "B": "LDH",
+      "C": "PSA",
+      "D": "AFP"
+    },
+    "correct": "D",
+    "explanation": "Yolk sac tumors produce AFP and are common in young children.",
+    "optionExplanations": {
+      "A": "hCG is seen in choriocarcinoma.",
+      "B": "LDH is nonspecific.",
+      "C": "PSA is prostate marker.",
+      "D": "Correct. AFP is characteristic."
+    }
+  },
+  {
+    "id": 7,
+    "stem": "A testicular tumor contains neural tissue, cartilage, and epithelium. In adults, what is the behavior of this tumor",
+    "topic": "Teratoma",
+    "options": {
+      "A": "Malignant potential with metastasis",
+      "B": "Always benign",
+      "C": "Non-neoplastic",
+      "D": "Always malignant"
+    },
+    "correct": "A",
+    "explanation": "Adult teratomas are considered malignant and can metastasize.",
+    "optionExplanations": {
+      "A": "Correct. Adult teratomas have malignant potential.",
+      "B": "Only prepubertal teratomas are benign.",
+      "C": "They are neoplastic.",
+      "D": "Not always aggressive but considered malignant."
+    }
+  },
+  {
+    "id": 8,
+    "stem": "A man presents with infertility and a testicular tumor not associated with GCNIS. Which tumor is most likely",
+    "topic": "Spermatocytic tumor",
+    "options": {
+      "A": "Yolk sac tumor",
+      "B": "Embryonal carcinoma",
+      "C": "Spermatocytic tumor",
+      "D": "Seminoma"
+    },
+    "correct": "C",
+    "explanation": "Spermatocytic tumors occur in older men and are not associated with GCNIS.",
+    "optionExplanations": {
+      "A": "Yolk sac tumor is GCNIS related.",
+      "B": "Embryonal carcinoma is GCNIS related.",
+      "C": "Correct. Unique tumor not linked to GCNIS.",
+      "D": "Seminoma is GCNIS related."
+    }
+  },
+  {
+    "id": 9,
+    "stem": "A tumor produces testosterone leading to precocious puberty in a child. Which tumor is responsible",
+    "topic": "Leydig cell tumor",
+    "options": {
+      "A": "Leydig cell tumor",
+      "B": "Teratoma",
+      "C": "Sertoli cell tumor",
+      "D": "Seminoma"
+    },
+    "correct": "A",
+    "explanation": "Leydig cell tumors produce testosterone causing precocious puberty.",
+    "optionExplanations": {
+      "A": "Correct. Testosterone producing tumor.",
+      "B": "Teratoma does not produce hormones.",
+      "C": "Sertoli tumors usually do not produce hormones.",
+      "D": "Seminoma does not produce testosterone."
+    }
+  },
+  {
+    "id": 10,
+    "stem": "A 35 year old man has erectile dysfunction due to impaired nitric oxide signaling. Which drug improves his condition",
+    "topic": "Erectile dysfunction treatment",
+    "options": {
+      "A": "ACE inhibitor",
+      "B": "Beta blocker",
+      "C": "PDE-5 inhibitor",
+      "D": "SSRI"
+    },
+    "correct": "C",
+    "explanation": "PDE-5 inhibitors increase NO mediated vasodilation to improve erection.",
+    "optionExplanations": {
+      "A": "ACE inhibitors not used here.",
+      "B": "Beta blockers may worsen ED.",
+      "C": "Correct. Enhances blood flow.",
+      "D": "SSRIs delay ejaculation."
+    }
+  },
+  {
+    "id": 11,
+    "stem": "A patient with erectile dysfunction is given a drug that increases cGMP levels. What is the direct effect",
+    "topic": "PDE5 mechanism",
+    "options": {
+      "A": "Decreased blood flow",
+      "B": "Smooth muscle contraction",
+      "C": "Increased sympathetic tone",
+      "D": "Smooth muscle relaxation"
+    },
+    "correct": "D",
+    "explanation": "Increased cGMP leads to smooth muscle relaxation and increased blood flow.",
+    "optionExplanations": {
+      "A": "Blood flow increases.",
+      "B": "Opposite effect.",
+      "C": "Not related.",
+      "D": "Correct. Causes vasodilation."
+    }
+  },
+  {
+    "id": 12,
+    "stem": "A man presents with ejaculation within 1 minute of penetration. Which medication is most appropriate",
+    "topic": "Premature ejaculation",
+    "options": {
+      "A": "Dopamine agonist",
+      "B": "SSRI",
+      "C": "Testosterone",
+      "D": "PDE inhibitor"
+    },
+    "correct": "B",
+    "explanation": "SSRIs delay ejaculation and are first line therapy.",
+    "optionExplanations": {
+      "A": "Not used.",
+      "B": "Correct. Slows ejaculation.",
+      "C": "Not indicated.",
+      "D": "Used for ED."
+    }
+  },
+  {
+    "id": 13,
+    "stem": "A man presents with painful erection lasting 6 hours. What is the major complication if untreated",
+    "topic": "Priapism",
+    "options": {
+      "A": "Cancer",
+      "B": "Testicular torsion",
+      "C": "Fibrosis leading to ED",
+      "D": "Infection"
+    },
+    "correct": "C",
+    "explanation": "Priapism causes ischemia leading to fibrosis and permanent erectile dysfunction.",
+    "optionExplanations": {
+      "A": "Not associated.",
+      "B": "Different pathology.",
+      "C": "Correct. Major complication.",
+      "D": "Not primary issue."
+    }
+  },
+  {
+    "id": 14,
+    "stem": "Most common cause of priapism in children is",
+    "topic": "Priapism causes",
+    "options": {
+      "A": "Sickle cell disease",
+      "B": "Trauma",
+      "C": "Tumor",
+      "D": "Infection"
+    },
+    "correct": "A",
+    "explanation": "Sickle cell disease is the most common cause of priapism.",
+    "optionExplanations": {
+      "A": "Correct. Most common cause.",
+      "B": "Less common.",
+      "C": "Less common.",
+      "D": "Rare."
+    }
+  },
+  {
+    "id": 15,
+    "stem": "A patient with priapism is treated with a drug that increases norepinephrine causing vasoconstriction. Which drug is used",
+    "topic": "Priapism treatment",
+    "options": {
+      "A": "Sildenafil",
+      "B": "Aspirin",
+      "C": "Heparin",
+      "D": "Metaraminol"
+    },
+    "correct": "D",
+    "explanation": "Metaraminol is used in refractory priapism to induce vasoconstriction.",
+    "optionExplanations": {
+      "A": "Would worsen.",
+      "B": "Not effective.",
+      "C": "Used for clot prevention.",
+      "D": "Correct. Alpha agonist effect."
+    }
+  },
+  {
+    "id": 16,
+    "stem": "A patient presents with penile curvature due to fibrosis of tunica albuginea. What is the diagnosis",
+    "topic": "Peyronie disease",
+    "options": {
+      "A": "Priapism",
+      "B": "Peyronie disease",
+      "C": "Phimosis",
+      "D": "Paraphimosis"
+    },
+    "correct": "B",
+    "explanation": "Peyronie disease involves fibrotic plaques causing curvature.",
+    "optionExplanations": {
+      "A": "Different condition.",
+      "B": "Correct.",
+      "C": "Foreskin issue.",
+      "D": "Entrapped foreskin."
+    }
+  },
+  {
+    "id": 17,
+    "stem": "Which risk factor is most strongly associated with testicular cancer",
+    "topic": "Risk factors",
+    "options": {
+      "A": "Smoking",
+      "B": "Alcohol",
+      "C": "Cryptorchidism",
+      "D": "Obesity"
+    },
+    "correct": "C",
+    "explanation": "Cryptorchidism is the strongest risk factor for testicular cancer.",
+    "optionExplanations": {
+      "A": "Not major.",
+      "B": "Not major.",
+      "C": "Correct.",
+      "D": "Not major."
+    }
+  },
+  {
+    "id": 18,
+    "stem": "A patient with prostate cancer most likely presents with metastasis to which site",
+    "topic": "Prostate cancer",
+    "options": {
+      "A": "Bone",
+      "B": "Lung",
+      "C": "Liver",
+      "D": "Brain"
+    },
+    "correct": "A",
+    "explanation": "Prostate cancer commonly metastasizes to bone.",
+    "optionExplanations": {
+      "A": "Correct.",
+      "B": "Less common.",
+      "C": "Less common.",
+      "D": "Rare."
+    }
+  },
+  {
+    "id": 19,
+    "stem": "Which test is required to confirm prostate cancer diagnosis",
+    "topic": "Prostate diagnosis",
+    "options": {
+      "A": "Ultrasound",
+      "B": "Biopsy",
+      "C": "DRE",
+      "D": "PSA"
+    },
+    "correct": "B",
+    "explanation": "Biopsy is required for definitive diagnosis.",
+    "optionExplanations": {
+      "A": "Adjunct.",
+      "B": "Correct.",
+      "C": "Screening.",
+      "D": "Screening only."
+    }
+  },
+  {
+    "id": 20,
+    "stem": "A patient has elevated PSA after vigorous prostate exam. What is the explanation",
+    "topic": "PSA interpretation",
+    "options": {
+      "A": "Cancer only",
+      "B": "Infection only",
+      "C": "Genetic mutation",
+      "D": "False elevation from manipulation"
+    },
+    "correct": "D",
+    "explanation": "PSA can be elevated from manipulation, BPH, or prostatitis.",
+    "optionExplanations": {
+      "A": "Not specific.",
+      "B": "Not only cause.",
+      "C": "Not relevant.",
+      "D": "Correct."
+    }
+  }
+];
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Labor and Delivery Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = [{"id": 1, "stem": "A pregnant patient presents with regular painful contractions. Which finding best defines true labor rather than false labor", "topic": "True vs false labor", "options": {"A": "Irregular contractions that improve with rest", "B": "Pain limited to the lower abdomen without cervical change", "C": "Contractions stop with hydration", "D": "Cervical change with contractions"}, "correct": "D", "explanation": "True labor is defined by regular contractions that produce progressive cervical change.", "optionExplanations": {"A": "Irregular contractions improving with rest suggest false labor.", "B": "Pain without cervical change is not true labor.", "C": "Improvement with hydration/rest suggests false labor/Braxton Hicks.", "D": "Correct. Cervical dilation/effacement change distinguishes true labor."}}, {"id": 2, "stem": "A patient is in labor and cervical exam shows 6 cm dilation. Which phase of the first stage is she in", "topic": "Stages of labor", "options": {"A": "Third stage", "B": "Latent phase", "C": "Active phase", "D": "Second stage"}, "correct": "C", "explanation": "Active labor begins around 6 cm dilation and continues until complete dilation at 10 cm.", "optionExplanations": {"A": "Third stage is delivery of the placenta.", "B": "Latent phase is early first stage before active labor.", "C": "Correct. 6 cm marks active labor.", "D": "Second stage begins at complete dilation and ends with delivery of the fetus."}}, {"id": 3, "stem": "A laboring patient reaches 10 cm cervical dilation and begins pushing. Which stage of labor is this", "topic": "Second stage", "options": {"A": "First stage active phase", "B": "First stage latent phase", "C": "Second stage", "D": "Fourth stage"}, "correct": "C", "explanation": "The second stage of labor begins with complete cervical dilation and ends with delivery of the baby.", "optionExplanations": {"A": "Active phase ends at complete dilation.", "B": "Latent phase occurs before active cervical dilation.", "C": "Correct. Complete dilation to fetal delivery is second stage.", "D": "Fourth stage is the immediate postpartum recovery period."}}, {"id": 4, "stem": "After delivery of the infant, the placenta separates and is delivered. Which stage of labor is this", "topic": "Third stage", "options": {"A": "First stage", "B": "Second stage", "C": "Latent phase", "D": "Third stage"}, "correct": "D", "explanation": "The third stage of labor is from fetal delivery to placental delivery.", "optionExplanations": {"A": "First stage is cervical dilation.", "B": "Second stage is complete dilation to fetal delivery.", "C": "Latent phase is early first stage.", "D": "Correct. Placental delivery is the third stage."}}, {"id": 5, "stem": "A patient is in the first hour after delivery. Which stage of labor is often used to describe this immediate postpartum monitoring period", "topic": "Fourth stage", "options": {"A": "Prelabor phase", "B": "Second stage", "C": "Latent phase", "D": "Fourth stage"}, "correct": "D", "explanation": "The fourth stage refers to the immediate postpartum period, when bleeding, uterine tone, and maternal stability are monitored.", "optionExplanations": {"A": "Prelabor phase is not the immediate postpartum period.", "B": "Second stage ends with fetal delivery.", "C": "Latent phase is early first stage.", "D": "Correct. Fourth stage is immediate postpartum recovery/monitoring."}}, {"id": 6, "stem": "A fetal heart tracing shows baseline 140 bpm with moderate variability and accelerations. Which interpretation is most appropriate", "topic": "Fetal heart tracing", "options": {"A": "Sinusoidal pattern", "B": "Fetal bradycardia", "C": "Reassuring fetal status", "D": "Absent variability requiring immediate delivery in every case"}, "correct": "C", "explanation": "Normal baseline is 110–160 bpm. Moderate variability and accelerations are reassuring.", "optionExplanations": {"A": "Sinusoidal pattern is smooth, wave-like, and concerning.", "B": "Bradycardia is baseline below 110 bpm.", "C": "Correct. Baseline 140 with moderate variability and accelerations is reassuring.", "D": "This tracing does not have absent variability."}}, {"id": 7, "stem": "A fetal heart tracing has a baseline of 100 bpm for several minutes. Which term best describes this baseline", "topic": "Fetal bradycardia", "options": {"A": "Normal baseline", "B": "Acceleration", "C": "Fetal bradycardia", "D": "Fetal tachycardia"}, "correct": "C", "explanation": "Fetal bradycardia is a baseline fetal heart rate below 110 bpm.", "optionExplanations": {"A": "Normal baseline is 110–160 bpm.", "B": "Acceleration is a temporary rise above baseline.", "C": "Correct. Baseline 100 bpm is bradycardia.", "D": "Tachycardia is above 160 bpm."}}, {"id": 8, "stem": "A fetal heart tracing has a baseline of 170 bpm. Which term best describes this baseline", "topic": "Fetal tachycardia", "options": {"A": "Normal baseline", "B": "Early deceleration", "C": "Fetal tachycardia", "D": "Fetal bradycardia"}, "correct": "C", "explanation": "Fetal tachycardia is a baseline fetal heart rate greater than 160 bpm.", "optionExplanations": {"A": "Normal baseline is 110–160 bpm.", "B": "Early deceleration is a periodic slowing associated with contractions.", "C": "Correct. Baseline 170 bpm is tachycardia.", "D": "Bradycardia is below 110 bpm."}}, {"id": 9, "stem": "A fetal heart tracing shows gradual decelerations that mirror uterine contractions. Which mechanism is most likely", "topic": "Early decelerations", "options": {"A": "Umbilical cord compression", "B": "Head compression", "C": "Fetal anemia", "D": "Uteroplacental insufficiency"}, "correct": "B", "explanation": "Early decelerations mirror contractions and are caused by fetal head compression.", "optionExplanations": {"A": "Variable decelerations suggest cord compression.", "B": "Correct. Early decelerations = head compression.", "C": "Fetal anemia is associated with sinusoidal pattern.", "D": "Late decelerations suggest uteroplacental insufficiency."}}, {"id": 10, "stem": "A fetal heart tracing shows abrupt V-shaped decelerations that vary in timing relative to contractions. Which mechanism is most likely", "topic": "Variable decelerations", "options": {"A": "Uteroplacental insufficiency", "B": "Fetal head compression", "C": "Umbilical cord compression", "D": "Maternal fever only"}, "correct": "C", "explanation": "Variable decelerations are abrupt and vary in timing; they are caused by umbilical cord compression.", "optionExplanations": {"A": "Uteroplacental insufficiency causes late decelerations.", "B": "Head compression causes early decelerations.", "C": "Correct. Variable decelerations = cord compression.", "D": "Maternal fever can cause fetal tachycardia, not classic variable decelerations."}}, {"id": 11, "stem": "A fetal heart tracing shows gradual decelerations that begin after the contraction starts and recover after the contraction ends. Which mechanism is most likely", "topic": "Late decelerations", "options": {"A": "Fetal head compression", "B": "Fetal sleep cycle only", "C": "Uteroplacental insufficiency", "D": "Umbilical cord compression"}, "correct": "C", "explanation": "Late decelerations occur after contractions and indicate uteroplacental insufficiency.", "optionExplanations": {"A": "Head compression causes early decelerations.", "B": "Fetal sleep can decrease variability but does not cause repetitive late decelerations.", "C": "Correct. Late decelerations = uteroplacental insufficiency.", "D": "Cord compression causes variable decelerations."}}, {"id": 12, "stem": "A patient with recurrent late decelerations is being managed. Which initial intrauterine resuscitation measure is appropriate", "topic": "Intrauterine resuscitation", "options": {"A": "Maternal repositioning and IV fluids", "B": "Give methotrexate", "C": "Ignore because late decelerations are always benign", "D": "Continue oxytocin without changes"}, "correct": "A", "explanation": "Initial resuscitative measures include maternal repositioning, IV fluids, stopping uterotonic agents if needed, oxygen when indicated, and treating hypotension/tachysystole.", "optionExplanations": {"A": "Correct. Repositioning and IV fluids are first-line supportive measures.", "B": "Methotrexate is used for ectopic pregnancy, not fetal resuscitation.", "C": "Late decelerations are concerning and require evaluation.", "D": "Oxytocin may worsen tachysystole and should be reduced/stopped if contributing."}}, {"id": 13, "stem": "A laboring patient has more than 5 contractions in 10 minutes averaged over 30 minutes. Which term describes this pattern", "topic": "Tachysystole", "options": {"A": "Bradycardia", "B": "Latent labor", "C": "Crowning", "D": "Tachysystole"}, "correct": "D", "explanation": "Tachysystole is excessive uterine contraction frequency, commonly defined as more than 5 contractions in 10 minutes averaged over 30 minutes.", "optionExplanations": {"A": "Bradycardia refers to slow fetal heart rate.", "B": "Latent labor refers to early cervical dilation phase.", "C": "Crowning is fetal head visible at the introitus.", "D": "Correct. >5 contractions/10 minutes = tachysystole."}}, {"id": 14, "stem": "A patient receiving oxytocin develops tachysystole with fetal heart rate abnormalities. Which intervention is appropriate", "topic": "Oxytocin complication", "options": {"A": "Stop or decrease oxytocin", "B": "Increase oxytocin", "C": "Perform Pap smear", "D": "Give more prostaglandin immediately"}, "correct": "A", "explanation": "If tachysystole or fetal intolerance occurs with oxytocin, oxytocin should be reduced or stopped as part of intrauterine resuscitation.", "optionExplanations": {"A": "Correct. Stop/decrease oxytocin when tachysystole causes fetal concern.", "B": "Increasing oxytocin can worsen tachysystole.", "C": "Pap smear is unrelated.", "D": "More prostaglandin can worsen uterine activity."}}, {"id": 15, "stem": "A patient presents in labor and fetal parts are easily palpated through the abdomen. There is sudden severe abdominal pain and fetal distress after prior cesarean delivery. Which diagnosis is most concerning", "topic": "Uterine rupture", "options": {"A": "Bacterial vaginosis", "B": "Normal active labor", "C": "Uterine rupture", "D": "Primary dysmenorrhea"}, "correct": "C", "explanation": "Uterine rupture is suggested by sudden severe abdominal pain, fetal distress, loss of station, palpable fetal parts, and history of uterine scar.", "optionExplanations": {"A": "BV causes discharge, not acute fetal distress and abdominal catastrophe.", "B": "These are not normal active labor findings.", "C": "Correct. Prior C-section plus sudden pain/fetal distress is uterine rupture until proven otherwise.", "D": "Primary dysmenorrhea is menstrual cramping, not intrapartum emergency."}}, {"id": 16, "stem": "A laboring patient has painless vaginal bleeding after rupture of membranes followed by fetal bradycardia. Which diagnosis is most concerning", "topic": "Vasa previa", "options": {"A": "Normal bloody show", "B": "Vasa previa", "C": "Primary dysmenorrhea", "D": "Lichen sclerosus"}, "correct": "B", "explanation": "Vasa previa classically presents with painless vaginal bleeding after membrane rupture and fetal heart rate abnormalities due to fetal blood loss.", "optionExplanations": {"A": "Bloody show should not cause fetal bradycardia.", "B": "Correct. Bleeding after ROM plus fetal bradycardia suggests vasa previa.", "C": "Dysmenorrhea is menstrual pain.", "D": "Lichen sclerosus is vulvar dermatosis."}}, {"id": 17, "stem": "A patient has sudden painful vaginal bleeding with a tender rigid uterus and fetal distress. Which diagnosis is most likely", "topic": "Placental abruption", "options": {"A": "Placental abruption", "B": "Vasa previa", "C": "Cervical polyp", "D": "Placenta previa"}, "correct": "A", "explanation": "Placental abruption classically causes painful bleeding, uterine tenderness/rigidity, and fetal distress.", "optionExplanations": {"A": "Correct. Painful bleeding with tender rigid uterus = abruption.", "B": "Vasa previa causes bleeding after ROM with fetal bradycardia from fetal blood loss.", "C": "Cervical polyp may cause spotting but not rigid uterus/fetal distress.", "D": "Placenta previa classically causes painless bleeding."}}, {"id": 18, "stem": "A pregnant patient has painless bright red vaginal bleeding in the third trimester. Which diagnosis is most likely", "topic": "Placenta previa", "options": {"A": "Ovarian torsion", "B": "Uterine rupture", "C": "Placenta previa", "D": "Placental abruption"}, "correct": "C", "explanation": "Placenta previa classically presents with painless bright red bleeding in the second or third trimester.", "optionExplanations": {"A": "Ovarian torsion causes unilateral pelvic pain and nausea/vomiting.", "B": "Uterine rupture causes severe pain and fetal distress, often with scar history.", "C": "Correct. Painless bright red bleeding suggests placenta previa.", "D": "Abruption is typically painful with uterine tenderness."}}, {"id": 19, "stem": "After delivery, a patient has excessive bleeding and a boggy uterus. Which cause of postpartum hemorrhage is most likely", "topic": "Postpartum hemorrhage", "options": {"A": "Normal lochia", "B": "Cervical cancer", "C": "Uterine inversion only", "D": "Uterine atony"}, "correct": "D", "explanation": "Uterine atony is the most common cause of postpartum hemorrhage and presents with a boggy uterus.", "optionExplanations": {"A": "Excessive bleeding with boggy uterus is not normal lochia.", "B": "Cervical cancer does not cause immediate boggy postpartum hemorrhage.", "C": "Uterine inversion is less common and has a distinct fundal inversion.", "D": "Correct. Boggy uterus after delivery = uterine atony."}}, {"id": 20, "stem": "A postpartum patient has heavy bleeding, but the uterus is firm. Which cause should be considered", "topic": "Postpartum hemorrhage differential", "options": {"A": "Normal postpartum bleeding only", "B": "Genital tract laceration", "C": "Primary dysmenorrhea", "D": "Uterine atony only"}, "correct": "B", "explanation": "Postpartum hemorrhage with a firm uterus suggests trauma such as cervical, vaginal, or perineal laceration rather than uterine atony.", "optionExplanations": {"A": "Heavy bleeding should not be dismissed as normal.", "B": "Correct. Firm uterus with bleeding suggests laceration/trauma.", "C": "Primary dysmenorrhea is menstrual pain, not postpartum hemorrhage.", "D": "Atony usually causes a boggy uterus."}}];
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>

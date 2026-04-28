@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cervical Cancer Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = 
+[
+  {
+    "id": 1,
+    "stem": "A 31 year old woman presents for routine cervical cancer screening. Which screening strategy matches the lecture for this age group",
+    "topic": "Cervical cancer screening",
+    "options": {
+      "A": "Stop screening if sexually active",
+      "B": "Pap smear plus HPV co-testing",
+      "C": "HPV vaccine only with no screening",
+      "D": "Colposcopy for every patient"
+    },
+    "correct": "B",
+    "explanation": "The lecture notes state that HPV testing is used with Pap smear as co-testing starting at age 30. HPV vaccination does not change screening recommendations.",
+    "optionExplanations": {
+      "A": "Screening is not stopped because a patient is sexually active.",
+      "B": "Correct. Age 30 and older uses Pap plus HPV co-testing.",
+      "C": "HPV vaccination prevents HPV but does not replace screening.",
+      "D": "Colposcopy is diagnostic after abnormal Pap/HPV-positive results, not routine screening for everyone."
+    }
+  },
+  {
+    "id": 2,
+    "stem": "A 25 year old woman has ASC-US on Pap smear. Which role does HPV testing play in this age range according to the lecture",
+    "topic": "HPV reflex testing",
+    "options": {
+      "A": "No HPV testing is ever used before age 30",
+      "B": "HPV testing diagnoses invasive cancer without biopsy",
+      "C": "HPV testing replaces Pap smear entirely",
+      "D": "Reflex testing after abnormal Pap"
+    },
+    "correct": "D",
+    "explanation": "For ages 21 to 30, the lecture lists HPV testing as reflex testing. HPV testing detects high-risk HPV DNA but does not itself diagnose invasive cancer.",
+    "optionExplanations": {
+      "A": "The lecture specifically allows reflex HPV testing in this age group.",
+      "B": "Biopsy is required for diagnosis of cancer.",
+      "C": "HPV testing does not completely replace Pap smear in the lecture framework.",
+      "D": "Correct. HPV reflex testing is used after certain abnormal Pap results in ages 21 to 30."
+    }
+  },
+  {
+    "id": 3,
+    "stem": "A patient received Gardasil as a teenager and asks whether she can stop cervical cancer screening. What is the best answer",
+    "topic": "Gardasil and screening",
+    "options": {
+      "A": "No, HPV vaccination does not change screening",
+      "B": "Yes, if vaccinated before sexual activity",
+      "C": "No screening is needed after age 21",
+      "D": "Yes, vaccination replaces screening"
+    },
+    "correct": "A",
+    "explanation": "The lecture emphasizes that HPV vaccine does not change screening. Gardasil is prevention, not replacement for screening.",
+    "optionExplanations": {
+      "A": "Correct. Continue age-appropriate screening even after vaccination.",
+      "B": "Best efficacy is before sexual activity, but screening still continues.",
+      "C": "Screening begins around age 21 and continues according to guidelines.",
+      "D": "Vaccination does not replace Pap/HPV screening."
+    }
+  },
+  {
+    "id": 4,
+    "stem": "A 67 year old woman has had adequate prior negative cervical cancer screening and no high-grade lesion history. Which screening decision matches the lecture",
+    "topic": "Stopping cervical cancer screening",
+    "options": {
+      "A": "Give Gardasil instead of screening",
+      "B": "Begin annual Pap smears",
+      "C": "Stop screening",
+      "D": "Perform colposcopy every 6 months"
+    },
+    "correct": "C",
+    "explanation": "The lecture notes state screening can stop at age 65 with adequate prior screening. It can also stop after hysterectomy if there is no cervix and no high-grade history.",
+    "optionExplanations": {
+      "A": "Gardasil is prevention and does not substitute for screening decisions.",
+      "B": "Annual Pap smears are not indicated solely because she is older than 65 with adequate screening.",
+      "C": "Correct. Age 65 with adequate prior screening can stop screening.",
+      "D": "Colposcopy is for abnormal screening or suspicion for cancer."
+    }
+  },
+  {
+    "id": 5,
+    "stem": "A woman had a total hysterectomy for benign disease and has no cervix and no history of high-grade cervical lesion. What is the appropriate cervical cancer screening approach",
+    "topic": "Post-hysterectomy screening",
+    "options": {
+      "A": "Perform HPV testing monthly",
+      "B": "Colposcopy at every annual visit",
+      "C": "Continue Pap smears every year forever",
+      "D": "Stop screening"
+    },
+    "correct": "D",
+    "explanation": "The lecture states screening can stop post-hysterectomy if there is no cervix and no high-grade history.",
+    "optionExplanations": {
+      "A": "Monthly HPV testing is not recommended.",
+      "B": "Colposcopy is not a routine screening tool.",
+      "C": "Annual Pap smears are not required if no cervix and no high-grade history.",
+      "D": "Correct. Screening can stop in this scenario."
+    }
+  },
+  {
+    "id": 6,
+    "stem": "A cervical screening test detects cytologic abnormalities and has dramatically decreased cervical cancer incidence. Which test is this",
+    "topic": "Pap smear",
+    "options": {
+      "A": "RPR",
+      "B": "Endometrial biopsy",
+      "C": "Pap smear",
+      "D": "CA-125"
+    },
+    "correct": "C",
+    "explanation": "Pap smear detects cytologic abnormalities/CIN and has reduced cervical cancer incidence substantially.",
+    "optionExplanations": {
+      "A": "RPR screens for syphilis.",
+      "B": "Endometrial biopsy evaluates endometrial pathology.",
+      "C": "Correct. Pap smear is the screening test that detects cytologic abnormalities.",
+      "D": "CA-125 is associated with ovarian cancer monitoring, not cervical screening."
+    }
+  },
+  {
+    "id": 7,
+    "stem": "A high-risk HPV DNA test is ordered. Which statement about its performance matches the lecture",
+    "topic": "HPV testing performance",
+    "options": {
+      "A": "It is less sensitive than Pap smear for high-risk DNA",
+      "B": "Sensitivity is approximately 98 percent",
+      "C": "It detects only HPV 6 and 11",
+      "D": "Specificity is 100 percent"
+    },
+    "correct": "B",
+    "explanation": "The lecture lists high-risk HPV DNA testing sensitivity around 98 percent and specificity 73 to 94 percent.",
+    "optionExplanations": {
+      "A": "HPV testing is a high-sensitivity adjunct.",
+      "B": "Correct. HPV testing is very sensitive, around 98 percent.",
+      "C": "High-risk HPV testing detects oncogenic types such as 16, 18, 31, 33, and others, not only low-risk 6 and 11.",
+      "D": "Specificity is not 100 percent; it is listed as 73 to 94 percent."
+    }
+  },
+  {
+    "id": 8,
+    "stem": "A patient has abnormal Pap smear and HPV positivity. The clinician applies 3 to 5 percent acetic acid and examines the cervix with a binocular microscope, then biopsies suspicious lesions. What procedure is this",
+    "topic": "Colposcopy",
+    "options": {
+      "A": "Colposcopy",
+      "B": "Dilation and curettage",
+      "C": "Pap smear",
+      "D": "Mammography"
+    },
+    "correct": "A",
+    "explanation": "Colposcopy uses a binocular microscope and 3 to 5 percent acetic acid to evaluate epithelium, vasculature, and transformation zone; suspicious lesions are biopsied.",
+    "optionExplanations": {
+      "A": "Correct. This is colposcopy.",
+      "B": "D&C samples the endometrium.",
+      "C": "Pap smear collects cytology and does not involve magnified biopsy with acetic acid.",
+      "D": "Mammography images breast tissue."
+    }
+  },
+  {
+    "id": 9,
+    "stem": "A patient has persistent ASC-US and positive HPV testing. Which next diagnostic procedure is indicated according to the lecture",
+    "topic": "Colposcopy indications",
+    "options": {
+      "A": "Immediate radical hysterectomy",
+      "B": "No follow-up ever needed",
+      "C": "Colposcopy",
+      "D": "Chest x-ray only"
+    },
+    "correct": "C",
+    "explanation": "Colposcopy is indicated for abnormal Pap or HPV-positive results, including persistent ASC-US or HPV positivity, ASC-H, AGC, LSIL/HSIL, or suspicion for cancer.",
+    "optionExplanations": {
+      "A": "Radical hysterectomy is cancer treatment, not first diagnostic step for persistent ASC-US.",
+      "B": "Persistent abnormal screening requires evaluation.",
+      "C": "Correct. Persistent ASC-US/HPV-positive results warrant colposcopy.",
+      "D": "Chest x-ray is part of staging studies in cancer, not initial evaluation of abnormal screening."
+    }
+  },
+  {
+    "id": 10,
+    "stem": "A cervical lesion shows mild dysplasia. Which CIN designation best matches this finding",
+    "topic": "CIN I",
+    "options": {
+      "A": "CIN II",
+      "B": "CIN III",
+      "C": "Stage IV cervical cancer",
+      "D": "CIN I"
+    },
+    "correct": "D",
+    "explanation": "CIN I corresponds to mild dysplasia. CIN II is moderate dysplasia, and CIN III is severe dysplasia/carcinoma in situ.",
+    "optionExplanations": {
+      "A": "CIN II is moderate dysplasia.",
+      "B": "CIN III is severe dysplasia/carcinoma in situ.",
+      "C": "Stage IV indicates advanced invasive cancer beyond pelvis/bladder/rectum/metastasis.",
+      "D": "Correct. CIN I is mild dysplasia."
+    }
+  },
+  {
+    "id": 11,
+    "stem": "A cervical lesion shows severe dysplasia/carcinoma in situ without basement membrane invasion. Which classification is correct",
+    "topic": "CIN III",
+    "options": {
+      "A": "Stage II invasive cancer",
+      "B": "CIN III",
+      "C": "CIN I",
+      "D": "CIN II"
+    },
+    "correct": "B",
+    "explanation": "CIN III is severe dysplasia/carcinoma in situ. It has no basement membrane invasion and corresponds to stage 0 if carcinoma in situ.",
+    "optionExplanations": {
+      "A": "Stage II requires invasive cancer extending beyond cervix but not to pelvic wall/lower vagina.",
+      "B": "Correct. CIN III is severe dysplasia/carcinoma in situ.",
+      "C": "CIN I is mild dysplasia.",
+      "D": "CIN II is moderate dysplasia."
+    }
+  },
+  {
+    "id": 12,
+    "stem": "A patient has CIN I and the lesion has been identified. Which ablative management option is specifically listed for CIN I",
+    "topic": "CIN management",
+    "options": {
+      "A": "Cryotherapy",
+      "B": "Paraaortic lymph node dissection",
+      "C": "Bilateral salpingo-oophorectomy",
+      "D": "Radical hysterectomy"
+    },
+    "correct": "A",
+    "explanation": "The lecture lists ablative management as destroying tissue; cryotherapy is listed for CIN 1 and laser destroys the transformation zone.",
+    "optionExplanations": {
+      "A": "Correct. Cryotherapy is listed for CIN 1.",
+      "B": "Paraaortic lymph node status is prognostic in cancer staging, not CIN I treatment.",
+      "C": "BSO is not treatment for CIN I.",
+      "D": "Radical hysterectomy is cervical cancer treatment, not routine CIN I management."
+    }
+  },
+  {
+    "id": 13,
+    "stem": "A patient has an HSIL Pap, but colposcopy does not confirm the high-grade lesion. Which procedure is indicated as diagnostic and therapeutic",
+    "topic": "Diagnostic cone biopsy indications",
+    "options": {
+      "A": "Wet mount",
+      "B": "Endometrial stripe measurement only",
+      "C": "Diagnostic cone biopsy",
+      "D": "KOH prep"
+    },
+    "correct": "C",
+    "explanation": "Diagnostic cone biopsy is indicated when HSIL Pap is not confirmed, as well as unsatisfactory colposcopy, high-grade lesion on ECC, adenocarcinoma in situ, and microinvasion.",
+    "optionExplanations": {
+      "A": "Wet mount evaluates vaginitis, not HSIL discordance.",
+      "B": "Endometrial stripe measurement evaluates endometrial pathology, not cervical HSIL.",
+      "C": "Correct. Conization is diagnostic and therapeutic in this setting.",
+      "D": "KOH prep evaluates Candida or whiff test."
+    }
+  },
+  {
+    "id": 14,
+    "stem": "A patient undergoes cold knife conization for cervical dysplasia. Which complication is specifically listed in the lecture",
+    "topic": "Conization complications",
+    "options": {
+      "A": "Pulmonary embolism as inevitable outcome",
+      "B": "Cervical incompetence",
+      "C": "Ovarian torsion",
+      "D": "Endometrial carcinoma"
+    },
+    "correct": "B",
+    "explanation": "Risks of conization listed in the lecture include cervical stenosis and cervical incompetence.",
+    "optionExplanations": {
+      "A": "PE is not listed as an inevitable conization complication.",
+      "B": "Correct. Cervical incompetence is a recognized conization risk.",
+      "C": "Ovarian torsion is unrelated to cervical conization.",
+      "D": "Conization does not cause endometrial carcinoma."
+    }
+  },
+  {
+    "id": 15,
+    "stem": "A 44 year old woman with inadequate screening presents with postcoital bleeding and a friable cervix that bleeds easily. Which diagnosis should be most strongly suspected",
+    "topic": "Cervical cancer presentation",
+    "options": {
+      "A": "Ovarian fibroma",
+      "B": "Mature cystic teratoma",
+      "C": "Endometrial polyp only",
+      "D": "Cervical cancer"
+    },
+    "correct": "D",
+    "explanation": "Final board pearls emphasize cervical cancer presents with postcoital bleeding and a friable cervix. Symptoms can also include abnormal bleeding, discharge, pelvic pain, leg swelling, urinary frequency, and fistulas.",
+    "optionExplanations": {
+      "A": "Ovarian fibroma may cause Meigs syndrome.",
+      "B": "Mature cystic teratoma is an ovarian dermoid tumor.",
+      "C": "Endometrial polyps can cause bleeding but not a friable bleeding cervix.",
+      "D": "Correct. Postcoital bleeding with friable cervix is classic for cervical cancer."
+    }
+  },
+  {
+    "id": 16,
+    "stem": "A cervical cancer directly invades surrounding structures. Which route and structures are listed as direct invasion sites",
+    "topic": "Cervical cancer spread",
+    "options": {
+      "A": "Cervical stroma, uterine corpus, vagina, and parametrium",
+      "B": "Only lungs through hematogenous spread",
+      "C": "Only ovaries through follicular cysts",
+      "D": "Only para-aortic lymph nodes without pelvic nodes"
+    },
+    "correct": "A",
+    "explanation": "Cervical cancer spreads by direct invasion into cervical stroma, uterine corpus, vagina, and parametrium; lymphatically to pelvic then para-aortic nodes; and hematogenously to lungs, liver, and bones.",
+    "optionExplanations": {
+      "A": "Correct. These are the direct invasion sites listed.",
+      "B": "Hematogenous spread can occur but direct invasion is also important.",
+      "C": "Ovarian follicular cysts are unrelated to cervical cancer spread.",
+      "D": "Lymphatic spread is pelvic to para-aortic nodes, not para-aortic only."
+    }
+  },
+  {
+    "id": 17,
+    "stem": "A patient has advanced cervical cancer. Which laboratory abnormality is listed as possible in advanced disease",
+    "topic": "Advanced cervical cancer labs",
+    "options": {
+      "A": "Decreased calcium",
+      "B": "Low BUN and low creatinine only",
+      "C": "Hypercalcemia",
+      "D": "Always normal LFTs"
+    },
+    "correct": "C",
+    "explanation": "The lecture lists advanced cervical cancer laboratory findings including anemia, increased BUN, increased creatinine, abnormal LFTs, and hypercalcemia.",
+    "optionExplanations": {
+      "A": "Hypercalcemia, not decreased calcium, is listed.",
+      "B": "The lecture lists increased BUN and creatinine, not decreased.",
+      "C": "Correct. Hypercalcemia is listed in advanced disease.",
+      "D": "Abnormal LFTs may occur in advanced disease."
+    }
+  },
+  {
+    "id": 18,
+    "stem": "A patient with cervical cancer undergoes surgical staging. Which factor is listed as the single most important prognostic factor",
+    "topic": "Cervical cancer prognosis",
+    "options": {
+      "A": "Vaginal pH",
+      "B": "Paraaortic lymph node status",
+      "C": "Breast density",
+      "D": "Presence of clue cells"
+    },
+    "correct": "B",
+    "explanation": "The lecture states paraaortic lymph node status is the single most important prognostic factor in surgical staging.",
+    "optionExplanations": {
+      "A": "Vaginal pH helps assess vaginitis, not cervical cancer prognosis.",
+      "B": "Correct. Paraaortic lymph node status is the key prognostic factor listed.",
+      "C": "Breast density is unrelated to cervical cancer staging.",
+      "D": "Clue cells indicate bacterial vaginosis."
+    }
+  },
+  {
+    "id": 19,
+    "stem": "A woman presents with pruritic vulvar plaque/ulcer/mass, bleeding, dysuria, and enlarged lymph nodes in advanced disease. Which cancer is most consistent",
+    "topic": "Vulvar cancer presentation",
+    "options": {
+      "A": "Cervical cancer",
+      "B": "Ovarian dysgerminoma",
+      "C": "Endometrial cancer",
+      "D": "Vulvar cancer"
+    },
+    "correct": "D",
+    "explanation": "The lecture contrasts vulvar cancer as an external lesion presenting with vulvar plaque/ulcer/mass, pruritus, bleeding, dysuria, and enlarged lymph nodes in advanced disease.",
+    "optionExplanations": {
+      "A": "Cervical cancer more classically presents with postcoital bleeding and friable cervix.",
+      "B": "Dysgerminoma is an ovarian germ cell tumor.",
+      "C": "Endometrial cancer classically presents with postmenopausal bleeding.",
+      "D": "Correct. Vulvar cancer classically presents as a pruritic external lesion."
+    }
+  },
+  {
+    "id": 20,
+    "stem": "A parent asks about Gardasil for a 12 year old. Which schedule and concept match the lecture",
+    "topic": "Gardasil",
+    "options": {
+      "A": "Quadrivalent HPV 6, 11, 16, 18 at 0, 2, and 6 months; best before sexual activity",
+      "B": "Single dose at age 65 that replaces Pap screening",
+      "C": "Therapeutic vaccine used to treat invasive cervical cancer",
+      "D": "HPV 16 and 18 only after cervical cancer diagnosis"
+    },
+    "correct": "A",
+    "explanation": "The lecture lists quadrivalent Gardasil against HPV 6, 11, 16, and 18, age 9 to 26, schedule 0, 2, 6 months, best before sexual activity, and prevention rather than screening replacement.",
+    "optionExplanations": {
+      "A": "Correct. This matches the lecture Gardasil schedule and prevention concept.",
+      "B": "It does not replace screening.",
+      "C": "Gardasil prevents HPV-related disease but does not treat invasive cancer.",
+      "D": "Gardasil is preventive and includes 6, 11, 16, and 18 in the lecture."
+    }
+  }
+]
+;
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>

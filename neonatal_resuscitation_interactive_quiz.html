@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neonatal Resuscitation Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = [{"id": 1, "stem": "A term newborn is delivered, has good tone, and is crying vigorously. What is the most appropriate immediate management", "topic": "Initial assessment", "options": {"A": "Immediate chest compressions", "B": "Immediate intubation before drying", "C": "Epinephrine through the endotracheal tube", "D": "Routine care with delayed cord clamping, warmth, drying, and skin-to-skin"}, "correct": "D", "explanation": "A vigorous term newborn with good tone and breathing/crying receives routine care rather than resuscitation.", "optionExplanations": {"A": "Chest compressions are for HR <60 despite effective ventilation.", "B": "Intubation is not needed for a vigorous newborn.", "C": "Epinephrine is reserved for persistent HR <60 after ventilation and compressions.", "D": "Correct. Term, breathing/crying, and good tone → routine care."}}, {"id": 2, "stem": "A newborn is apneic and limp immediately after birth. What is the first step after moving to the warmer", "topic": "Initial resuscitation steps", "options": {"A": "Start chest compressions immediately", "B": "Warm, position airway, clear secretions if needed, dry, stimulate", "C": "Wait 10 minutes before intervention", "D": "Give IV epinephrine immediately"}, "correct": "B", "explanation": "Initial neonatal resuscitation steps are warmth, airway positioning, clearing secretions only if needed, drying, and stimulation.", "optionExplanations": {"A": "Compressions come only after ventilation if HR remains <60.", "B": "Correct. These are the first corrective steps for a non-vigorous newborn.", "C": "Delayed intervention is inappropriate in apnea/poor tone.", "D": "Epinephrine comes later if HR remains <60 after ventilation and compressions."}}, {"id": 3, "stem": "After initial steps, a newborn remains apneic with heart rate 90/min. What is the next intervention", "topic": "Positive pressure ventilation", "options": {"A": "Routine care only", "B": "Chest compressions", "C": "Positive pressure ventilation", "D": "Naloxone before ventilation"}, "correct": "C", "explanation": "Positive pressure ventilation is indicated if the newborn is apneic/gasping or heart rate is below 100/min after initial steps.", "optionExplanations": {"A": "Routine care is for vigorous newborns.", "B": "Compressions are for HR <60 despite effective ventilation.", "C": "Correct. Apnea and HR <100 require PPV.", "D": "Ventilation is the priority; naloxone is not initial NRP management."}}, {"id": 4, "stem": "A newborn receives 30 seconds of effective positive pressure ventilation. Heart rate rises from 80/min to 130/min. What should be done next", "topic": "Ventilation response", "options": {"A": "Begin chest compressions", "B": "Continue supportive care and reassess breathing", "C": "Perform immediate volume expansion", "D": "Administer epinephrine"}, "correct": "B", "explanation": "An increasing heart rate above 100/min after PPV indicates effective ventilation. Continue support based on respiratory effort and oxygenation.", "optionExplanations": {"A": "Compressions are not indicated once HR is >100.", "B": "Correct. HR improvement is the best sign of effective ventilation.", "C": "Volume expansion is for suspected hypovolemia/shock, not routine after response to PPV.", "D": "Epinephrine is not indicated."}}, {"id": 5, "stem": "A newborn remains bradycardic after PPV. Which finding is the best indicator that ventilation is effective", "topic": "Effective ventilation", "options": {"A": "Presence of acrocyanosis only", "B": "Rising heart rate", "C": "Low oxygen saturation despite mask leak", "D": "Weak cry without chest movement"}, "correct": "B", "explanation": "The most important indicator of effective ventilation in neonatal resuscitation is an increase in heart rate.", "optionExplanations": {"A": "Acrocyanosis alone is common and not proof of effective ventilation.", "B": "Correct. HR rise is the key sign of effective ventilation.", "C": "Mask leak suggests ventilation may be ineffective.", "D": "Weak cry without chest movement does not prove ventilation."}}, {"id": 6, "stem": "A newborn has poor chest rise during positive pressure ventilation. Which corrective action sequence is appropriate", "topic": "MR SOPA", "options": {"A": "Begin compressions without correcting ventilation", "B": "Stop ventilation and observe", "C": "Give epinephrine before checking the mask", "D": "Mask adjustment, reposition airway, suction mouth/nose, open mouth, pressure increase, alternative airway"}, "correct": "D", "explanation": "MR SOPA corrective steps are used when PPV is ineffective: mask adjustment, reposition airway, suction, open mouth, pressure increase, and alternative airway.", "optionExplanations": {"A": "Compressions without effective ventilation are less useful because neonatal bradycardia is usually respiratory.", "B": "Observation alone is unsafe when ventilation is ineffective.", "C": "Ventilation must be optimized before epinephrine.", "D": "Correct. MR SOPA corrects inadequate ventilation."}}, {"id": 7, "stem": "After 30 seconds of effective PPV through a properly placed airway, a newborn’s heart rate is 50/min. What is the next step", "topic": "Chest compressions", "options": {"A": "Routine skin-to-skin care", "B": "Stop PPV because HR is improving", "C": "Start chest compressions with coordinated ventilation", "D": "Only dry and stimulate again for 5 minutes"}, "correct": "C", "explanation": "Chest compressions are started when HR remains below 60/min despite at least 30 seconds of effective ventilation.", "optionExplanations": {"A": "Routine care is inappropriate in severe bradycardia.", "B": "HR 50 is not improving enough and requires escalation.", "C": "Correct. HR <60 after effective ventilation → compressions.", "D": "Repeating stimulation delays needed resuscitation."}}, {"id": 8, "stem": "During neonatal chest compressions, which compression-to-ventilation ratio is recommended", "topic": "Compression ratio", "options": {"A": "Continuous compressions without ventilation", "B": "3 compressions to 1 ventilation", "C": "15 compressions to 2 ventilations", "D": "30 compressions to 2 ventilations"}, "correct": "B", "explanation": "Neonatal resuscitation uses a 3:1 compression-to-ventilation ratio because most neonatal arrests are respiratory.", "optionExplanations": {"A": "Ventilation is essential in neonatal resuscitation.", "B": "Correct. Neonatal compressions use 3:1.", "C": "15:2 is used in some pediatric CPR situations, not standard neonatal resuscitation.", "D": "30:2 is adult single-rescuer CPR style, not neonatal NRP."}}, {"id": 9, "stem": "A newborn receiving compressions has HR 40/min after 60 seconds of coordinated compressions and effective ventilation. What is indicated next", "topic": "Epinephrine", "options": {"A": "Routine care", "B": "Epinephrine", "C": "Oral glucose only", "D": "Stop resuscitation immediately"}, "correct": "B", "explanation": "Epinephrine is indicated if HR remains below 60/min after effective PPV plus chest compressions.", "optionExplanations": {"A": "Routine care is inappropriate.", "B": "Correct. Persistent HR <60 after PPV + compressions → epinephrine.", "C": "Glucose is not the immediate treatment for persistent severe bradycardia.", "D": "Resuscitation should continue with medication escalation."}}, {"id": 10, "stem": "What is the preferred route for epinephrine during neonatal resuscitation when vascular access is available", "topic": "Epinephrine route", "options": {"A": "Intramuscular deltoid injection", "B": "Oral administration", "C": "Subcutaneous scalp injection", "D": "Umbilical venous catheter"}, "correct": "D", "explanation": "IV epinephrine via umbilical venous catheter is preferred when available during neonatal resuscitation.", "optionExplanations": {"A": "IM injection is not preferred for neonatal resuscitation epinephrine.", "B": "Oral epinephrine is not used for resuscitation.", "C": "Subcutaneous administration is not appropriate.", "D": "Correct. UVC provides rapid central venous access."}}, {"id": 11, "stem": "A newborn is pale with weak pulses after placental abruption and has poor response to ventilation, compressions, and epinephrine. Which additional intervention should be considered", "topic": "Volume expansion", "options": {"A": "Volume expansion with isotonic crystalloid or blood if blood loss suspected", "B": "Methotrexate", "C": "Immediate oral feeding", "D": "Phototherapy"}, "correct": "A", "explanation": "Volume expansion is considered when there is suspected blood loss or hypovolemic shock, especially with pallor and weak pulses.", "optionExplanations": {"A": "Correct. Abruption + pallor/weak pulses suggests blood loss.", "B": "Methotrexate is used for ectopic pregnancy, not neonatal shock.", "C": "Oral feeding is inappropriate during resuscitation.", "D": "Phototherapy treats hyperbilirubinemia, not acute hypovolemia."}}, {"id": 12, "stem": "A newborn is delivered through meconium-stained amniotic fluid but is vigorous with strong respirations and good tone. What is the appropriate management", "topic": "Meconium-stained fluid", "options": {"A": "Immediate tracheal suctioning before stimulation", "B": "Epinephrine immediately", "C": "Chest compressions immediately", "D": "Routine care; no routine tracheal suctioning"}, "correct": "D", "explanation": "A vigorous infant born through meconium-stained fluid receives routine care; routine tracheal suctioning is not recommended.", "optionExplanations": {"A": "Routine tracheal suctioning is not indicated for vigorous infants.", "B": "Epinephrine is reserved for persistent severe bradycardia.", "C": "Compressions require HR <60 after ventilation.", "D": "Correct. Vigorous newborn + meconium → routine care."}}, {"id": 13, "stem": "A non-vigorous newborn is delivered through meconium-stained fluid. What is the priority if the baby is apneic or bradycardic", "topic": "Non-vigorous meconium", "options": {"A": "Start phototherapy", "B": "Give antibiotics before breathing support", "C": "Delay ventilation until all meconium is suctioned from the trachea", "D": "Begin ventilation rather than delaying for routine tracheal suction"}, "correct": "D", "explanation": "For non-vigorous infants with meconium, the priority is to establish effective ventilation; routine tracheal suction should not delay ventilation.", "optionExplanations": {"A": "Phototherapy is unrelated.", "B": "Antibiotics are not the immediate resuscitation priority.", "C": "Delaying ventilation worsens hypoxia/bradycardia.", "D": "Correct. Ventilation is the priority."}}, {"id": 14, "stem": "A newborn is breathing but persistently cyanotic with labored respirations and heart rate above 100/min. Which intervention may be appropriate", "topic": "CPAP", "options": {"A": "CPAP or supplemental oxygen with monitoring", "B": "No support because HR is above 100", "C": "Chest compressions immediately", "D": "Epinephrine immediately"}, "correct": "A", "explanation": "If the newborn is breathing with HR >100 but has respiratory distress or persistent cyanosis, CPAP and/or supplemental oxygen may be used.", "optionExplanations": {"A": "Correct. Breathing with distress/cyanosis can require CPAP/oxygen.", "B": "Respiratory distress still requires support even if HR is >100.", "C": "Compressions are for HR <60 after effective ventilation.", "D": "Epinephrine is not indicated with HR >100."}}, {"id": 15, "stem": "A preterm infant requires respiratory support after delivery. Which initial oxygen strategy is most appropriate conceptually", "topic": "Oxygen use", "options": {"A": "Use room air only even if saturations remain low", "B": "Use blended oxygen and titrate to target preductal oxygen saturations", "C": "Always use 100% oxygen for all newborns indefinitely", "D": "Avoid oxygen saturation monitoring"}, "correct": "B", "explanation": "Oxygen should be titrated using pulse oximetry targets; preterm infants often require blended oxygen rather than automatic prolonged 100% oxygen.", "optionExplanations": {"A": "Persistent hypoxemia requires escalation.", "B": "Correct. Titrate oxygen to target saturations.", "C": "Prolonged 100% oxygen can increase oxidative injury.", "D": "Pulse oximetry helps guide oxygen delivery."}}, {"id": 16, "stem": "Where should the pulse oximeter probe be placed to monitor preductal oxygen saturation in neonatal resuscitation", "topic": "Pulse oximetry", "options": {"A": "Right hand or wrist", "B": "Left thigh", "C": "Left foot", "D": "Right foot"}, "correct": "A", "explanation": "Preductal oxygen saturation is measured on the right hand or wrist.", "optionExplanations": {"A": "Correct. Right hand/wrist gives preductal saturation.", "B": "Left thigh is not the standard preductal site.", "C": "A foot gives postductal saturation.", "D": "A foot gives postductal saturation."}}, {"id": 17, "stem": "A newborn has Apgar scores assigned at 1 and 5 minutes. Which components are included in the Apgar score", "topic": "Apgar score", "options": {"A": "Airway, breathing, circulation, disability, exposure", "B": "Blood pressure, urine output, weight, length, head circumference", "C": "Appearance, pulse, grimace, activity, respirations", "D": "Tone, temperature, glucose, calcium, bilirubin"}, "correct": "C", "explanation": "Apgar scores include Appearance, Pulse, Grimace, Activity, and Respirations.", "optionExplanations": {"A": "ABCDE is a general emergency assessment framework.", "B": "These are not Apgar components.", "C": "Correct. APGAR = Appearance, Pulse, Grimace, Activity, Respirations.", "D": "These may be clinically important but are not the Apgar components."}}, {"id": 18, "stem": "A newborn has a heart rate of 80/min at 1 minute of life. What Apgar pulse score should be assigned", "topic": "Apgar pulse", "options": {"A": "2", "B": "0", "C": "1", "D": "Cannot be scored"}, "correct": "C", "explanation": "Apgar pulse score: 0 = absent, 1 = HR below 100/min, 2 = HR at least 100/min.", "optionExplanations": {"A": "Score 2 requires HR ≥100/min.", "B": "Score 0 is absent heart rate.", "C": "Correct. HR 80/min scores 1 for pulse.", "D": "Pulse is a standard Apgar component."}}, {"id": 19, "stem": "A newborn is blue and limp with no respiratory effort and no heart rate at birth. What is the Apgar score", "topic": "Apgar calculation", "options": {"A": "10", "B": "5", "C": "0", "D": "3"}, "correct": "C", "explanation": "Apgar score is 0 if appearance, pulse, grimace, activity, and respirations each score 0.", "optionExplanations": {"A": "A score of 10 is fully normal.", "B": "A score of 5 would require multiple partial findings.", "C": "Correct. No HR, no respirations, limp, blue, no reflex response = 0.", "D": "A score of 3 would require some positive findings."}}, {"id": 20, "stem": "A newborn required prolonged resuscitation with PPV, compressions, and epinephrine. After stabilization, what is the appropriate next management principle", "topic": "Post-resuscitation care", "options": {"A": "Stop monitoring once the heart rate rises once", "B": "Post-resuscitation monitoring for oxygenation, ventilation, glucose, temperature, and complications", "C": "Avoid checking glucose or temperature", "D": "Immediate discharge home"}, "correct": "B", "explanation": "Infants requiring significant resuscitation need post-resuscitation care with monitoring for respiratory status, perfusion, temperature, glucose, and complications.", "optionExplanations": {"A": "A single HR improvement does not end monitoring needs.", "B": "Correct. Significant resuscitation requires ongoing monitoring.", "C": "Hypoglycemia and temperature instability are important post-resuscitation risks.", "D": "Immediate discharge is unsafe."}}];
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>

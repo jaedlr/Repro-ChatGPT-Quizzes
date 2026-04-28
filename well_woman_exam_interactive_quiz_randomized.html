@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Well Woman Exam Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = 
+[
+  {
+    "id": 1,
+    "stem": "A 22 year old sexually active woman presents for routine care. She has no symptoms and asks what STI screening is recommended annually based on age alone. Which screening is indicated",
+    "topic": "STI screening",
+    "options": {
+      "A": "Annual endometrial biopsy",
+      "B": "Annual mammography",
+      "C": "Annual colonoscopy",
+      "D": "Annual gonorrhea and chlamydia screening"
+    },
+    "correct": "D",
+    "explanation": "Sexually active women younger than 25 should receive annual screening for gonorrhea and chlamydia.",
+    "optionExplanations": {
+      "A": "Endometrial biopsy is not routine screening in asymptomatic young women.",
+      "B": "Mammography is not indicated annually for average-risk women in their early 20s.",
+      "C": "Colonoscopy is unrelated to routine STI screening.",
+      "D": "Correct. CDC screening guidance emphasizes annual GC/CT screening for sexually active women under 25."
+    }
+  },
+  {
+    "id": 2,
+    "stem": "A 20 year old average-risk woman asks when cervical cancer screening should begin. Which answer is the classic exam answer from the notes",
+    "topic": "Cervical cancer screening",
+    "options": {
+      "A": "Age 13 to 15",
+      "B": "Age 18",
+      "C": "Age 21",
+      "D": "Age 30"
+    },
+    "correct": "C",
+    "explanation": "The classic exam answer for Pap smear/cervical cancer screening initiation is age 21.",
+    "optionExplanations": {
+      "A": "Age 13 to 15 is recommended for the first gynecologic visit, not Pap screening.",
+      "B": "Age 18 is not the classic starting age listed.",
+      "C": "Correct. Cervical cancer screening classically starts at age 21.",
+      "D": "HPV testing is emphasized at ages 30 to 65, but screening starts earlier."
+    }
+  },
+  {
+    "id": 3,
+    "stem": "A 14 year old girl presents for her first gynecologic visit. She has no symptoms. Which statement best matches the recommended timing",
+    "topic": "First gynecologic visit",
+    "options": {
+      "A": "First gynecologic visit should occur only after pregnancy",
+      "B": "First gynecologic visit should occur at age 13 to 15",
+      "C": "First gynecologic visit should wait until age 21",
+      "D": "First gynecologic visit should wait until menopause"
+    },
+    "correct": "B",
+    "explanation": "ACOG recommends the first gynecologic visit at age 13 to 15, even though cervical cancer screening begins later.",
+    "optionExplanations": {
+      "A": "Pregnancy is not required before gynecologic care.",
+      "B": "Correct. Age 13 to 15 is the timing for the first gynecologic visit.",
+      "C": "Age 21 is the classic Pap screening start, not the first visit.",
+      "D": "Waiting until menopause is inappropriate."
+    }
+  },
+  {
+    "id": 4,
+    "stem": "A clinician is taking a gynecologic history. Which approach is most patient-centered and consistent with the notes",
+    "topic": "Gynecologic history",
+    "options": {
+      "A": "Use open-ended questions in a private, respectful, nonjudgmental setting",
+      "B": "Begin the exam before asking history questions",
+      "C": "Ask only yes/no questions and avoid patient narrative",
+      "D": "Use assumptions about sexual activity and orientation to save time"
+    },
+    "correct": "A",
+    "explanation": "Gynecologic history should be obtained in a private, respectful, nonjudgmental setting without assumptions, using open-ended questions to allow the patient narrative.",
+    "optionExplanations": {
+      "A": "Correct. This is the patient-centered approach described.",
+      "B": "History should always be obtained before disrobing and exam.",
+      "C": "Open-ended questions are preferred to allow the patient narrative.",
+      "D": "The notes emphasize avoiding assumptions about sexual activity and orientation."
+    }
+  },
+  {
+    "id": 5,
+    "stem": "A postmenopausal woman reports new vaginal bleeding. Which interpretation is most appropriate",
+    "topic": "Postmenopausal bleeding",
+    "options": {
+      "A": "Malignancy until proven otherwise",
+      "B": "Normal if bleeding is light",
+      "C": "No evaluation needed if painless",
+      "D": "Always due to ovulation"
+    },
+    "correct": "A",
+    "explanation": "Postmenopausal bleeding is always abnormal and should be treated as malignancy until proven otherwise.",
+    "optionExplanations": {
+      "A": "Correct. Postmenopausal bleeding is a high-yield red flag.",
+      "B": "Light bleeding can still be pathologic after menopause.",
+      "C": "Painless bleeding still requires evaluation.",
+      "D": "Postmenopausal patients are not ovulating."
+    }
+  },
+  {
+    "id": 6,
+    "stem": "A woman presents with a palpable breast mass. Which documentation best localizes the lesion",
+    "topic": "Breast mass characterization",
+    "options": {
+      "A": "Upper body lump",
+      "B": "Mass somewhere in the breast",
+      "C": "Painful or not painful only",
+      "D": "Clock position and centimeters from nipple"
+    },
+    "correct": "D",
+    "explanation": "Breast masses should be localized by quadrant or clock position plus distance in centimeters from the nipple, along with size, shape, consistency, borders, tenderness, and mobility.",
+    "optionExplanations": {
+      "A": "This does not localize the breast lesion.",
+      "B": "This is too vague and not clinically useful.",
+      "C": "Tenderness is important but insufficient alone.",
+      "D": "Correct. Clock face plus distance from nipple improves localization."
+    }
+  },
+  {
+    "id": 7,
+    "stem": "During breast exam, which lymph nodes receive approximately 90 percent of breast lymphatic drainage and are accessible on exam",
+    "topic": "Breast lymphatic drainage",
+    "options": {
+      "A": "Inguinal nodes",
+      "B": "Para-aortic nodes",
+      "C": "Ipsilateral axillary nodes",
+      "D": "Internal thoracic nodes only"
+    },
+    "correct": "C",
+    "explanation": "Approximately 90 percent of breast lymphatic drainage goes to ipsilateral axillary nodes; about 10 percent drains to internal thoracic nodes, which are not exam-accessible.",
+    "optionExplanations": {
+      "A": "Inguinal nodes do not drain the breast.",
+      "B": "Para-aortic nodes are not the primary breast drainage group.",
+      "C": "Correct. Axillary nodes are the main clinically examined drainage basin.",
+      "D": "Internal thoracic nodes receive less drainage and are not accessible by routine exam."
+    }
+  },
+  {
+    "id": 8,
+    "stem": "A clinician is inspecting breasts during physical exam. Which patient position sequence is appropriate to look for malignancy clues such as dimpling, retraction, asymmetry, and nipple abnormalities",
+    "topic": "Breast inspection",
+    "options": {
+      "A": "Supine only with arms covered",
+      "B": "Arms at sides, arms overhead, hands on hips, and leaning forward if pendulous",
+      "C": "Prone position only",
+      "D": "Standing with no visual inspection"
+    },
+    "correct": "B",
+    "explanation": "Breast inspection includes arms at sides, arms overhead, hands on hips, and leaning forward if breasts are pendulous to look for asymmetry, skin changes, retraction, dimpling, and nipple abnormalities.",
+    "optionExplanations": {
+      "A": "Supine positioning is mainly for palpation; inspection requires multiple positions.",
+      "B": "Correct. These positions help reveal subtle skin or contour changes.",
+      "C": "Prone position is not the standard breast inspection position.",
+      "D": "Visual inspection is a key part of the breast exam."
+    }
+  },
+  {
+    "id": 9,
+    "stem": "A patient reports a breast lump. Which examination principle is correct",
+    "topic": "Symptomatic breast patient",
+    "options": {
+      "A": "Exam should be performed through clothing",
+      "B": "Only self-exam is appropriate",
+      "C": "Symptomatic breast patients should be examined",
+      "D": "Clinical breast exam is unnecessary because average-risk screening does not recommend it"
+    },
+    "correct": "C",
+    "explanation": "Clinical breast exam and self-exam are not recommended for average-risk screening, but symptomatic female or male patients should be examined.",
+    "optionExplanations": {
+      "A": "The exam should never be performed through clothing.",
+      "B": "Self-exam alone is not sufficient for a symptomatic patient.",
+      "C": "Correct. Symptoms such as mass, pain, discharge, or skin changes require exam.",
+      "D": "Screening recommendations do not eliminate the need to examine symptomatic patients."
+    }
+  },
+  {
+    "id": 10,
+    "stem": "A clinician palpates the breast using the pads of the middle three fingers in a rotary motion, compressing tissue against the chest wall. Which area should be included",
+    "topic": "Breast palpation technique",
+    "options": {
+      "A": "Only the inframammary ridge",
+      "B": "Only the nipple and areola",
+      "C": "Only the upper outer quadrant",
+      "D": "Clavicle to inframammary fold and midsternal line to posterior axillary line including axilla and tail of breast"
+    },
+    "correct": "D",
+    "explanation": "Breast palpation should cover clavicle to inframammary fold and midsternal line to posterior axillary line, including the axilla and tail of breast.",
+    "optionExplanations": {
+      "A": "The inframammary ridge is a normal structure that can mimic a tumor, but exam must be complete.",
+      "B": "The nipple/areola alone is incomplete.",
+      "C": "Upper outer quadrant is common for pathology but not the only area to examine.",
+      "D": "Correct. This covers the breast, axilla, and tail of breast."
+    }
+  },
+  {
+    "id": 11,
+    "stem": "A patient is anxious because she feels a ridge at the lower breast near the chest wall. The clinician notes this is symmetric and located at the inframammary fold. What is the best interpretation",
+    "topic": "Normal breast finding",
+    "options": {
+      "A": "This confirms axillary metastasis",
+      "B": "Inframammary ridge is a normal variant that can mimic a tumor",
+      "C": "This is always invasive carcinoma",
+      "D": "This is always an abscess"
+    },
+    "correct": "B",
+    "explanation": "The inframammary ridge is a normal finding that can mimic a tumor.",
+    "optionExplanations": {
+      "A": "Axillary metastasis is evaluated in lymph nodes, not by an inframammary ridge.",
+      "B": "Correct. Recognizing this normal variant prevents overcalling a mass.",
+      "C": "It is not automatically invasive carcinoma.",
+      "D": "Abscess would typically have inflammatory signs and pain."
+    }
+  },
+  {
+    "id": 12,
+    "stem": "A clinician prepares for a breast exam. Which draping principle is correct",
+    "topic": "Draping principles",
+    "options": {
+      "A": "Only expose the area being examined and replace the drape immediately after",
+      "B": "Expose both breasts and lower body for the whole exam",
+      "C": "Reach under the gown instead of adjusting the drape",
+      "D": "Examine through clothing to reduce anxiety"
+    },
+    "correct": "A",
+    "explanation": "Draping principles include never examining through clothing, exposing only the area being examined, replacing the drape immediately after, not reaching under the gown, and retieing the gown if untied.",
+    "optionExplanations": {
+      "A": "Correct. This protects patient comfort and professionalism.",
+      "B": "Only the area being examined should be exposed.",
+      "C": "Do not reach under the gown; adjust draping appropriately.",
+      "D": "The notes explicitly state never to examine through clothing."
+    }
+  },
+  {
+    "id": 13,
+    "stem": "A clinician inserts a speculum during pelvic exam. Which insertion technique is most consistent with the notes",
+    "topic": "Speculum exam technique",
+    "options": {
+      "A": "Insert vertically and keep vertical at the cervix",
+      "B": "Insert without lubrication",
+      "C": "Use oil-based lubricant only",
+      "D": "Start at a 45 degree angle, then rotate to horizontal at the cervix"
+    },
+    "correct": "D",
+    "explanation": "Speculum insertion should start at a 45 degree angle and rotate to horizontal at the cervix. Warm water or water-soluble lubricant may be used.",
+    "optionExplanations": {
+      "A": "The speculum is rotated to horizontal at the cervix.",
+      "B": "Lubrication with warm water or water-soluble lubricant may be used for comfort.",
+      "C": "The notes specify warm water or water-soluble lubricant.",
+      "D": "Correct. This is the technique emphasized in the notes."
+    }
+  },
+  {
+    "id": 14,
+    "stem": "During pelvic exam setup, which patient position is traditional and commonly used",
+    "topic": "Pelvic exam position",
+    "options": {
+      "A": "Prone with hips flexed",
+      "B": "Dorsal lithotomy with head elevated 30 to 45 degrees for comfort and communication",
+      "C": "Standing only",
+      "D": "Trendelenburg only without communication"
+    },
+    "correct": "B",
+    "explanation": "The traditional pelvic exam position is dorsal lithotomy. Elevating the head 30 to 45 degrees improves comfort and communication.",
+    "optionExplanations": {
+      "A": "Prone positioning is not standard for routine pelvic exam.",
+      "B": "Correct. This is the standard position described.",
+      "C": "Standing only is not the standard exam setup.",
+      "D": "Communication and comfort are emphasized."
+    }
+  },
+  {
+    "id": 15,
+    "stem": "A pelvic exam is being performed. Which structures are inspected and palpated during the external genital exam",
+    "topic": "External genital exam",
+    "options": {
+      "A": "Only the uterus and adnexa",
+      "B": "Only the rectum",
+      "C": "Hair distribution, labia, clitoris, urethral meatus, vestibule, introitus, perineal body, Bartholin and paraurethral glands",
+      "D": "Only the cervix"
+    },
+    "correct": "C",
+    "explanation": "External genital exam includes hair distribution, labia majora/minora, clitoris, urethral meatus, vestibule, introitus, perineal body, and evaluation of Bartholin and paraurethral glands.",
+    "optionExplanations": {
+      "A": "The uterus and adnexa are assessed during bimanual exam.",
+      "B": "Rectal exam is optional depending on indication and is not the entire external genital exam.",
+      "C": "Correct. These are the external genital exam structures listed.",
+      "D": "The cervix is evaluated during speculum exam."
+    }
+  },
+  {
+    "id": 16,
+    "stem": "A clinician performs bimanual exam. What is primarily assessed",
+    "topic": "Bimanual exam",
+    "options": {
+      "A": "Uterus and adnexa",
+      "B": "External hair distribution only",
+      "C": "Breast lymphatics only",
+      "D": "Cervical cytology only"
+    },
+    "correct": "A",
+    "explanation": "Bimanual exam uses two vaginal fingers and abdominal pressure to lift and palpate internal organs, assessing uterus and adnexa.",
+    "optionExplanations": {
+      "A": "Correct. Bimanual exam assesses uterus and adnexa.",
+      "B": "Hair distribution is part of external genital inspection.",
+      "C": "Breast lymphatics are assessed during breast/axillary exam.",
+      "D": "Cervical cytology is collected during speculum exam."
+    }
+  },
+  {
+    "id": 17,
+    "stem": "During bimanual exam, which uterine characteristics should be assessed",
+    "topic": "Uterus assessment",
+    "options": {
+      "A": "Only color of the cervix",
+      "B": "Size, shape, symmetry, mobility, position, and consistency",
+      "C": "Only axillary lymph nodes",
+      "D": "Only nipple discharge"
+    },
+    "correct": "B",
+    "explanation": "Uterine assessment during bimanual exam includes size, shape, symmetry, mobility, position, and consistency.",
+    "optionExplanations": {
+      "A": "Cervical color is evaluated during speculum exam.",
+      "B": "Correct. These are the uterine characteristics listed in the notes.",
+      "C": "Axillary lymph nodes are assessed during breast exam.",
+      "D": "Nipple discharge is part of breast exam."
+    }
+  },
+  {
+    "id": 18,
+    "stem": "A clinician palpates the adnexa during bimanual exam. Which statement about normal ovaries is most accurate",
+    "topic": "Adnexal exam",
+    "options": {
+      "A": "Normal ovaries are always fixed and hard",
+      "B": "Any adnexal tenderness proves ovarian cancer",
+      "C": "Normal ovaries are usually slightly tender and mobile",
+      "D": "Ovaries are always palpable regardless of body habitus"
+    },
+    "correct": "C",
+    "explanation": "Normal ovaries are usually slightly tender and mobile. Palpability depends on examiner skill, body habitus, and time spent.",
+    "optionExplanations": {
+      "A": "Fixed and hard adnexa would be concerning, not normal.",
+      "B": "Tenderness alone does not prove cancer.",
+      "C": "Correct. Slight tenderness and mobility can be normal.",
+      "D": "Ovaries are not always palpable."
+    }
+  },
+  {
+    "id": 19,
+    "stem": "A patient with vaginal discharge, abnormal bleeding, pelvic pain, urinary symptoms, breast concern, sexual dysfunction, or infertility presents to clinic. Which exam principle is emphasized",
+    "topic": "Pelvic exam indications",
+    "options": {
+      "A": "Pelvic exam is never indicated before age 50",
+      "B": "Only breast exam is needed for all complaints",
+      "C": "Exam should be skipped if the patient is anxious",
+      "D": "Symptoms present means exam is always indicated"
+    },
+    "correct": "D",
+    "explanation": "The notes emphasize that when symptoms are present, a pelvic exam is always performed. History should be obtained before disrobing.",
+    "optionExplanations": {
+      "A": "Age 50 is not a cutoff for pelvic exam indications.",
+      "B": "Breast exam does not evaluate pelvic complaints.",
+      "C": "Anxiety should be addressed with communication and comfort measures, not automatic omission if exam is indicated.",
+      "D": "Correct. Symptoms warrant exam."
+    }
+  },
+  {
+    "id": 20,
+    "stem": "A clinician is performing a sensitive exam and wants to follow professionalism guidance. Which statement is best",
+    "topic": "Chaperone and patient comfort",
+    "options": {
+      "A": "A chaperone is recommended for sensitive exams and anatomical terms should be used",
+      "B": "Slang should be used to sound casual",
+      "C": "The clinician should lean on the patient to stabilize their hand",
+      "D": "Abnormal findings should be described as normal to reduce anxiety"
+    },
+    "correct": "A",
+    "explanation": "A chaperone is recommended for sensitive exams. Patient comfort principles include not leaning on the patient, using anatomical terms, avoiding slang, and saying normal or no abnormalities when appropriate.",
+    "optionExplanations": {
+      "A": "Correct. This matches the professionalism and comfort guidance.",
+      "B": "The notes specifically recommend avoiding slang.",
+      "C": "Do not lean on the patient.",
+      "D": "Findings should be communicated accurately; use normal/no abnormalities only when true."
+    }
+  }
+]
+;
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>

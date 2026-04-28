@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vagina and Vulva Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+  {
+    "id": 1,
+    "stem": "A woman has a painless cyst along the lateral vaginal wall. The lesion is derived from a mesonephric duct remnant. Which diagnosis is most likely",
+    "topic": "Gartner duct cyst",
+    "options": {
+      "A": "Bartholin cyst",
+      "B": "Skene duct cyst",
+      "C": "Gartner duct cyst",
+      "D": "Nabothian cyst"
+    },
+    "correct": "C",
+    "explanation": "Gartner duct cysts arise from mesonephric Wolffian duct remnants and are classically located along the lateral vaginal wall.",
+    "optionExplanations": {
+      "A": "Bartholin cyst occurs at the posterior-lateral introitus from obstruction of Bartholin duct.",
+      "B": "Skene duct cysts occur near the urethral meatus.",
+      "C": "Correct. Lateral vaginal wall cyst from Wolffian/mesonephric remnant = Gartner duct cyst.",
+      "D": "Nabothian cysts are mucus-filled cervical cysts."
+    }
+  },
+  {
+    "id": 2,
+    "stem": "A woman has a painful fluctuant mass at the posterior-lateral vaginal introitus. It developed after obstruction of a mucus-secreting gland duct. What is the most likely diagnosis",
+    "topic": "Bartholin cyst",
+    "options": {
+      "A": "Gartner duct cyst",
+      "B": "Bartholin cyst",
+      "C": "Condyloma lata",
+      "D": "Lichen sclerosus"
+    },
+    "correct": "B",
+    "explanation": "Bartholin cysts occur due to obstruction of the Bartholin duct near the posterior-lateral introitus and may become painful if infected or enlarged.",
+    "optionExplanations": {
+      "A": "Gartner duct cyst is on the lateral vaginal wall from mesonephric remnant.",
+      "B": "Correct. Posterior-lateral introitus cyst from duct obstruction = Bartholin cyst.",
+      "C": "Condyloma lata is a flat moist lesion of secondary syphilis.",
+      "D": "Lichen sclerosus causes white atrophic vulvar plaques, not a fluctuant duct cyst."
+    }
+  },
+  {
+    "id": 3,
+    "stem": "A postmenopausal woman has vulvar pruritus and white parchment-like plaques with thinning of the epidermis. Which complication is increased",
+    "topic": "Lichen sclerosus",
+    "options": {
+      "A": "Endometrial stromal sarcoma",
+      "B": "Cervical adenocarcinoma in situ only",
+      "C": "Vulvar squamous cell carcinoma",
+      "D": "Ovarian dysgerminoma"
+    },
+    "correct": "C",
+    "explanation": "Lichen sclerosus is an inflammatory vulvar dermatosis causing white atrophic plaques and is associated with increased risk of vulvar squamous cell carcinoma.",
+    "optionExplanations": {
+      "A": "Endometrial stromal sarcoma is a uterine tumor.",
+      "B": "Cervical adenocarcinoma in situ is not the main complication of vulvar lichen sclerosus.",
+      "C": "Correct. Lichen sclerosus increases vulvar SCC risk.",
+      "D": "Dysgerminoma is an ovarian germ cell tumor."
+    }
+  },
+  {
+    "id": 4,
+    "stem": "A vulvar biopsy from a pruritic white plaque shows hyperkeratosis, thinning epidermis, loss of rete ridges, and dermal fibrosis. What is the diagnosis",
+    "topic": "Lichen sclerosus histology",
+    "options": {
+      "A": "Extramammary Paget disease",
+      "B": "Lichen sclerosus",
+      "C": "Condyloma acuminatum",
+      "D": "Bartholin abscess"
+    },
+    "correct": "B",
+    "explanation": "Lichen sclerosus shows epithelial thinning, loss of rete ridges, hyperkeratosis, and dermal fibrosis/hyalinization.",
+    "optionExplanations": {
+      "A": "Extramammary Paget disease shows large pale malignant cells in epidermis.",
+      "B": "Correct. White plaques with epidermal atrophy and dermal fibrosis fit lichen sclerosus.",
+      "C": "Condyloma acuminatum shows papillomatosis and koilocytosis.",
+      "D": "Bartholin abscess is a painful infected gland/duct lesion."
+    }
+  },
+  {
+    "id": 5,
+    "stem": "A patient has vulvar plaques that are white, thickened, and itchy. Biopsy shows epithelial hyperplasia without atypia. Which condition is most likely",
+    "topic": "Lichen simplex chronicus",
+    "options": {
+      "A": "Lichen simplex chronicus",
+      "B": "Vulvar melanoma",
+      "C": "Lichen sclerosus",
+      "D": "Sarcoma botryoides"
+    },
+    "correct": "A",
+    "explanation": "Lichen simplex chronicus is due to chronic irritation/scratching and causes epithelial hyperplasia, hyperkeratosis, and pruritic thickened plaques without increased cancer risk by itself.",
+    "optionExplanations": {
+      "A": "Correct. Chronic itching/scratching with epithelial hyperplasia = lichen simplex chronicus.",
+      "B": "Vulvar melanoma is a pigmented malignant lesion.",
+      "C": "Lichen sclerosus causes thin atrophic parchment-like plaques and increased SCC risk.",
+      "D": "Sarcoma botryoides is a vaginal embryonal rhabdomyosarcoma in young girls."
+    }
+  },
+  {
+    "id": 6,
+    "stem": "A young sexually active woman has multiple small red-brown warty vulvar papules. Biopsy shows full-thickness atypia but the lesions often regress and have low malignant potential. Which diagnosis is most likely",
+    "topic": "Bowenoid papulosis",
+    "options": {
+      "A": "Erythroplasia of Queyrat",
+      "B": "Bartholin cyst",
+      "C": "Lichen sclerosus",
+      "D": "Bowenoid papulosis"
+    },
+    "correct": "D",
+    "explanation": "Bowenoid papulosis presents in younger sexually active patients with multiple red-brown or warty papules, is HPV-associated, and has low malignant potential despite carcinoma-in-situ-like histology.",
+    "optionExplanations": {
+      "A": "Erythroplasia of Queyrat is a velvety red SCC in situ lesion of mucosal surfaces.",
+      "B": "Bartholin cyst is a cystic duct obstruction at the introitus.",
+      "C": "Lichen sclerosus causes white atrophic plaques.",
+      "D": "Correct. Multiple red-brown/warty papules in a young patient fit bowenoid papulosis."
+    }
+  },
+  {
+    "id": 7,
+    "stem": "A vulvar lesion is caused by low-risk HPV and appears as exophytic papillomatous warts. Histology shows koilocytes. Which HPV types are most likely",
+    "topic": "Condyloma acuminatum",
+    "options": {
+      "A": "HHV-8",
+      "B": "HPV 6 and 11",
+      "C": "HSV 1 and 2",
+      "D": "HPV 16 and 18"
+    },
+    "correct": "B",
+    "explanation": "Condyloma acuminatum is caused by low-risk HPV types 6 and 11 and shows papillomatous architecture with koilocytosis.",
+    "optionExplanations": {
+      "A": "HHV-8 causes Kaposi sarcoma.",
+      "B": "Correct. HPV 6 and 11 cause genital warts.",
+      "C": "HSV causes painful vesicles and ulcers.",
+      "D": "HPV 16 and 18 are high-risk oncogenic types."
+    }
+  },
+  {
+    "id": 8,
+    "stem": "A vulvar biopsy shows high-grade squamous intraepithelial lesion associated with high-risk HPV infection. Which molecular mechanism drives progression",
+    "topic": "HPV-related vulvar neoplasia",
+    "options": {
+      "A": "PTEN loss increases estrogen sensitivity",
+      "B": "CYP17 inhibition increases mineralocorticoids",
+      "C": "gp120 binds CD4",
+      "D": "E6 inhibits p53 and E7 inhibits Rb"
+    },
+    "correct": "D",
+    "explanation": "High-risk HPV oncogenesis is driven by E6-mediated p53 inhibition and E7-mediated Rb inhibition, promoting uncontrolled proliferation.",
+    "optionExplanations": {
+      "A": "PTEN loss is linked to endometrial hyperplasia/carcinoma.",
+      "B": "CYP17 inhibition is abiraterone mechanism.",
+      "C": "gp120 binding to CD4 is HIV entry.",
+      "D": "Correct. E6 and E7 are the core high-risk HPV oncogenic proteins."
+    }
+  },
+  {
+    "id": 9,
+    "stem": "An older woman with long-standing lichen sclerosus develops a vulvar mass. Biopsy shows keratinizing squamous cell carcinoma. Which pathway best explains this cancer",
+    "topic": "HPV-independent vulvar SCC",
+    "options": {
+      "A": "HPV-independent pathway associated with lichen sclerosus",
+      "B": "Low-risk HPV 6/11 condyloma pathway",
+      "C": "Estrogen-only HRT pathway",
+      "D": "Gartner duct remnant pathway"
+    },
+    "correct": "A",
+    "explanation": "Vulvar SCC can arise through an HPV-independent pathway in older women, often associated with chronic inflammatory dermatoses such as lichen sclerosus.",
+    "optionExplanations": {
+      "A": "Correct. Older patient plus lichen sclerosus suggests HPV-independent vulvar SCC.",
+      "B": "HPV 6/11 causes benign condyloma, not typical keratinizing SCC pathway.",
+      "C": "Estrogen-only HRT increases endometrial cancer risk, not vulvar SCC specifically.",
+      "D": "Gartner duct remnants cause vaginal wall cysts."
+    }
+  },
+  {
+    "id": 10,
+    "stem": "A woman has a chronic pruritic eczematous red vulvar plaque. Biopsy shows large malignant cells with pale cytoplasm scattered within the epidermis. What is the diagnosis",
+    "topic": "Extramammary Paget disease",
+    "options": {
+      "A": "Bartholin cyst",
+      "B": "Lichen simplex chronicus",
+      "C": "Condyloma acuminatum",
+      "D": "Extramammary Paget disease"
+    },
+    "correct": "D",
+    "explanation": "Extramammary Paget disease presents as a chronic pruritic eczematous vulvar lesion and shows malignant glandular Paget cells with pale cytoplasm in the epidermis.",
+    "optionExplanations": {
+      "A": "Bartholin cyst is a duct obstruction near the introitus.",
+      "B": "Lichen simplex chronicus shows epithelial hyperplasia from scratching.",
+      "C": "Condyloma acuminatum shows HPV-related papillary warts and koilocytes.",
+      "D": "Correct. Eczematous vulvar plaque with pale malignant epidermal cells = extramammary Paget disease."
+    }
+  },
+  {
+    "id": 11,
+    "stem": "A woman with extramammary Paget disease is evaluated for an underlying malignancy. Which statement is most appropriate",
+    "topic": "Extramammary Paget association",
+    "options": {
+      "A": "It may be associated with underlying adnexal or regional carcinoma",
+      "B": "It is always benign and never needs evaluation",
+      "C": "It is caused by HSV reactivation",
+      "D": "It is always caused by ovarian torsion"
+    },
+    "correct": "A",
+    "explanation": "Extramammary Paget disease may be primary intraepidermal disease or associated with underlying adnexal/regional carcinoma, so evaluation for associated malignancy is important.",
+    "optionExplanations": {
+      "A": "Correct. Paget disease can be associated with underlying carcinoma.",
+      "B": "Paget disease is malignant and needs evaluation.",
+      "C": "HSV causes painful vesicles and ulcers, not Paget cells.",
+      "D": "Ovarian torsion is unrelated."
+    }
+  },
+  {
+    "id": 12,
+    "stem": "A child presents with vaginal bleeding and a grape-like mass protruding from the vagina. Histology shows malignant rhabdomyoblasts. Which tumor is most likely",
+    "topic": "Sarcoma botryoides",
+    "options": {
+      "A": "Clear cell adenocarcinoma",
+      "B": "Sarcoma botryoides",
+      "C": "Condyloma acuminatum",
+      "D": "Bartholin abscess"
+    },
+    "correct": "B",
+    "explanation": "Sarcoma botryoides is an embryonal rhabdomyosarcoma of the vagina in young girls that presents as a grape-like mass protruding from the vagina.",
+    "optionExplanations": {
+      "A": "Clear cell adenocarcinoma is associated with in utero DES exposure.",
+      "B": "Correct. Grape-like vaginal mass in a child = sarcoma botryoides.",
+      "C": "Condyloma is HPV-related wart disease.",
+      "D": "Bartholin abscess is an infected gland duct lesion near the introitus."
+    }
+  },
+  {
+    "id": 13,
+    "stem": "A woman whose mother took diethylstilbestrol during pregnancy develops a vaginal malignancy. Which tumor is classically associated with in utero DES exposure",
+    "topic": "Clear cell adenocarcinoma",
+    "options": {
+      "A": "Vulvar melanoma",
+      "B": "Gartner duct cyst",
+      "C": "Sarcoma botryoides",
+      "D": "Clear cell adenocarcinoma of the vagina"
+    },
+    "correct": "D",
+    "explanation": "In utero DES exposure is classically associated with clear cell adenocarcinoma of the vagina and cervix.",
+    "optionExplanations": {
+      "A": "Vulvar melanoma is a pigmented malignant tumor, not DES-related classic association.",
+      "B": "Gartner duct cyst is a benign mesonephric remnant cyst.",
+      "C": "Sarcoma botryoides is embryonal rhabdomyosarcoma in children.",
+      "D": "Correct. DES exposure is associated with clear cell adenocarcinoma."
+    }
+  },
+  {
+    "id": 14,
+    "stem": "A patient has a pigmented vulvar lesion with irregular borders and color variation. Biopsy confirms malignant melanocytes. Which diagnosis is most likely",
+    "topic": "Vulvar melanoma",
+    "options": {
+      "A": "Vulvar melanoma",
+      "B": "Extramammary Paget disease",
+      "C": "Lichen sclerosus",
+      "D": "Condyloma acuminatum"
+    },
+    "correct": "A",
+    "explanation": "Vulvar melanoma presents as a pigmented vulvar lesion and is diagnosed by biopsy showing malignant melanocytes.",
+    "optionExplanations": {
+      "A": "Correct. Irregular pigmented lesion with malignant melanocytes = vulvar melanoma.",
+      "B": "Extramammary Paget disease is an eczematous plaque with pale malignant cells.",
+      "C": "Lichen sclerosus causes white atrophic plaques.",
+      "D": "Condyloma acuminatum causes warty lesions with koilocytes."
+    }
+  },
+  {
+    "id": 15,
+    "stem": "A patient has vulvar pain with recurrent fissures and erosions from scratching. Biopsy shows squamous epithelial thickening without atypia. Which condition is most likely",
+    "topic": "Chronic vulvar pruritus",
+    "options": {
+      "A": "High-grade VIN",
+      "B": "Sarcoma botryoides",
+      "C": "Lichen simplex chronicus",
+      "D": "Dysgerminoma"
+    },
+    "correct": "C",
+    "explanation": "Lichen simplex chronicus is caused by chronic irritation and scratching, causing epithelial thickening/hyperplasia and pruritic plaques without atypia.",
+    "optionExplanations": {
+      "A": "High-grade VIN shows dysplasia/atypia.",
+      "B": "Sarcoma botryoides is a grape-like vaginal mass in children.",
+      "C": "Correct. Chronic itch-scratch cycle causing epithelial hyperplasia fits lichen simplex chronicus.",
+      "D": "Dysgerminoma is an ovarian germ cell tumor."
+    }
+  },
+  {
+    "id": 16,
+    "stem": "A woman has recurrent painful grouped vesicles on the vulva that ulcerate. Which finding would support HSV infection",
+    "topic": "Vulvar HSV",
+    "options": {
+      "A": "Call-Exner bodies",
+      "B": "Multinucleated giant cells with nuclear molding",
+      "C": "Donovan bodies",
+      "D": "Schiller-Duval bodies"
+    },
+    "correct": "B",
+    "explanation": "HSV causes painful grouped vesicles/ulcers and cytology may show multinucleated giant cells, nuclear molding, and intranuclear inclusions.",
+    "optionExplanations": {
+      "A": "Call-Exner bodies indicate granulosa tumor.",
+      "B": "Correct. Multinucleated giant cells with nuclear molding support HSV.",
+      "C": "Donovan bodies indicate granuloma inguinale.",
+      "D": "Schiller-Duval bodies indicate yolk sac tumor."
+    }
+  },
+  {
+    "id": 17,
+    "stem": "A vulvar lesion consists of multiple moist, broad-based plaques in a patient with systemic rash involving palms and soles. Which lesion is most likely",
+    "topic": "Condyloma lata",
+    "options": {
+      "A": "Vulvar melanoma",
+      "B": "Condyloma lata",
+      "C": "Bartholin cyst",
+      "D": "Condyloma acuminatum"
+    },
+    "correct": "B",
+    "explanation": "Condyloma lata are broad-based moist lesions of secondary syphilis and may occur with systemic findings such as rash involving palms and soles.",
+    "optionExplanations": {
+      "A": "Vulvar melanoma is a pigmented malignant lesion.",
+      "B": "Correct. Moist broad plaques with secondary syphilis findings = condyloma lata.",
+      "C": "Bartholin cyst is a duct obstruction at the posterior-lateral introitus.",
+      "D": "Condyloma acuminatum is HPV-related warty papillary lesion."
+    }
+  },
+  {
+    "id": 18,
+    "stem": "A vulvar mass in an older woman is biopsied and shows invasive squamous cell carcinoma. Which presenting symptom is common for vulvar carcinoma",
+    "topic": "Vulvar carcinoma presentation",
+    "options": {
+      "A": "Amenorrhea only",
+      "B": "Pruritus",
+      "C": "Painless postmenopausal uterine bleeding only",
+      "D": "Hematuria only"
+    },
+    "correct": "B",
+    "explanation": "Vulvar carcinoma commonly presents with pruritus, pain, bleeding, dysuria, or a visible vulvar plaque, ulcer, or mass.",
+    "optionExplanations": {
+      "A": "Amenorrhea alone is not a typical vulvar carcinoma presentation.",
+      "B": "Correct. Pruritus is a common presenting symptom.",
+      "C": "Postmenopausal uterine bleeding suggests endometrial cancer more than vulvar carcinoma.",
+      "D": "Hematuria alone points to urinary tract pathology."
+    }
+  },
+  {
+    "id": 19,
+    "stem": "A vaginal biopsy shows squamous intraepithelial lesion associated with high-risk HPV. Which anatomic site is most likely affected by primary vaginal squamous neoplasia",
+    "topic": "Vaginal squamous neoplasia",
+    "options": {
+      "A": "Ovary",
+      "B": "Endometrium",
+      "C": "Fallopian tube fimbria only",
+      "D": "Upper posterior vagina"
+    },
+    "correct": "D",
+    "explanation": "Primary vaginal squamous carcinoma/neoplasia is associated with HPV and often involves the upper posterior vagina.",
+    "optionExplanations": {
+      "A": "Ovarian tumors have different epithelial/germ cell/sex cord classifications.",
+      "B": "Endometrium is involved in endometrial hyperplasia/carcinoma.",
+      "C": "Fallopian tube fimbria is implicated in some high-grade serous ovarian carcinomas, not primary vaginal squamous neoplasia.",
+      "D": "Correct. HPV-related vaginal squamous neoplasia often affects the upper posterior vagina."
+    }
+  },
+  {
+    "id": 20,
+    "stem": "A vaginal malignancy in an adult is discovered. Before diagnosing a primary vaginal cancer, what must be considered first",
+    "topic": "Vaginal cancer workup",
+    "options": {
+      "A": "Metastasis or extension from cervix, vulva, endometrium, or other sites",
+      "B": "Only benign Gartner duct cyst",
+      "C": "Only ovarian torsion",
+      "D": "Normal physiologic finding"
+    },
+    "correct": "A",
+    "explanation": "Primary vaginal carcinoma is rare, so metastatic disease or direct extension from nearby gynecologic sites should be considered before calling it primary vaginal cancer.",
+    "optionExplanations": {
+      "A": "Correct. Most vaginal malignancy concerns require exclusion of extension/metastasis from adjacent sites.",
+      "B": "Gartner duct cyst is benign and cystic, not malignant.",
+      "C": "Ovarian torsion is an acute pain emergency, not the main differential for vaginal malignancy.",
+      "D": "A confirmed malignancy is not physiologic."
+    }
+  }
+];
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>

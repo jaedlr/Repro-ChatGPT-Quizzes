@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HIV AIDS Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = 
+[
+  {
+    "id": 1,
+    "stem": "A newly diagnosed HIV patient asks why lifelong therapy is required even when viral load becomes undetectable. Which feature best explains why HIV cannot be eradicated",
+    "topic": "Latent reservoir",
+    "options": {
+      "A": "HIV integrates into host DNA and persists in memory T-cell reservoirs",
+      "B": "HIV remains only extracellular in plasma",
+      "C": "HIV lacks genetic material after treatment",
+      "D": "HIV forms bacterial endospores"
+    },
+    "correct": "A",
+    "explanation": "HIV is a retrovirus that reverse transcribes RNA into DNA and integrates into the host genome. Latent reservoirs, especially memory T cells, allow lifelong persistence even with undetectable viral load.",
+    "optionExplanations": {
+      "A": "Correct. Integration into host DNA and latent memory T-cell reservoirs prevent eradication.",
+      "B": "HIV infects cells and integrates into host DNA; it is not only extracellular.",
+      "C": "HIV genetic material persists in reservoirs even during suppressive therapy.",
+      "D": "HIV is a virus and does not form bacterial endospores."
+    }
+  },
+  {
+    "id": 2,
+    "stem": "A clinician starts antiretroviral therapy immediately after diagnosis in a patient with CD4 count of 720. Why is this appropriate",
+    "topic": "When to start ART",
+    "options": {
+      "A": "ART is delayed unless symptoms develop",
+      "B": "ART is only for pregnancy",
+      "C": "ART should start immediately regardless of CD4 count",
+      "D": "ART should start only after CD4 falls below 350"
+    },
+    "correct": "C",
+    "explanation": "The lecture emphasizes starting ART immediately upon diagnosis regardless of CD4 count because early therapy decreases morbidity, mortality, transmission, and opportunistic infections.",
+    "optionExplanations": {
+      "A": "Therapy is not delayed until symptoms occur.",
+      "B": "Pregnancy is a special urgency, but ART is not limited to pregnancy.",
+      "C": "Correct. ART is started immediately after HIV diagnosis.",
+      "D": "Waiting for CD4 <350 increases complications."
+    }
+  },
+  {
+    "id": 3,
+    "stem": "A first-line HIV regimen is being selected for a patient with no resistance concerns. Which regimen structure best matches the lecture",
+    "topic": "First-line ART structure",
+    "options": {
+      "A": "Single protease inhibitor alone",
+      "B": "Second-generation INSTI plus 2 NRTIs",
+      "C": "Two NNRTIs without NRTIs",
+      "D": "Fusion inhibitor plus booster only"
+    },
+    "correct": "B",
+    "explanation": "First-line ART in the lecture is a second-generation integrase strand transfer inhibitor plus 2 nucleoside/nucleotide reverse transcriptase inhibitors.",
+    "optionExplanations": {
+      "A": "Protease inhibitor monotherapy is not first-line combination ART.",
+      "B": "Correct. INSTI + 2 NRTIs is the preferred first-line structure.",
+      "C": "Two NNRTIs without NRTIs is not recommended.",
+      "D": "Fusion inhibitor plus booster is not a standard first-line structure."
+    }
+  },
+  {
+    "id": 4,
+    "stem": "A patient has history of long-acting cabotegravir PrEP and concern for INSTI resistance. Which backup regimen structure is emphasized in the lecture",
+    "topic": "Backup ART regimen",
+    "options": {
+      "A": "NRTI monotherapy",
+      "B": "CCR5 antagonist alone",
+      "C": "Two boosters without antivirals",
+      "D": "Boosted protease inhibitor plus 2 NRTIs"
+    },
+    "correct": "D",
+    "explanation": "When INSTI resistance or CAB-LA PrEP history is a concern, the backup option is a boosted protease inhibitor plus 2 NRTIs.",
+    "optionExplanations": {
+      "A": "NRTI monotherapy promotes resistance and is not adequate ART.",
+      "B": "CCR5 antagonist monotherapy is not adequate first-line treatment.",
+      "C": "Boosters have no antiviral activity by themselves.",
+      "D": "Correct. Boosted PI + 2 NRTIs is the backup regimen structure."
+    }
+  },
+  {
+    "id": 5,
+    "stem": "A patient is prescribed emtricitabine, lamivudine, and tenofovir as part of ART. Which mechanism is shared by this drug class",
+    "topic": "NRTI mechanism",
+    "options": {
+      "A": "Blockage of viral DNA integration into host genome",
+      "B": "Blockade of CCR5 before gp120 binding",
+      "C": "Competitive inhibition of reverse transcriptase with DNA chain termination",
+      "D": "Prevention of protease-mediated virion maturation"
+    },
+    "correct": "C",
+    "explanation": "NRTIs are synthetic nucleoside/nucleotide analogs that competitively inhibit reverse transcriptase and become incorporated into viral DNA, causing chain termination.",
+    "optionExplanations": {
+      "A": "INSTIs block integration.",
+      "B": "CCR5 antagonists block CCR5-mediated entry.",
+      "C": "Correct. NRTIs inhibit reverse transcription and terminate DNA chains.",
+      "D": "Protease inhibitors prevent maturation."
+    }
+  },
+  {
+    "id": 6,
+    "stem": "A patient on older NRTI-based therapy develops lactic acidosis, hepatic steatosis, peripheral neuropathy, and pancreatitis. Which toxicity pattern does this represent",
+    "topic": "Older NRTI toxicities",
+    "options": {
+      "A": "Tumor flare",
+      "B": "Mitochondrial toxicity",
+      "C": "Type I hypersensitivity only",
+      "D": "Immune complex nephritis"
+    },
+    "correct": "B",
+    "explanation": "Older NRTIs are associated with mitochondrial toxicity, which can cause lactic acidosis, hepatic steatosis, peripheral neuropathy, and pancreatitis.",
+    "optionExplanations": {
+      "A": "Tumor flare is associated with GnRH agonists, not NRTIs.",
+      "B": "Correct. This is the classic mitochondrial toxicity pattern.",
+      "C": "This presentation is not a pure IgE-mediated allergy.",
+      "D": "Immune complex nephritis does not explain the listed NRTI toxicities."
+    }
+  },
+  {
+    "id": 7,
+    "stem": "A patient with chronic hepatitis B coinfection stops an ART regimen containing FTC, 3TC, or TDF. What complication is specifically emphasized",
+    "topic": "HBV flare with NRTI discontinuation",
+    "options": {
+      "A": "HBV flare",
+      "B": "Aortic root dilation",
+      "C": "Immediate HIV cure",
+      "D": "Loss of HPV immunity"
+    },
+    "correct": "A",
+    "explanation": "The lecture notes emphasize that stopping FTC, 3TC, or TDF can cause hepatitis B flare in coinfected patients.",
+    "optionExplanations": {
+      "A": "Correct. HBV flare is a key pearl when stopping these agents.",
+      "B": "Aortic root dilation is associated with tertiary syphilis, not stopping NRTIs.",
+      "C": "Stopping ART does not cure HIV.",
+      "D": "These drugs are not HPV vaccines."
+    }
+  },
+  {
+    "id": 8,
+    "stem": "A patient with chronic kidney disease and low bone density needs a tenofovir-containing regimen. Which comparison is correct",
+    "topic": "TDF vs TAF",
+    "options": {
+      "A": "TDF is a protease inhibitor and TAF is an integrase inhibitor",
+      "B": "TDF has higher nephrotoxicity and bone mineral density loss than TAF",
+      "C": "TDF and TAF have no toxicity differences",
+      "D": "TAF has higher nephrotoxicity and bone loss than TDF"
+    },
+    "correct": "B",
+    "explanation": "TDF has higher nephrotoxicity and higher bone mineral density loss than TAF. TAF has higher lipid increase and weight gain compared with TDF.",
+    "optionExplanations": {
+      "A": "Both TDF and TAF are nucleotide reverse transcriptase inhibitors.",
+      "B": "Correct. TDF is worse for kidney and bone effects.",
+      "C": "The lecture specifically compares toxicity differences.",
+      "D": "This reverses the lecture comparison."
+    }
+  },
+  {
+    "id": 9,
+    "stem": "A patient is placed on bictegravir as part of initial ART. Which mechanism explains this drug class",
+    "topic": "INSTI mechanism",
+    "options": {
+      "A": "Blocks reverse transcriptase through DNA chain termination",
+      "B": "Blocks protease to prevent capsid uncoating",
+      "C": "Blocks gp41 membrane fusion",
+      "D": "Blocks integrase to prevent viral DNA insertion into host genome"
+    },
+    "correct": "D",
+    "explanation": "Bictegravir and dolutegravir are second-generation INSTIs. They block integrase and prevent HIV DNA insertion into the host genome.",
+    "optionExplanations": {
+      "A": "NRTIs cause chain termination during reverse transcription.",
+      "B": "Protease inhibitors prevent maturation after budding, not uncoating.",
+      "C": "Fusion inhibitors target gp41-mediated fusion.",
+      "D": "Correct. INSTIs block integration."
+    }
+  },
+  {
+    "id": 10,
+    "stem": "A patient taking an integrase inhibitor develops weight gain, insomnia, headache, and rare rhabdomyolysis with elevated CPK. Which class is responsible",
+    "topic": "INSTI adverse effects",
+    "options": {
+      "A": "Protease inhibitors",
+      "B": "NRTIs",
+      "C": "INSTIs",
+      "D": "Boosters"
+    },
+    "correct": "C",
+    "explanation": "INSTIs are the best tolerated first-line backbone but can cause weight gain, insomnia, headache, and rarely elevated CPK/rhabdomyolysis.",
+    "optionExplanations": {
+      "A": "Protease inhibitors are associated with GI upset, hepatotoxicity, rash, lipodystrophy, and metabolic syndrome.",
+      "B": "NRTIs are associated with GI symptoms, LFT elevation, and older mitochondrial toxicities.",
+      "C": "Correct. These adverse effects are listed for INSTIs.",
+      "D": "Boosters inhibit CYP3A4 and have no antiviral activity."
+    }
+  },
+  {
+    "id": 11,
+    "stem": "A patient with HIV takes darunavir with ritonavir. What does the protease inhibitor accomplish in the viral life cycle",
+    "topic": "Protease inhibitor mechanism",
+    "options": {
+      "A": "Produces immature noninfectious virions by preventing protein cleavage",
+      "B": "Prevents gp120 binding to CD4",
+      "C": "Terminates viral DNA chains during reverse transcription",
+      "D": "Degrades latent integrated provirus"
+    },
+    "correct": "A",
+    "explanation": "Protease inhibitors prevent cleavage of long viral protein chains into smaller chains needed for mature virions. HIV may replicate, but the products are immature and noninfectious.",
+    "optionExplanations": {
+      "A": "Correct. Protease inhibitors prevent virion maturation.",
+      "B": "Attachment inhibitors or CCR5 antagonists affect entry, not protease inhibitors.",
+      "C": "NRTIs terminate DNA chains during reverse transcription.",
+      "D": "No current ART degrades all latent integrated provirus."
+    }
+  },
+  {
+    "id": 12,
+    "stem": "A patient on boosted protease inhibitor therapy develops GI upset, hepatotoxicity, rash, decreased bone mineral density, lipodystrophy, and metabolic syndrome. Which drug class best explains this pattern",
+    "topic": "Protease inhibitor adverse effects",
+    "options": {
+      "A": "CCR5 antagonists",
+      "B": "NRTIs only",
+      "C": "Protease inhibitors",
+      "D": "INSTIs"
+    },
+    "correct": "C",
+    "explanation": "Protease inhibitors are associated with GI upset, hepatotoxicity, rash, decreased bone mineral density, increased body fat/lipodystrophy, and metabolic syndrome.",
+    "optionExplanations": {
+      "A": "CCR5 antagonists require tropism testing and are less common agents.",
+      "B": "NRTIs do not classically cause PI-associated lipodystrophy/metabolic syndrome as listed.",
+      "C": "Correct. This is the adverse effect pattern listed for PIs.",
+      "D": "INSTIs more prominently cause weight gain, insomnia, headache, and rare CPK elevation."
+    }
+  },
+  {
+    "id": 13,
+    "stem": "A patient asks why ritonavir or cobicistat is added to some HIV regimens. Which statement is correct",
+    "topic": "Boosters",
+    "options": {
+      "A": "They directly terminate viral DNA chains",
+      "B": "They bind gp120 and block CD4 attachment",
+      "C": "They integrate HIV DNA into host DNA",
+      "D": "They inhibit CYP3A4 to increase other drug levels but have no antiviral activity as boosters"
+    },
+    "correct": "D",
+    "explanation": "Ritonavir and cobicistat are pharmacokinetic enhancers. They inhibit CYP3A4 to prevent metabolism and increase drug levels; the lecture emphasizes boosters are not antivirals.",
+    "optionExplanations": {
+      "A": "NRTIs terminate DNA chains.",
+      "B": "gp120 attachment inhibitors block attachment.",
+      "C": "HIV integrase, not boosters, integrates viral DNA.",
+      "D": "Correct. Boosters increase drug levels by CYP3A4 inhibition."
+    }
+  },
+  {
+    "id": 14,
+    "stem": "A patient is prescribed maraviroc. What must be checked before using this medication",
+    "topic": "CCR5 antagonist",
+    "options": {
+      "A": "RPR titer response",
+      "B": "Tropism test",
+      "C": "Pap smear every week",
+      "D": "Bone marrow biopsy"
+    },
+    "correct": "B",
+    "explanation": "Maraviroc is a CCR5 antagonist and requires a tropism test because it only works if the virus uses CCR5 for entry.",
+    "optionExplanations": {
+      "A": "RPR titers monitor syphilis, not maraviroc eligibility.",
+      "B": "Correct. CCR5 tropism must be confirmed.",
+      "C": "Pap smears are important in HIV-positive patients but not required specifically before maraviroc.",
+      "D": "Bone marrow biopsy is not needed to prescribe maraviroc."
+    }
+  },
+  {
+    "id": 15,
+    "stem": "A patient is prescribed enfuvirtide and develops prominent injection site reactions. Which step of the HIV life cycle does this medication inhibit",
+    "topic": "Fusion inhibitor",
+    "options": {
+      "A": "Fusion of viral membrane with CD4 cell",
+      "B": "Reverse transcription",
+      "C": "Protease-mediated maturation",
+      "D": "Integration"
+    },
+    "correct": "A",
+    "explanation": "Enfuvirtide is a fusion inhibitor that blocks viral membrane fusion with the CD4 cell. Injection site reactions are a key feature.",
+    "optionExplanations": {
+      "A": "Correct. Enfuvirtide inhibits fusion.",
+      "B": "Reverse transcription is targeted by NRTIs and NNRTIs.",
+      "C": "Protease inhibitors block maturation.",
+      "D": "Integration is targeted by INSTIs."
+    }
+  },
+  {
+    "id": 16,
+    "stem": "A treatment-experienced patient receives fostemsavir. Which target best matches this drug",
+    "topic": "gp120 inhibitor",
+    "options": {
+      "A": "Viral neuraminidase",
+      "B": "gp120 attachment",
+      "C": "Viral protease",
+      "D": "Viral integrase"
+    },
+    "correct": "B",
+    "explanation": "Fostemsavir is a gp120 attachment inhibitor. The lecture also notes increased creatinine as a key feature.",
+    "optionExplanations": {
+      "A": "Neuraminidase is an influenza target, not an HIV target.",
+      "B": "Correct. Fostemsavir targets gp120 attachment.",
+      "C": "Protease is targeted by protease inhibitors.",
+      "D": "Integrase is targeted by INSTIs."
+    }
+  },
+  {
+    "id": 17,
+    "stem": "A patient is HIV-negative but at ongoing high risk for sexual exposure. Which medication strategy best defines PrEP",
+    "topic": "PrEP definition",
+    "options": {
+      "A": "HIV-positive patient takes boosters alone",
+      "B": "HIV-positive patient stops ART after viral suppression",
+      "C": "HIV-negative patient takes medication to prevent infection",
+      "D": "HIV-negative patient waits for CD4 count to fall"
+    },
+    "correct": "C",
+    "explanation": "Pre-exposure prophylaxis means an HIV-negative patient takes medication while at risk to prevent HIV infection.",
+    "optionExplanations": {
+      "A": "Boosters alone have no antiviral activity.",
+      "B": "Stopping ART after suppression is not PrEP and risks rebound.",
+      "C": "Correct. PrEP is prevention before exposure in HIV-negative patients.",
+      "D": "HIV-negative patients do not have HIV-related CD4 decline."
+    }
+  },
+  {
+    "id": 18,
+    "stem": "A patient asks about PrEP efficacy. According to the lecture, appropriate PrEP decreases sexual HIV transmission by approximately what amount",
+    "topic": "PrEP efficacy",
+    "options": {
+      "A": "About 10%",
+      "B": "About 50%",
+      "C": "About 74%",
+      "D": "About 99%"
+    },
+    "correct": "D",
+    "explanation": "The lecture states PrEP decreases sexual transmission by about 99 percent and IV drug use transmission by greater than 74 percent.",
+    "optionExplanations": {
+      "A": "Too low for sexual transmission protection.",
+      "B": "Too low for the lecture’s PrEP efficacy statistic.",
+      "C": "Greater than 74 percent applies to IV drug use risk reduction, not sexual transmission.",
+      "D": "Correct. PrEP reduces sexual transmission by about 99 percent."
+    }
+  },
+  {
+    "id": 19,
+    "stem": "A cisgender woman with vaginal exposure risk asks whether TAF/FTC is the preferred PrEP option. Which statement matches the lecture",
+    "topic": "PrEP regimen selection",
+    "options": {
+      "A": "TAF/FTC is the only PrEP option for vaginal exposure",
+      "B": "Cabotegravir must be taken as a daily oral tablet",
+      "C": "PrEP does not require confirming HIV-negative status",
+      "D": "TAF/FTC is not approved for vaginal exposure"
+    },
+    "correct": "D",
+    "explanation": "The lecture notes TDF/FTC is used for sex and IV drug use exposure, while TAF/FTC is not for vaginal exposure. Cabotegravir is given as an IM injection every 2 months.",
+    "optionExplanations": {
+      "A": "This is incorrect; TAF/FTC is specifically not for vaginal exposure.",
+      "B": "Cabotegravir PrEP is long-acting IM every 2 months.",
+      "C": "HIV-negative status must be confirmed before PrEP.",
+      "D": "Correct. TAF/FTC is not approved for vaginal exposure in the lecture."
+    }
+  },
+  {
+    "id": 20,
+    "stem": "A patient taking ART has undetectable viral load. Which counseling point is most consistent with treatment goals in the lecture",
+    "topic": "ART goals and monitoring",
+    "options": {
+      "A": "Continue combination therapy and monitor CD4 count and HIV RNA viral load",
+      "B": "Stop ART because HIV is eradicated",
+      "C": "Switch to booster monotherapy",
+      "D": "Monitor only PSA and DRE"
+    },
+    "correct": "A",
+    "explanation": "ART goals are decreased viral load to undetectable, increased CD4, and prevention of transmission. Monitoring includes CD4 count and HIV RNA viral load. Therapy remains combination therapy because HIV cannot be eradicated.",
+    "optionExplanations": {
+      "A": "Correct. Continue combination ART and monitor CD4 and viral load.",
+      "B": "Undetectable viral load is not eradication because latent reservoirs remain.",
+      "C": "Boosters alone have no antiviral activity.",
+      "D": "PSA and DRE are prostate tools, not ART monitoring."
+    }
+  }
+]
+;
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>

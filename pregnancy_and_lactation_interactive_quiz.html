@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pregnancy and Lactation Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = [{"id": 1, "stem": "A pregnant patient has severe vomiting and cannot keep oral medications down. Which maternal pharmacokinetic issue is most relevant", "topic": "Maternal absorption", "options": {"A": "Gastric acidity increases dramatically, improving all oral drug absorption", "B": "Severe vomiting can make oral absorption unreliable, so parenteral administration may be needed", "C": "Pregnancy always prevents oral drug absorption completely", "D": "Pregnancy eliminates the need to individualize drug therapy"}, "correct": "B", "explanation": "Oral absorption is generally not clinically changed in pregnancy, but severe vomiting can make oral absorption unreliable and may require parenteral administration.", "optionExplanations": {"A": "The notes list decreased gastric acidity, not increased acidity.", "B": "Correct. Severe vomiting is the key exception to generally preserved oral absorption.", "C": "Oral absorption is generally not clinically significantly changed.", "D": "Therapy should always be tailored to patient need and condition."}}, {"id": 2, "stem": "A pregnant patient has decreased albumin concentration from plasma volume expansion. What is the expected effect on highly protein-bound drugs", "topic": "Protein binding", "options": {"A": "Complete prevention of placental transfer", "B": "No possible pharmacologic consequence", "C": "Decreased free drug concentration due to increased binding", "D": "Increased free unbound drug concentration"}, "correct": "D", "explanation": "Pregnancy causes relative hypoalbuminemia from increased plasma volume, decreasing protein binding and increasing free drug concentration. This may increase pharmacologic effect and placental transfer, although increased clearance may balance it.", "optionExplanations": {"A": "Higher free drug can increase, not prevent, placental transfer.", "B": "Free drug concentration can affect activity and transfer.", "C": "Albumin falls, so binding decreases rather than increases.", "D": "Correct. Less albumin means less binding and more free drug."}}, {"id": 3, "stem": "A hydrophilic medication is prescribed during pregnancy. Which distribution change is most likely to alter its apparent volume of distribution", "topic": "Maternal distribution", "options": {"A": "Decreased plasma volume", "B": "Increased total body water and plasma volume", "C": "Complete loss of renal blood flow", "D": "Absent placental blood flow"}, "correct": "B", "explanation": "Pregnancy increases total body water and plasma volume, increasing drug distribution especially for hydrophilic drugs.", "optionExplanations": {"A": "Plasma volume increases in pregnancy.", "B": "Correct. Increased body water/plasma volume increases hydrophilic drug distribution.", "C": "Renal blood flow increases in pregnancy.", "D": "Placental circulation is central to fetal support and drug transfer."}}, {"id": 4, "stem": "A medication is cleared primarily by the kidney. In pregnancy, which change may reduce the drug half-life", "topic": "Renal elimination", "options": {"A": "Decreased GFR by 90 percent", "B": "Increased albumin binding", "C": "Increased renal blood flow and increased GFR", "D": "Complete hepatic shutdown"}, "correct": "C", "explanation": "Pregnancy increases renal blood flow and GFR, which can increase renal clearance and decrease drug half-life.", "optionExplanations": {"A": "GFR increases, not decreases.", "B": "Albumin concentration decreases, reducing binding.", "C": "Correct. Increased GFR/renal blood flow can shorten half-life.", "D": "Hepatic clearance is largely unchanged in the notes."}}, {"id": 5, "stem": "Which placental function is correctly listed in the pregnancy and lactation lecture", "topic": "Placenta functions", "options": {"A": "Permanent prevention of all drug transfer", "B": "Nutrient transfer, gas exchange, waste excretion, endocrine activity, and maternal-fetal communication", "C": "Only fetal urine production", "D": "Only mechanical protection with no endocrine role"}, "correct": "B", "explanation": "The placenta supports nutrient transfer, gas exchange, waste excretion, respiratory support, endocrine activity such as hCG production, and communication between fetus and mother.", "optionExplanations": {"A": "Most drugs cross the placenta.", "B": "Correct. These are the major roles listed.", "C": "Fetal kidney excretion is separate from overall placental functions.", "D": "The placenta acts as an endocrine organ."}}, {"id": 6, "stem": "A fetal drug exposure is prolonged because fetal kidneys excrete drug into amniotic fluid, and the fetus swallows the fluid. What concept does this describe", "topic": "Amniotic fluid reservoir", "options": {"A": "Complete fetal drug elimination", "B": "Absence of placental transfer", "C": "Amniotic fluid as a drug reservoir with fetal recycling", "D": "Maternal first-pass metabolism"}, "correct": "C", "explanation": "Fetal kidney excretion into amniotic fluid followed by fetal swallowing and GI absorption can cause drug recycling and prolonged fetal exposure.", "optionExplanations": {"A": "This is not complete elimination; it can recycle drug.", "B": "Placental transfer still occurs for most drugs.", "C": "Correct. Amniotic fluid can act as a reservoir and prolong exposure.", "D": "This is fetal/amniotic recycling, not maternal first-pass metabolism."}}, {"id": 7, "stem": "Which fetal metabolic feature increases vulnerability to drug effects compared with adults", "topic": "Fetal metabolism", "options": {"A": "Fully mature liver enzymes at adult levels", "B": "Reduced or absent glucuronidation and reduced P450 levels", "C": "Complete inability of any drug to cross placenta", "D": "Higher adult-level GFR"}, "correct": "B", "explanation": "Fetal metabolism is immature, with reduced enzyme activity, reduced/absent glucuronidation, lower P450 levels, and lower GFR than adults.", "optionExplanations": {"A": "Fetal liver enzymes are immature.", "B": "Correct. Immature metabolism/clearance increases vulnerability.", "C": "Most drugs cross the placenta.", "D": "Fetal GFR is lower than in adults."}}, {"id": 8, "stem": "A drug is low molecular weight and lipid soluble. How is it expected to cross the placenta", "topic": "Transplacental transfer", "options": {"A": "It crosses only after delivery", "B": "It requires fetal swallowing first", "C": "It cannot cross because all drugs are blocked", "D": "It crosses rapidly, most commonly by passive diffusion"}, "correct": "D", "explanation": "Most drugs cross the placenta by passive diffusion. Lipid-soluble, low-molecular-weight drugs cross rapidly.", "optionExplanations": {"A": "Placental transfer occurs during pregnancy.", "B": "Fetal swallowing is part of amniotic recycling, not initial placental crossing.", "C": "The placenta does not block all drugs.", "D": "Correct. Low MW and lipid solubility favor placental transfer."}}, {"id": 9, "stem": "A clinician is deciding whether to prescribe a medication during pregnancy. Which prescribing principle best matches the lecture", "topic": "Pregnancy prescribing principles", "options": {"A": "Ignore trimester because timing does not matter", "B": "Use only if necessary or if maternal benefit outweighs fetal risk", "C": "Assume all drugs are safe unless proven harmful", "D": "Always choose the newest drug because safety data are newest"}, "correct": "B", "explanation": "Drug prescribing in pregnancy requires risk-benefit analysis: prescribe only if necessary or maternal benefit exceeds fetal risk, and prefer well-established drugs with known safety.", "optionExplanations": {"A": "Timing matters greatly for teratogenic risk.", "B": "Correct. Risk-benefit analysis is central.", "C": "The lecture says assume all drugs are potentially harmful unless proven safe.", "D": "Well-established safer drugs are preferred."}}, {"id": 10, "stem": "A pregnant patient with hypertension needs chronic therapy. Which medication pair is preferred in pregnancy according to the lecture", "topic": "Hypertension in pregnancy", "options": {"A": "Lithium or isotretinoin", "B": "ACE inhibitor or ARB", "C": "Warfarin or methotrexate", "D": "Methyldopa or labetalol"}, "correct": "D", "explanation": "Methyldopa and labetalol are preferred antihypertensives in pregnancy. ACE inhibitors can cause fetal/neonatal renal toxicity.", "optionExplanations": {"A": "Lithium is high-risk and not an antihypertensive; isotretinoin is teratogenic.", "B": "ACE inhibitors/ARBs are high-risk and contraindicated.", "C": "Warfarin and methotrexate are teratogenic/contraindicated.", "D": "Correct. Methyldopa and labetalol are listed as preferred."}}, {"id": 11, "stem": "A pregnant patient taking methyldopa for hypertension develops hemolytic anemia. Which lecture note does this illustrate", "topic": "Methyldopa adverse effect", "options": {"A": "Methyldopa can cause hemolytic anemia", "B": "Methyldopa causes fetal warfarin syndrome", "C": "Methyldopa closes the ductus arteriosus", "D": "Methyldopa causes neural tube defects"}, "correct": "A", "explanation": "The pregnancy lecture notes methyldopa as a preferred antihypertensive but cautions that it can cause hemolytic anemia.", "optionExplanations": {"A": "Correct. Methyldopa is associated with hemolytic anemia.", "B": "Warfarin causes fetal warfarin syndrome.", "C": "Third-trimester NSAIDs can prematurely close the ductus arteriosus.", "D": "Valproate is associated with neural tube defects."}}, {"id": 12, "stem": "A pregnant patient with diabetes requires pharmacologic treatment. Which agent is preferred according to the lecture", "topic": "Diabetes in pregnancy", "options": {"A": "Oral hypoglycemics as first-line", "B": "ACE inhibitors", "C": "Highly purified human insulin", "D": "Warfarin"}, "correct": "C", "explanation": "Insulin is the drug of choice for diabetes in pregnancy, with highly purified human insulin preferred. Oral hypoglycemics are avoided in the lecture.", "optionExplanations": {"A": "The lecture says to avoid oral hypoglycemics.", "B": "ACE inhibitors are contraindicated due to fetal renal toxicity.", "C": "Correct. Insulin is preferred.", "D": "Warfarin is teratogenic and unrelated to diabetes treatment."}}, {"id": 13, "stem": "A pregnant patient has asymptomatic bacteriuria. Which treatment and duration match the lecture", "topic": "UTI in pregnancy", "options": {"A": "Cephalexin for 7–10 days", "B": "Warfarin for 6–9 weeks", "C": "No treatment because it is asymptomatic", "D": "Methotrexate for 1 dose"}, "correct": "A", "explanation": "Asymptomatic bacteriuria in pregnancy is treated with cephalexin for 7–10 days according to the lecture table.", "optionExplanations": {"A": "Correct. Cephalexin 7–10 days is listed.", "B": "Warfarin is teratogenic and not used for UTI.", "C": "Asymptomatic bacteriuria in pregnancy is treated.", "D": "Methotrexate is contraindicated in pregnancy."}}, {"id": 14, "stem": "A pregnant patient with pyelonephritis requires treatment. Which regimen and duration match the lecture", "topic": "Pyelonephritis in pregnancy", "options": {"A": "Cefazolin plus gentamicin for 10–14 days", "B": "Lithium for 7 days", "C": "NSAIDs in the third trimester as definitive therapy", "D": "Cephalexin for 1 day only"}, "correct": "A", "explanation": "The lecture lists pyelonephritis treatment as cefazolin plus gentamicin for 10–14 days.", "optionExplanations": {"A": "Correct. This is the listed regimen/duration.", "B": "Lithium is not a UTI treatment and is high-risk in pregnancy/lactation.", "C": "NSAIDs should be avoided in the third trimester.", "D": "Cephalexin 7–10 days is listed for asymptomatic bacteriuria, not pyelonephritis."}}, {"id": 15, "stem": "A pregnant patient asks when teratogenic exposure is most likely to cause permanent structural malformations. Which period is highest risk", "topic": "Teratogenic timing", "options": {"A": "Third trimester only because organogenesis begins then", "B": "Preimplantation only, where all exposures cause malformations", "C": "After birth only", "D": "Embryonic period, day 18–60 during organogenesis"}, "correct": "D", "explanation": "The embryonic period from day 18–60 is the period of organogenesis and highest sensitivity to teratogens, causing permanent structural damage.", "optionExplanations": {"A": "Organogenesis occurs early, not beginning in the third trimester.", "B": "Preimplantation is generally all-or-none: embryo death or no effect.", "C": "Teratogenic structural malformations occur during development before birth.", "D": "Correct. Day 18–60 organogenesis is highest risk."}}, {"id": 16, "stem": "A patient was exposed to a teratogen from conception to implantation. Which outcome pattern is classically expected", "topic": "All-or-none period", "options": {"A": "Premature ductus arteriosus closure only", "B": "Guaranteed fetal warfarin syndrome", "C": "Guaranteed limb malformations", "D": "Embryo death or no effect"}, "correct": "D", "explanation": "The preimplantation period is the all-or-none period: exposure causes embryo death or no effect, usually without malformations unless exposure persists.", "optionExplanations": {"A": "Premature ductus closure is linked to NSAID use in the third trimester.", "B": "Warfarin syndrome has a critical period around weeks 6–9.", "C": "Specific malformations depend on timing and organ development later.", "D": "Correct. Preimplantation exposure is all-or-none."}}, {"id": 17, "stem": "A pregnant patient chronically consumed large amounts of alcohol. Which neonatal finding is most consistent with fetal alcohol syndrome from the lecture", "topic": "Alcohol teratogenicity", "options": {"A": "Oliguria, hyperkalemia, and renal failure from fetal renal insufficiency", "B": "Schiller-Duval bodies and elevated AFP", "C": "Microcephaly, developmental delay, low nasal bridge, cleft palate, and thin upper lip", "D": "Nasal hypoplasia with stippled epiphyses from weeks 6–9 exposure"}, "correct": "C", "explanation": "Fetal alcohol syndrome is associated with IUGR, microcephaly, developmental delay, heavily stained meconium, low nasal bridge, cleft palate, and thin upper lip.", "optionExplanations": {"A": "This describes ACE inhibitor fetal/neonatal renal toxicity.", "B": "Schiller-Duval bodies and AFP are yolk sac tumor features.", "C": "Correct. These are the lecture features of fetal alcohol syndrome.", "D": "This describes fetal warfarin syndrome."}}, {"id": 18, "stem": "A pregnant patient took an ACE inhibitor. Which fetal/neonatal toxicity is expected", "topic": "ACE inhibitor fetotoxicity", "options": {"A": "Intrauterine renal insufficiency with oligohydramnios, neonatal hypotension, hyperkalemia, oliguria, and renal failure", "B": "Fetal hydantoin syndrome with nail hypoplasia", "C": "Fetal alcohol syndrome", "D": "Neural tube defects from first-trimester exposure"}, "correct": "A", "explanation": "ACE inhibitors can cause fetal renal insufficiency, oligohydramnios, IUGR, fetal death, and neonatal hypotension, hyperkalemia, oliguria, and renal failure.", "optionExplanations": {"A": "Correct. ACE inhibitors are high-yield fetotoxic drugs causing renal problems.", "B": "Phenytoin causes fetal hydantoin syndrome.", "C": "Alcohol causes fetal alcohol syndrome.", "D": "Valproate is associated with neural tube defects."}}, {"id": 19, "stem": "A patient took warfarin during weeks 6–9 of pregnancy. Which syndrome and finding are most likely", "topic": "Warfarin teratogenicity", "options": {"A": "Cocaine vasoconstriction with abruptio placentae only", "B": "ACE inhibitor fetopathy with neonatal renal failure only", "C": "Fetal hydantoin syndrome with long upper lip only", "D": "Fetal warfarin syndrome with nasal hypoplasia, IUGR, CNS, eye, and hearing defects"}, "correct": "D", "explanation": "Warfarin causes fetal warfarin syndrome, especially with exposure during weeks 6–9, including nasal hypoplasia, IUGR, CNS defects, eye defects, and hearing loss.", "optionExplanations": {"A": "Cocaine causes vasoconstrictive complications.", "B": "ACE inhibitors cause fetal/neonatal renal toxicity.", "C": "Phenytoin causes fetal hydantoin syndrome.", "D": "Correct. Weeks 6–9 warfarin exposure is classic."}}, {"id": 20, "stem": "A breastfeeding patient needs a medication. Which principle best reduces infant drug exposure", "topic": "Lactation drug safety", "options": {"A": "Prefer aspirin over acetaminophen for all lactating patients", "B": "Use lithium freely because it is contraindicated in pregnancy only", "C": "Choose poorly transferred, low-toxicity drugs and give the dose after breastfeeding when possible", "D": "Assume protein binding and lipid solubility do not affect milk transfer"}, "correct": "C", "explanation": "To reduce infant exposure, choose drugs poorly transferred into milk and low in toxicity, use topical/inhaled routes when possible, give medications after breastfeeding, and monitor infant levels if needed.", "optionExplanations": {"A": "The lecture gives acetaminophen as preferred over aspirin.", "B": "Lithium is listed among drugs contraindicated in breastfeeding.", "C": "Correct. This matches the lecture approach to reducing infant exposure.", "D": "Transfer depends on protein binding, lipid solubility, and ionization."}}];
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>

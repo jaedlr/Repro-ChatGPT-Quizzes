@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Genital Infections Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = 
+[
+  {
+    "id": 1,
+    "stem": "A sexually active woman presents with thin gray vaginal discharge and a fishy odor. Vaginal pH is elevated and KOH whiff test is positive. Microscopy shows epithelial cells with fuzzy borders. Which organism is most associated with this condition",
+    "topic": "Bacterial vaginosis",
+    "options": {
+      "A": "Gardnerella vaginalis",
+      "B": "Candida albicans",
+      "C": "Neisseria gonorrhoeae",
+      "D": "Trichomonas vaginalis"
+    },
+    "correct": "A",
+    "explanation": "Bacterial vaginosis is associated with loss of hydrogen peroxide producing lactobacilli, anaerobic overgrowth, elevated pH, fishy odor, and clue cells. Gardnerella vaginalis is a key associated organism.",
+    "optionExplanations": {
+      "A": "Correct. Gardnerella vaginalis is classically associated with bacterial vaginosis.",
+      "B": "Candida causes thick white discharge, pruritus, normal pH, and pseudohyphae.",
+      "C": "Neisseria gonorrhoeae causes cervicitis/PID or urethritis, not clue cells and fishy odor.",
+      "D": "Trichomonas causes frothy yellow-green discharge, motile organisms, and strawberry cervix."
+    }
+  },
+  {
+    "id": 2,
+    "stem": "A patient develops vulvovaginal itching and thick white discharge after taking broad spectrum antibiotics. Vaginal pH is normal. KOH prep reveals budding yeast and pseudohyphae. Which treatment class targets ergosterol synthesis by inhibiting 14 alpha demethylase",
+    "topic": "Vulvovaginal candidiasis",
+    "options": {
+      "A": "Metronidazole",
+      "B": "Azoles",
+      "C": "Echinocandins",
+      "D": "Doxycycline"
+    },
+    "correct": "B",
+    "explanation": "Azoles treat Candida by inhibiting 14 alpha demethylase, a cytochrome P450 enzyme required for ergosterol synthesis.",
+    "optionExplanations": {
+      "A": "Metronidazole treats bacterial vaginosis and trichomoniasis.",
+      "B": "Correct. Azoles decrease ergosterol by inhibiting 14 alpha demethylase.",
+      "C": "Echinocandins inhibit beta glucan synthesis, not ergosterol synthesis.",
+      "D": "Doxycycline treats chlamydia and some other bacterial STIs, not candidiasis."
+    }
+  },
+  {
+    "id": 3,
+    "stem": "A woman has vulvar itching, frothy yellow green discharge, dysuria, and a strawberry cervix. Wet mount shows motile organisms. Which microbial feature is characteristic of the causative organism",
+    "topic": "Trichomoniasis",
+    "options": {
+      "A": "Budding yeast with pseudohyphae",
+      "B": "Spirochete visualized with silver stain",
+      "C": "Gram negative diplococcus with pili",
+      "D": "Flagellated protozoan with hydrogenosomes"
+    },
+    "correct": "D",
+    "explanation": "Trichomonas vaginalis is a flagellated protozoan that lacks mitochondria and has hydrogenosomes. It causes frothy yellow-green discharge, elevated pH, and strawberry cervix.",
+    "optionExplanations": {
+      "A": "This describes Candida albicans.",
+      "B": "This describes Treponema pallidum.",
+      "C": "This describes Neisseria gonorrhoeae.",
+      "D": "Correct. Trichomonas is a flagellated protozoan with hydrogenosomes."
+    }
+  },
+  {
+    "id": 4,
+    "stem": "A patient has vaginal discharge. Microscopy shows squamous epithelial cells coated with bacteria. Which finding best distinguishes this condition from trichomoniasis",
+    "topic": "BV vs Trichomonas",
+    "options": {
+      "A": "Frothy yellow green discharge",
+      "B": "Motile organisms on wet mount",
+      "C": "Elevated vaginal pH",
+      "D": "Fishy odor with clue cells"
+    },
+    "correct": "D",
+    "explanation": "Both bacterial vaginosis and trichomoniasis can have elevated pH, but bacterial vaginosis is distinguished by fishy odor, positive whiff test, and clue cells.",
+    "optionExplanations": {
+      "A": "Frothy yellow-green discharge suggests Trichomonas.",
+      "B": "Motile organisms suggest Trichomonas.",
+      "C": "Both BV and Trichomonas can have elevated pH.",
+      "D": "Correct. Clue cells and fishy odor are classic for BV."
+    }
+  },
+  {
+    "id": 5,
+    "stem": "A menstruating woman using tampons develops high fever, diffuse rash, hypotension, and multiorgan failure followed by desquamation of palms and soles. Which mechanism explains this syndrome",
+    "topic": "Staphylococcal toxic shock syndrome",
+    "options": {
+      "A": "IgE mediated mast cell degranulation",
+      "B": "Latent neuronal reactivation",
+      "C": "Superantigen mediated cytokine storm",
+      "D": "Endarteritis obliterans"
+    },
+    "correct": "C",
+    "explanation": "Staphylococcal toxic shock syndrome is caused by TSST-1, a superantigen that overrides normal T cell specificity and causes massive cytokine release.",
+    "optionExplanations": {
+      "A": "IgE mediated mast cell degranulation describes type I hypersensitivity.",
+      "B": "Latent neuronal reactivation is characteristic of HSV recurrence.",
+      "C": "Correct. Superantigen activation causes cytokine storm, shock, rash, and multiorgan failure.",
+      "D": "Endarteritis is central to syphilis pathology."
+    }
+  },
+  {
+    "id": 6,
+    "stem": "A patient develops fever, myalgias, red eyes, headache, meningitis, and renal and hepatic dysfunction after exposure to contaminated freshwater containing animal urine. Which organism is most likely",
+    "topic": "Leptospirosis",
+    "options": {
+      "A": "Gardnerella vaginalis",
+      "B": "Leptospira interrogans",
+      "C": "Treponema pallidum",
+      "D": "Haemophilus ducreyi"
+    },
+    "correct": "B",
+    "explanation": "Leptospira interrogans is a pathogenic spirochete acquired from contaminated water with animal urine and can cause systemic disease with conjunctival suffusion, meningitis, renal, and hepatic dysfunction.",
+    "optionExplanations": {
+      "A": "Gardnerella vaginalis is associated with bacterial vaginosis.",
+      "B": "Correct. Leptospira interrogans causes leptospirosis after contaminated water exposure.",
+      "C": "Treponema pallidum causes syphilis.",
+      "D": "Haemophilus ducreyi causes chancroid."
+    }
+  },
+  {
+    "id": 7,
+    "stem": "A man presents with dysuria and thick purulent urethral discharge. Gram stain shows intracellular gram negative diplococci. Which additional complication is most classically associated with disseminated infection",
+    "topic": "Gonorrhea",
+    "options": {
+      "A": "Arthritis, tenosynovitis, and dermatitis",
+      "B": "Genital elephantiasis from necrotic lymph nodes",
+      "C": "General paresis and tabes dorsalis after decades",
+      "D": "Beefy red painless ulcers with Donovan bodies"
+    },
+    "correct": "A",
+    "explanation": "Disseminated gonococcal infection classically causes arthritis, tenosynovitis, and skin lesions such as hemorrhagic papules or pustules.",
+    "optionExplanations": {
+      "A": "Correct. Arthritis, tenosynovitis, and dermatitis are classic for DGI.",
+      "B": "This describes lymphogranuloma venereum complications.",
+      "C": "This describes tertiary syphilis/neurosyphilis.",
+      "D": "This describes granuloma inguinale."
+    }
+  },
+  {
+    "id": 8,
+    "stem": "A patient with mucopurulent cervicitis is diagnosed with Chlamydia trachomatis. Which sequence describes the organism life cycle",
+    "topic": "Chlamydia life cycle",
+    "options": {
+      "A": "Trophozoite forms cysts that are shed in stool",
+      "B": "Spirochete forms endospores then reactivates",
+      "C": "Elementary body enters cell, becomes reticulate body, replicates, then reverts to elementary body",
+      "D": "Yeast forms pseudohyphae and germ tubes"
+    },
+    "correct": "C",
+    "explanation": "Chlamydia alternates between nonreplicating infectious elementary bodies and replicating noninfectious reticulate bodies within host cells.",
+    "optionExplanations": {
+      "A": "This describes some protozoal intestinal infections, not chlamydia.",
+      "B": "Treponema is a spirochete but does not form endospores.",
+      "C": "Correct. EB is infectious; RB replicates intracellularly; RB converts back to EB for release.",
+      "D": "This describes Candida morphology."
+    }
+  },
+  {
+    "id": 9,
+    "stem": "A patient presents with a painless hard genital chancre followed weeks later by rash on palms and soles. Which diagnostic pair is most appropriate for screening and confirmation",
+    "topic": "Syphilis diagnosis",
+    "options": {
+      "A": "Wet mount followed by pH testing",
+      "B": "NAAT followed by Gram stain only",
+      "C": "KOH prep followed by CHROMagar",
+      "D": "RPR/VDRL followed by FTA-ABS"
+    },
+    "correct": "D",
+    "explanation": "Syphilis screening uses nontreponemal tests such as RPR or VDRL, followed by treponemal confirmation with tests such as FTA-ABS.",
+    "optionExplanations": {
+      "A": "Wet mount and pH are used in vaginitis evaluation.",
+      "B": "NAAT is important for chlamydia/gonorrhea; Gram stain alone is not the syphilis algorithm.",
+      "C": "KOH and CHROMagar can help diagnose Candida.",
+      "D": "Correct. RPR/VDRL screen and FTA-ABS confirms syphilis."
+    }
+  },
+  {
+    "id": 10,
+    "stem": "A patient with syphilis develops aortic root dilation with valve insufficiency after a long latent period. Which disease stage is this",
+    "topic": "Tertiary syphilis",
+    "options": {
+      "A": "Tertiary syphilis",
+      "B": "Congenital syphilis",
+      "C": "Primary syphilis",
+      "D": "Secondary syphilis"
+    },
+    "correct": "A",
+    "explanation": "Tertiary syphilis occurs years after infection and can cause aortitis with aortic root dilation, neurosyphilis, and gummas.",
+    "optionExplanations": {
+      "A": "Correct. Cardiovascular syphilis is a tertiary manifestation.",
+      "B": "Congenital syphilis causes findings such as Hutchinson teeth, saddle nose, and osteochondritis.",
+      "C": "Primary syphilis causes a painless hard chancre.",
+      "D": "Secondary syphilis causes systemic dissemination with rash, condylomata lata, and mucous patches."
+    }
+  },
+  {
+    "id": 11,
+    "stem": "A patient treated for syphilis develops fever, chills, myalgias, hypotension, and headache within several hours of penicillin. Which mechanism is responsible",
+    "topic": "Jarisch-Herxheimer reaction",
+    "options": {
+      "A": "Toxin production by Staphylococcus aureus",
+      "B": "Rapid spirochete lysis causing immune cytokine response",
+      "C": "Hemolysis from G6PD deficiency",
+      "D": "Penicillin IgE allergy"
+    },
+    "correct": "B",
+    "explanation": "Jarisch-Herxheimer reaction occurs after antibiotic treatment of syphilis due to rapid lysis of spirochetes and immune response to released lipoproteins.",
+    "optionExplanations": {
+      "A": "TSS toxin causes toxic shock syndrome, not this post-syphilis treatment reaction.",
+      "B": "Correct. It is an inflammatory reaction to dying spirochetes, not a true drug allergy.",
+      "C": "G6PD hemolysis is triggered by oxidant stress, not syphilis treatment reaction.",
+      "D": "IgE allergy would more likely present with urticaria, wheezing, angioedema, or anaphylaxis."
+    }
+  },
+  {
+    "id": 12,
+    "stem": "A patient presents with a painful soft genital ulcer with ragged borders, gray exudate, and tender inguinal buboes. Which organism is most likely",
+    "topic": "Chancroid",
+    "options": {
+      "A": "Chlamydia trachomatis serovars L1-L3",
+      "B": "Klebsiella granulomatis",
+      "C": "Treponema pallidum",
+      "D": "Haemophilus ducreyi"
+    },
+    "correct": "D",
+    "explanation": "Chancroid is caused by Haemophilus ducreyi and presents with painful soft ulcers with ragged borders and painful suppurative inguinal lymphadenopathy.",
+    "optionExplanations": {
+      "A": "L1-L3 serovars cause lymphogranuloma venereum, often with transient ulcer then painful lymphadenopathy.",
+      "B": "Klebsiella granulomatis causes painless beefy red ulcers with Donovan bodies.",
+      "C": "Treponema pallidum causes a painless hard chancre.",
+      "D": "Correct. Haemophilus ducreyi causes chancroid."
+    }
+  },
+  {
+    "id": 13,
+    "stem": "A patient has painless beefy red genital ulcers that bleed easily. Biopsy shows macrophages filled with intracellular Donovan bodies. Which organism causes this disease",
+    "topic": "Granuloma inguinale",
+    "options": {
+      "A": "Haemophilus ducreyi",
+      "B": "Klebsiella granulomatis",
+      "C": "Neisseria gonorrhoeae",
+      "D": "Treponema pallidum"
+    },
+    "correct": "B",
+    "explanation": "Granuloma inguinale, also called donovanosis, is caused by Klebsiella granulomatis and shows Donovan bodies in macrophages.",
+    "optionExplanations": {
+      "A": "Haemophilus ducreyi causes painful chancroid.",
+      "B": "Correct. Klebsiella granulomatis causes painless beefy red ulcers with Donovan bodies.",
+      "C": "Neisseria gonorrhoeae causes urethritis/cervicitis and disseminated arthritis.",
+      "D": "Treponema pallidum causes syphilis."
+    }
+  },
+  {
+    "id": 14,
+    "stem": "A man develops a small painless genital papule that resolves. Weeks later he develops painful inguinal lymphadenopathy with necrotic lymph nodes and later fibrosis causing anogenital strictures. Which organism type is responsible",
+    "topic": "Lymphogranuloma venereum",
+    "options": {
+      "A": "Gardnerella vaginalis",
+      "B": "HSV-2",
+      "C": "Chlamydia trachomatis serovars L1-L3",
+      "D": "HPV types 6 and 11"
+    },
+    "correct": "C",
+    "explanation": "Lymphogranuloma venereum is caused by Chlamydia trachomatis serovars L1-L3 and can cause painful necrotic lymph nodes, chronic fibrosis, strictures, and genital elephantiasis.",
+    "optionExplanations": {
+      "A": "Gardnerella is associated with bacterial vaginosis.",
+      "B": "HSV-2 causes painful vesicles and ulcers.",
+      "C": "Correct. L1-L3 cause LGV.",
+      "D": "HPV 6 and 11 cause condyloma acuminata."
+    }
+  },
+  {
+    "id": 15,
+    "stem": "A patient has painful grouped vesicles on an erythematous base that ulcerate and crust. Tzanck smear shows multinucleated syncytia. Which drug class is used for treatment and requires viral thymidine kinase activation",
+    "topic": "HSV treatment",
+    "options": {
+      "A": "Acyclovir or famciclovir",
+      "B": "Azoles",
+      "C": "Ceftriaxone",
+      "D": "Metronidazole or tinidazole"
+    },
+    "correct": "A",
+    "explanation": "HSV is treated with acyclovir or famciclovir, which are activated by viral thymidine kinase and inhibit viral DNA elongation.",
+    "optionExplanations": {
+      "A": "Correct. Acyclovir/famciclovir treat HSV and depend on thymidine kinase activation.",
+      "B": "Azoles treat Candida.",
+      "C": "Ceftriaxone treats gonorrhea.",
+      "D": "Metronidazole/tinidazole treat Trichomonas and bacterial vaginosis."
+    }
+  },
+  {
+    "id": 16,
+    "stem": "A biopsy from a genital wart shows exophytic papillary architecture, hyperkeratosis, acanthosis, and koilocytosis. Which HPV types are most likely",
+    "topic": "Condyloma acuminatum",
+    "options": {
+      "A": "HPV 6 and 11",
+      "B": "HPV 16 and 18",
+      "C": "HBV S gene variants",
+      "D": "HSV 1 and 2"
+    },
+    "correct": "A",
+    "explanation": "Condyloma acuminata are caused by low risk HPV types 6 and 11 and show koilocytosis, papillary architecture, hyperkeratosis, and acanthosis.",
+    "optionExplanations": {
+      "A": "Correct. HPV 6 and 11 cause genital warts.",
+      "B": "HPV 16 and 18 are high risk strains associated with cancer.",
+      "C": "HBV causes hepatitis, not genital warts.",
+      "D": "HSV causes vesicles and ulcers, not warts with koilocytosis."
+    }
+  },
+  {
+    "id": 17,
+    "stem": "A patient with anal squamous cell carcinoma has a history of high risk HPV infection. Which viral proteins drive oncogenesis by disabling tumor suppressors",
+    "topic": "High risk HPV oncogenesis",
+    "options": {
+      "A": "Elementary body and reticulate body",
+      "B": "TSST-1 and exfoliative toxin",
+      "C": "E6 and E7",
+      "D": "gp120 and gp41"
+    },
+    "correct": "C",
+    "explanation": "High risk HPV types produce E6 and E7 proteins that inhibit p53 and Rb tumor suppressor proteins, promoting genomic instability and proliferation.",
+    "optionExplanations": {
+      "A": "Elementary and reticulate bodies are chlamydial developmental forms.",
+      "B": "TSST-1 is a Staphylococcus aureus superantigen.",
+      "C": "Correct. E6 inhibits p53 and E7 inhibits Rb.",
+      "D": "gp120 and gp41 are HIV envelope glycoproteins."
+    }
+  },
+  {
+    "id": 18,
+    "stem": "A patient has fatigue, jaundice, nausea, vomiting, and abdominal pain 8 weeks after exposure. Which marker indicates active hepatitis B disease",
+    "topic": "Hepatitis B",
+    "options": {
+      "A": "Anti-HBc IgG only",
+      "B": "HBsAg",
+      "C": "Anti-HBs only",
+      "D": "Anti-HBe only"
+    },
+    "correct": "B",
+    "explanation": "Active hepatitis B disease is indicated by the presence of HBsAg.",
+    "optionExplanations": {
+      "A": "Anti-HBc IgG indicates prior exposure or chronic infection but is not the active marker listed.",
+      "B": "Correct. HBsAg indicates active HBV infection.",
+      "C": "Anti-HBs indicates immunity from vaccination or recovery.",
+      "D": "Anti-HBe alone is not the active disease marker emphasized here."
+    }
+  },
+  {
+    "id": 19,
+    "stem": "A patient with HIV has viral entry into CD4 positive T cells. Which envelope glycoprotein binds CD4",
+    "topic": "HIV entry",
+    "options": {
+      "A": "L1 capsid protein",
+      "B": "gp41",
+      "C": "p24",
+      "D": "gp120"
+    },
+    "correct": "D",
+    "explanation": "HIV gp120 binds CD4, while gp41 mediates membrane fusion/penetration.",
+    "optionExplanations": {
+      "A": "L1 is the major capsid protein of HPV.",
+      "B": "gp41 mediates membrane fusion/penetration after gp120 binding.",
+      "C": "p24 is a capsid antigen, not the CD4 binding glycoprotein.",
+      "D": "Correct. gp120 binds CD4."
+    }
+  },
+  {
+    "id": 20,
+    "stem": "A patient with AIDS develops opportunistic infections when the CD4 count falls below a critical threshold. Which threshold defines AIDS in the notes",
+    "topic": "AIDS definition",
+    "options": {
+      "A": "<500 cells/microL",
+      "B": "<350 cells/microL",
+      "C": "<200 cells/microL",
+      "D": "<50 cells/microL"
+    },
+    "correct": "C",
+    "explanation": "AIDS is associated with CD4+ T cell count below 200 cells/microL, with opportunistic infections emerging as CD4 count falls.",
+    "optionExplanations": {
+      "A": "CD4 below 500 does not define AIDS.",
+      "B": "CD4 below 350 is not the threshold used in the notes for AIDS.",
+      "C": "Correct. CD4 <200 cells/microL defines AIDS.",
+      "D": "CD4 <50 indicates profound immunosuppression but is below the AIDS-defining cutoff."
+    }
+  }
+]
+;
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>

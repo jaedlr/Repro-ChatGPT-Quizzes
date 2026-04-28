@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fertility Control Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+  {
+    "id": 1,
+    "stem": "A patient asks which reversible contraceptive methods are considered the most effective because they do not depend on daily user adherence. Which category best fits",
+    "topic": "LARC",
+    "options": {
+      "A": "Fertility awareness only",
+      "B": "Long-acting reversible contraception",
+      "C": "Withdrawal",
+      "D": "Barrier methods only"
+    },
+    "correct": "B",
+    "explanation": "Long-acting reversible contraception includes IUDs and implants and is highly effective because it does not rely on daily or pericoital adherence.",
+    "optionExplanations": {
+      "A": "Fertility awareness requires careful cycle tracking and abstinence/barrier use during fertile windows.",
+      "B": "Correct. IUDs and implants are LARC methods with very high effectiveness.",
+      "C": "Withdrawal is highly user-dependent and less reliable.",
+      "D": "Barrier methods are user-dependent and less effective with typical use."
+    }
+  },
+  {
+    "id": 2,
+    "stem": "A patient wants a highly effective contraceptive that also decreases menstrual bleeding and dysmenorrhea. Which method is most likely to provide this benefit",
+    "topic": "Levonorgestrel IUD",
+    "options": {
+      "A": "Levonorgestrel-releasing IUD",
+      "B": "Male condom",
+      "C": "Diaphragm",
+      "D": "Copper IUD"
+    },
+    "correct": "A",
+    "explanation": "Levonorgestrel IUDs provide contraception and commonly decrease menstrual bleeding and dysmenorrhea by causing endometrial suppression.",
+    "optionExplanations": {
+      "A": "Correct. LNG-IUD decreases endometrial proliferation, bleeding, and cramping.",
+      "B": "Condoms prevent STIs but do not decrease menstrual bleeding.",
+      "C": "Diaphragms are barrier methods and do not treat heavy bleeding.",
+      "D": "Copper IUD can increase menstrual bleeding and cramping."
+    }
+  },
+  {
+    "id": 3,
+    "stem": "A patient wants nonhormonal long-acting contraception. She has a history of heavy painful periods. Which counseling point is most important for the copper IUD",
+    "topic": "Copper IUD",
+    "options": {
+      "A": "It protects against gonorrhea and chlamydia",
+      "B": "It may increase menstrual bleeding and cramping",
+      "C": "It must be replaced every week",
+      "D": "It suppresses ovulation every cycle"
+    },
+    "correct": "B",
+    "explanation": "The copper IUD is nonhormonal and long acting, but it may increase menstrual bleeding and dysmenorrhea.",
+    "optionExplanations": {
+      "A": "IUDs do not protect against STIs; condoms are needed for STI prevention.",
+      "B": "Correct. Copper IUD can worsen bleeding and cramps.",
+      "C": "Copper IUD is long acting, not weekly.",
+      "D": "Copper IUD primarily creates a spermicidal inflammatory environment; it does not suppress ovulation."
+    }
+  },
+  {
+    "id": 4,
+    "stem": "A patient with multiple new sexual partners asks which contraceptive method also reduces STI transmission. Which method should be emphasized",
+    "topic": "STI protection",
+    "options": {
+      "A": "Condoms",
+      "B": "Levonorgestrel IUD",
+      "C": "Copper IUD",
+      "D": "Etonogestrel implant"
+    },
+    "correct": "A",
+    "explanation": "Condoms are the contraceptive method that also reduces STI transmission. Hormonal methods and IUDs do not protect against STIs.",
+    "optionExplanations": {
+      "A": "Correct. Condoms provide barrier protection against STIs.",
+      "B": "LNG-IUD is effective contraception but does not protect against STIs.",
+      "C": "Copper IUD is effective contraception but does not protect against STIs.",
+      "D": "The implant prevents pregnancy but not STIs."
+    }
+  },
+  {
+    "id": 5,
+    "stem": "A patient wants contraception but strongly prefers to avoid estrogen due to migraine with aura. Which option is estrogen-free",
+    "topic": "Progestin-only contraception",
+    "options": {
+      "A": "Transdermal combined patch",
+      "B": "Progestin-only pill",
+      "C": "Combined vaginal ring",
+      "D": "Combined oral contraceptive"
+    },
+    "correct": "B",
+    "explanation": "Progestin-only contraception avoids estrogen and is useful when estrogen is contraindicated, such as migraine with aura or high thrombotic risk.",
+    "optionExplanations": {
+      "A": "The combined patch contains estrogen and progestin.",
+      "B": "Correct. Progestin-only pills do not contain estrogen.",
+      "C": "The combined ring contains estrogen and progestin.",
+      "D": "Combined oral contraceptives contain estrogen and progestin."
+    }
+  },
+  {
+    "id": 6,
+    "stem": "A 36 year old patient who smokes heavily requests combined hormonal contraception. Which concern is most important",
+    "topic": "Combined hormonal contraception contraindication",
+    "options": {
+      "A": "Increased thrombotic and cardiovascular risk",
+      "B": "Guaranteed infertility",
+      "C": "Loss of STI protection",
+      "D": "Immediate ovarian cancer"
+    },
+    "correct": "A",
+    "explanation": "Combined hormonal contraception is contraindicated in smokers age 35 or older because estrogen increases thrombotic and cardiovascular risk.",
+    "optionExplanations": {
+      "A": "Correct. Age ≥35 with smoking is a major estrogen contraindication.",
+      "B": "CHCs do not cause guaranteed infertility.",
+      "C": "CHCs do not protect against STIs, but the contraindication here is vascular risk.",
+      "D": "CHCs are not an immediate cause of ovarian cancer and may reduce ovarian cancer risk."
+    }
+  },
+  {
+    "id": 7,
+    "stem": "A patient taking combined hormonal contraception asks how it prevents pregnancy. Which mechanism is most important",
+    "topic": "CHC mechanism",
+    "options": {
+      "A": "Causes copper toxicity to sperm",
+      "B": "Increases follicular rupture",
+      "C": "Suppresses LH surge and ovulation",
+      "D": "Destroys implanted embryos"
+    },
+    "correct": "C",
+    "explanation": "Combined hormonal contraception suppresses GnRH, FSH, and LH, preventing the LH surge and ovulation. Progestin also thickens cervical mucus and thins endometrium.",
+    "optionExplanations": {
+      "A": "Copper IUD creates a spermicidal inflammatory environment.",
+      "B": "CHCs prevent follicular maturation/ovulation rather than increasing rupture.",
+      "C": "Correct. Suppression of ovulation is the main mechanism.",
+      "D": "CHCs prevent pregnancy before implantation; they are not abortifacients."
+    }
+  },
+  {
+    "id": 8,
+    "stem": "A patient uses depot medroxyprogesterone acetate injections for contraception. Which adverse effect requires counseling, especially with prolonged use",
+    "topic": "Depot medroxyprogesterone",
+    "options": {
+      "A": "Increased STI protection",
+      "B": "Immediate return to fertility in all patients",
+      "C": "Severe copper allergy",
+      "D": "Decreased bone mineral density"
+    },
+    "correct": "D",
+    "explanation": "Depot medroxyprogesterone acetate is associated with irregular bleeding, weight gain, delayed return to fertility, and decreased bone mineral density with prolonged use.",
+    "optionExplanations": {
+      "A": "DMPA does not protect against STIs.",
+      "B": "Return to fertility may be delayed after discontinuation.",
+      "C": "Copper allergy is relevant to copper IUD avoidance, not DMPA.",
+      "D": "Correct. Bone mineral density loss is a key counseling point."
+    }
+  },
+  {
+    "id": 9,
+    "stem": "A patient wants emergency contraception 4 days after unprotected intercourse and wants the most effective option. Which method is most effective",
+    "topic": "Emergency contraception",
+    "options": {
+      "A": "Copper IUD",
+      "B": "Withdrawal",
+      "C": "Male condom after intercourse",
+      "D": "Calendar method"
+    },
+    "correct": "A",
+    "explanation": "Copper IUD is the most effective emergency contraception and can be used within 5 days after unprotected intercourse.",
+    "optionExplanations": {
+      "A": "Correct. Copper IUD is the most effective EC option and provides ongoing contraception.",
+      "B": "Withdrawal after intercourse is not emergency contraception.",
+      "C": "Condoms prevent exposure only when used during intercourse.",
+      "D": "Calendar method does not provide postcoital emergency contraception."
+    }
+  },
+  {
+    "id": 10,
+    "stem": "A patient requests oral emergency contraception. Ulipristal is chosen. Which mechanism best describes ulipristal",
+    "topic": "Ulipristal",
+    "options": {
+      "A": "Androgen receptor blockade",
+      "B": "Copper-mediated sperm toxicity",
+      "C": "Selective progesterone receptor modulator that delays ovulation",
+      "D": "Estrogen receptor degradation"
+    },
+    "correct": "C",
+    "explanation": "Ulipristal acetate is a selective progesterone receptor modulator used for emergency contraception; it primarily delays ovulation.",
+    "optionExplanations": {
+      "A": "Antiandrogens block androgen receptors.",
+      "B": "Copper-mediated sperm toxicity describes copper IUD.",
+      "C": "Correct. Ulipristal delays ovulation via progesterone receptor modulation.",
+      "D": "Fulvestrant degrades estrogen receptors."
+    }
+  },
+  {
+    "id": 11,
+    "stem": "A patient asks when levonorgestrel emergency contraception works best. Which counseling point is correct",
+    "topic": "Levonorgestrel EC",
+    "options": {
+      "A": "It protects against STIs",
+      "B": "It is only useful after confirmed pregnancy implantation",
+      "C": "It is most effective as soon as possible after unprotected intercourse",
+      "D": "It is more effective after 10 days than after 1 day"
+    },
+    "correct": "C",
+    "explanation": "Levonorgestrel emergency contraception is most effective when taken as soon as possible after unprotected intercourse and works primarily by delaying ovulation.",
+    "optionExplanations": {
+      "A": "Emergency contraception does not protect against STIs.",
+      "B": "It does not terminate an implanted pregnancy.",
+      "C": "Correct. Earlier use improves effectiveness.",
+      "D": "Effectiveness decreases with time."
+    }
+  },
+  {
+    "id": 12,
+    "stem": "A patient with known pregnancy asks for emergency contraception to end the pregnancy. Which statement is correct",
+    "topic": "Emergency contraception counseling",
+    "options": {
+      "A": "Levonorgestrel destroys implanted embryos",
+      "B": "Emergency contraception prevents pregnancy before implantation and does not terminate established pregnancy",
+      "C": "Emergency contraception is the same as surgical abortion",
+      "D": "Copper IUD causes fetal malformations if pregnancy is already established"
+    },
+    "correct": "B",
+    "explanation": "Emergency contraception prevents pregnancy, mainly by delaying ovulation or impairing fertilization. It does not terminate an established pregnancy.",
+    "optionExplanations": {
+      "A": "Levonorgestrel EC does not destroy implanted embryos.",
+      "B": "Correct. EC is contraceptive, not abortive.",
+      "C": "Surgical abortion is a separate pregnancy termination procedure.",
+      "D": "Copper IUD should not be placed in known pregnancy, but its EC role is before pregnancy is established."
+    }
+  },
+  {
+    "id": 13,
+    "stem": "A patient wants permanent female sterilization. Which procedure is most consistent with current risk-reducing practice when feasible",
+    "topic": "Female sterilization",
+    "options": {
+      "A": "Pap smear",
+      "B": "Condom use only",
+      "C": "Bilateral salpingectomy",
+      "D": "Endometrial ablation only"
+    },
+    "correct": "C",
+    "explanation": "Permanent female sterilization can be performed by tubal interruption or salpingectomy. Salpingectomy also reduces risk of high-grade serous carcinoma arising from the fallopian tube fimbria.",
+    "optionExplanations": {
+      "A": "Pap smear screens the cervix and does not sterilize.",
+      "B": "Condoms are reversible barrier contraception, not permanent sterilization.",
+      "C": "Correct. Bilateral salpingectomy provides sterilization and ovarian cancer risk reduction.",
+      "D": "Endometrial ablation does not reliably prevent pregnancy and is not sterilization."
+    }
+  },
+  {
+    "id": 14,
+    "stem": "A man requests permanent contraception. Which counseling point is correct for vasectomy",
+    "topic": "Vasectomy",
+    "options": {
+      "A": "It increases prostate cancer risk according to the lecture",
+      "B": "It lowers testosterone to castrate levels",
+      "C": "It immediately causes sterility the same day",
+      "D": "Backup contraception is needed until azoospermia is confirmed"
+    },
+    "correct": "D",
+    "explanation": "After vasectomy, sperm may remain in the reproductive tract temporarily, so backup contraception is required until semen analysis confirms azoospermia.",
+    "optionExplanations": {
+      "A": "The male cancer lecture noted no known link with vasectomy and prostate cancer.",
+      "B": "Vasectomy does not suppress testosterone production.",
+      "C": "Sterility is not immediate.",
+      "D": "Correct. Semen analysis confirmation is required before relying on vasectomy."
+    }
+  },
+  {
+    "id": 15,
+    "stem": "A patient asks which contraceptive method is best for menstrual suppression and also treats heavy menstrual bleeding. Which option is most appropriate",
+    "topic": "Menstrual suppression",
+    "options": {
+      "A": "Copper IUD",
+      "B": "Levonorgestrel IUD",
+      "C": "Fertility awareness method",
+      "D": "Spermicide alone"
+    },
+    "correct": "B",
+    "explanation": "Levonorgestrel IUD suppresses endometrium and can markedly decrease heavy menstrual bleeding and dysmenorrhea.",
+    "optionExplanations": {
+      "A": "Copper IUD may worsen bleeding/cramps.",
+      "B": "Correct. LNG-IUD is useful for contraception and heavy menstrual bleeding.",
+      "C": "Fertility awareness does not suppress menses.",
+      "D": "Spermicide alone does not treat heavy bleeding and has relatively high failure rates."
+    }
+  },
+  {
+    "id": 16,
+    "stem": "A patient using enzyme-inducing antiseizure medication asks about contraceptive reliability. Which method avoids hepatic enzyme interaction concerns best",
+    "topic": "Drug interactions",
+    "options": {
+      "A": "Combined oral contraceptive pill",
+      "B": "Progestin-only pill",
+      "C": "Copper IUD",
+      "D": "Emergency levonorgestrel as routine contraception"
+    },
+    "correct": "C",
+    "explanation": "Copper IUD efficacy is not reduced by hepatic enzyme-inducing medications. Oral hormonal contraceptives can have reduced efficacy with enzyme inducers.",
+    "optionExplanations": {
+      "A": "Combined pills can have reduced hormone levels with enzyme inducers.",
+      "B": "Progestin-only pills can also be affected depending on agent and adherence.",
+      "C": "Correct. Copper IUD is nonhormonal and not affected by enzyme induction.",
+      "D": "Emergency contraception is not intended as routine contraception."
+    }
+  },
+  {
+    "id": 17,
+    "stem": "A patient asks about the etonogestrel implant. Which mechanism is most important",
+    "topic": "Etonogestrel implant",
+    "options": {
+      "A": "Mechanical barrier over cervix only",
+      "B": "Progestin suppression of ovulation and thickening of cervical mucus",
+      "C": "Copper-induced inflammatory sperm toxicity",
+      "D": "Permanent blockage of vas deferens"
+    },
+    "correct": "B",
+    "explanation": "The etonogestrel implant is a progestin LARC that suppresses ovulation and thickens cervical mucus.",
+    "optionExplanations": {
+      "A": "Diaphragm/cervical cap are mechanical barrier methods.",
+      "B": "Correct. Implant contraception is progestin-mediated.",
+      "C": "Copper IUD uses copper/inflammatory effects.",
+      "D": "Vasectomy blocks the vas deferens."
+    }
+  },
+  {
+    "id": 18,
+    "stem": "A patient wants contraception immediately postpartum and is breastfeeding. Which general principle is most important regarding estrogen-containing methods early postpartum",
+    "topic": "Postpartum contraception",
+    "options": {
+      "A": "Avoid early postpartum estrogen because of VTE risk and possible decreased milk supply",
+      "B": "No contraception is needed postpartum",
+      "C": "Only combined hormonal contraception is safe during breastfeeding",
+      "D": "Estrogen is mandatory immediately postpartum"
+    },
+    "correct": "A",
+    "explanation": "Estrogen-containing contraception is generally avoided early postpartum because postpartum VTE risk is elevated and estrogen may reduce milk supply.",
+    "optionExplanations": {
+      "A": "Correct. Estrogen is avoided early postpartum due to VTE/lactation concerns.",
+      "B": "Ovulation can return before first menses, so contraception counseling is important.",
+      "C": "Progestin-only and nonhormonal options are commonly used postpartum.",
+      "D": "Estrogen is not mandatory."
+    }
+  },
+  {
+    "id": 19,
+    "stem": "A patient asks about fertility awareness methods. Which counseling statement is most accurate",
+    "topic": "Fertility awareness",
+    "options": {
+      "A": "They require cycle tracking and avoidance/barrier use during the fertile window",
+      "B": "They are unaffected by irregular cycles and require no education",
+      "C": "They are permanent sterilization",
+      "D": "They protect against STIs"
+    },
+    "correct": "A",
+    "explanation": "Fertility awareness methods require identifying the fertile window through cycle tracking and using abstinence or barrier methods during that time.",
+    "optionExplanations": {
+      "A": "Correct. Accurate tracking and behavior changes during fertile days are essential.",
+      "B": "Irregular cycles make fertility awareness harder and less reliable.",
+      "C": "They are reversible behavioral methods, not sterilization.",
+      "D": "They do not protect against STIs."
+    }
+  },
+  {
+    "id": 20,
+    "stem": "A patient chooses a diaphragm for contraception. Which counseling point is most appropriate",
+    "topic": "Barrier contraception",
+    "options": {
+      "A": "It suppresses ovulation through estrogen feedback",
+      "B": "It provides permanent sterilization",
+      "C": "It is the most effective emergency contraception",
+      "D": "It is a user-dependent barrier method and is less effective with typical use than LARC"
+    },
+    "correct": "D",
+    "explanation": "Barrier methods such as diaphragms are user-dependent and generally have lower typical-use effectiveness than LARC methods.",
+    "optionExplanations": {
+      "A": "Diaphragms do not suppress ovulation.",
+      "B": "Diaphragms are reversible, not permanent.",
+      "C": "Copper IUD is the most effective emergency contraception.",
+      "D": "Correct. Correct and consistent use is required, and typical-use failure is higher than LARC."
+    }
+  }
+];
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>
