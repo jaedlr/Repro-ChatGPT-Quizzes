@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Psychiatric Issues in Pregnancy Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = [{"id": 1, "stem": "A pregnant patient has persistent depressed mood, anhedonia, sleep disturbance, poor concentration, and guilt. Which condition is most likely", "topic": "Depression in pregnancy", "options": {"A": "Major depressive disorder during pregnancy", "B": "Postpartum psychosis", "C": "Placental abruption", "D": "Normal pregnancy only"}, "correct": "A", "explanation": "Depression in pregnancy presents with persistent depressive symptoms such as low mood, anhedonia, sleep/appetite changes, guilt, low energy, and poor concentration.", "optionExplanations": {"A": "Correct. Persistent depressive symptoms during pregnancy suggest antenatal depression.", "B": "Postpartum psychosis occurs postpartum and includes psychosis, disorganization, or risk to self/infant.", "C": "Placental abruption causes painful bleeding and uterine tenderness.", "D": "Pregnancy can affect sleep/energy, but persistent mood symptoms and anhedonia are not simply normal."}}, {"id": 2, "stem": "Which treatment is first-line for mild to moderate depression in pregnancy according to the lecture", "topic": "Depression treatment", "options": {"A": "Warfarin", "B": "Methotrexate", "C": "RhoGAM", "D": "Cognitive behavioral therapy or interpersonal therapy"}, "correct": "D", "explanation": "Psychotherapy, especially CBT or interpersonal therapy, is first-line for mild to moderate depression in pregnancy.", "optionExplanations": {"A": "Warfarin is teratogenic and not depression treatment.", "B": "Methotrexate is contraindicated in pregnancy and not an antidepressant.", "C": "RhoGAM prevents Rh alloimmunization.", "D": "Correct. CBT/interpersonal therapy are first-line nonpharmacologic treatments."}}, {"id": 3, "stem": "A pregnant patient has moderate to severe depression and needs medication. Which medication class is generally preferred", "topic": "SSRIs in pregnancy", "options": {"A": "SSRIs", "B": "Isotretinoin", "C": "ACE inhibitors", "D": "Valproate"}, "correct": "A", "explanation": "SSRIs are commonly preferred when medication is needed for depression or anxiety in pregnancy.", "optionExplanations": {"A": "Correct. SSRIs are commonly used/preferred when pharmacotherapy is needed.", "B": "Isotretinoin is highly teratogenic.", "C": "ACE inhibitors are contraindicated in pregnancy due to fetal renal toxicity.", "D": "Valproate is teratogenic and avoided when possible."}}, {"id": 4, "stem": "A patient is screened postpartum with the Edinburgh Postnatal Depression Scale. What is this tool used for", "topic": "EPDS", "options": {"A": "Screening for postpartum depression", "B": "Diagnosing placenta previa", "C": "Staging pelvic organ prolapse", "D": "Measuring fetal anemia"}, "correct": "A", "explanation": "The Edinburgh Postnatal Depression Scale is used to screen for postpartum depression.", "optionExplanations": {"A": "Correct. EPDS screens for postpartum depression.", "B": "Placenta previa is diagnosed by ultrasound.", "C": "POP-Q stages pelvic organ prolapse.", "D": "MCA Doppler assesses fetal anemia."}}, {"id": 5, "stem": "A postpartum patient has tearfulness, mood lability, anxiety, and irritability starting a few days after delivery but symptoms are mild and resolve within 2 weeks. Which diagnosis is most likely", "topic": "Postpartum blues", "options": {"A": "Postpartum blues", "B": "Postpartum psychosis", "C": "Bipolar I disorder with mania", "D": "Eclampsia"}, "correct": "A", "explanation": "Postpartum blues are common, begin within days of delivery, are mild/transient, and resolve within about 2 weeks.", "optionExplanations": {"A": "Correct. Mild mood lability resolving within 2 weeks = postpartum blues.", "B": "Postpartum psychosis includes delusions, hallucinations, severe disorganization, or risk to infant/self.", "C": "Mania involves elevated/irritable mood with increased energy and other manic features.", "D": "Eclampsia is seizure in the setting of preeclampsia."}}, {"id": 6, "stem": "A postpartum patient has depressed mood, anhedonia, guilt, poor bonding, and symptoms lasting more than 2 weeks. Which diagnosis is most likely", "topic": "Postpartum depression", "options": {"A": "Placenta accreta", "B": "Postpartum blues", "C": "Normal postpartum adjustment only", "D": "Postpartum depression"}, "correct": "D", "explanation": "Postpartum depression is suggested by depressive symptoms lasting more than 2 weeks and can impair bonding and functioning.", "optionExplanations": {"A": "Placenta accreta is abnormal placental adherence/invasion.", "B": "Postpartum blues resolve within about 2 weeks.", "C": "Persistent anhedonia/depression and impaired bonding are not just normal adjustment.", "D": "Correct. Symptoms persisting beyond 2 weeks suggest postpartum depression."}}, {"id": 7, "stem": "A postpartum patient has hallucinations, delusions that the infant is possessed, severe insomnia, and disorganized behavior. What is the most appropriate next step", "topic": "Postpartum psychosis", "options": {"A": "Reassurance that this is postpartum blues", "B": "Routine follow-up in 6 weeks only", "C": "No treatment if breastfeeding", "D": "Emergency psychiatric evaluation/hospitalization"}, "correct": "D", "explanation": "Postpartum psychosis is a psychiatric emergency due to risk of suicide or infanticide and requires urgent evaluation and hospitalization.", "optionExplanations": {"A": "Postpartum blues do not include delusions/hallucinations.", "B": "Routine follow-up alone is unsafe.", "C": "Breastfeeding status does not eliminate need for emergency treatment.", "D": "Correct. Psychosis postpartum is an emergency."}}, {"id": 8, "stem": "Which prior history is a major risk factor for postpartum psychosis", "topic": "Postpartum psychosis risk", "options": {"A": "Bipolar disorder", "B": "Copper IUD use", "C": "Rh-negative blood type alone", "D": "Treated bacterial vaginosis"}, "correct": "A", "explanation": "Postpartum psychosis is strongly associated with bipolar disorder and prior postpartum psychosis.", "optionExplanations": {"A": "Correct. Bipolar disorder is a major risk factor.", "B": "Copper IUD use is unrelated.", "C": "Rh status alone is unrelated to psychosis risk.", "D": "BV is not a major postpartum psychosis risk factor."}}, {"id": 9, "stem": "A pregnant patient has panic attacks with palpitations, shortness of breath, trembling, and fear of dying. Which psychiatric disorder is most likely", "topic": "Panic disorder", "options": {"A": "Postpartum blues", "B": "Placenta previa", "C": "Panic disorder", "D": "Primary ovarian insufficiency"}, "correct": "C", "explanation": "Panic disorder involves recurrent panic attacks with autonomic symptoms and intense fear.", "optionExplanations": {"A": "Postpartum blues occur after delivery and involve transient mood lability.", "B": "Placenta previa causes painless bleeding.", "C": "Correct. Episodic intense fear with palpitations/SOB/trembling fits panic attacks.", "D": "Primary ovarian insufficiency causes amenorrhea/hypoestrogenism with high FSH."}}, {"id": 10, "stem": "A pregnant patient has excessive worry most days, restlessness, muscle tension, sleep disturbance, and difficulty controlling worry. Which disorder is most likely", "topic": "Generalized anxiety disorder", "options": {"A": "HELLP syndrome", "B": "Vasa previa", "C": "Generalized anxiety disorder", "D": "Endometriosis"}, "correct": "C", "explanation": "Generalized anxiety disorder involves excessive, difficult-to-control worry with symptoms such as restlessness, sleep disturbance, fatigue, concentration problems, and muscle tension.", "optionExplanations": {"A": "HELLP is hemolysis, elevated liver enzymes, and low platelets.", "B": "Vasa previa causes bleeding after ROM with fetal bradycardia.", "C": "Correct. Persistent excessive worry with somatic tension symptoms fits GAD.", "D": "Endometriosis causes pelvic pain, dysmenorrhea, dyspareunia, and infertility."}}, {"id": 11, "stem": "A pregnant patient has intrusive thoughts of contamination and spends hours washing her hands despite distress. Which diagnosis is most likely", "topic": "OCD in pregnancy", "options": {"A": "Psychotic disorder", "B": "Postpartum blues", "C": "Primary dysmenorrhea", "D": "Obsessive-compulsive disorder"}, "correct": "D", "explanation": "OCD involves intrusive obsessions and repetitive compulsions performed to reduce anxiety.", "optionExplanations": {"A": "Psychosis involves hallucinations/delusions or loss of reality testing.", "B": "Postpartum blues are transient mood symptoms after delivery.", "C": "Primary dysmenorrhea is menstrual cramping.", "D": "Correct. Intrusive contamination thoughts plus compulsive handwashing = OCD."}}, {"id": 12, "stem": "A patient has PTSD symptoms during pregnancy after prior birth trauma. Which symptom cluster is consistent with PTSD", "topic": "PTSD", "options": {"A": "Polyhydramnios and fetal macrosomia only", "B": "Painless vaginal bleeding and soft uterus", "C": "Intrusive memories, avoidance, hyperarousal, and negative mood/cognition changes", "D": "High FSH with streak ovaries"}, "correct": "C", "explanation": "PTSD involves intrusive symptoms, avoidance, negative mood/cognition, and hyperarousal after traumatic exposure.", "optionExplanations": {"A": "These can be associated with diabetes in pregnancy, not PTSD.", "B": "This describes placenta previa.", "C": "Correct. These are classic PTSD symptom clusters.", "D": "This suggests Turner syndrome/primary ovarian failure."}}, {"id": 13, "stem": "A pregnant patient with bipolar disorder is depressed. Why should antidepressant monotherapy be used cautiously", "topic": "Bipolar disorder in pregnancy", "options": {"A": "It can precipitate mania or rapid cycling", "B": "It always cures bipolar disorder", "C": "It diagnoses bipolar disorder", "D": "It prevents postpartum relapse completely"}, "correct": "A", "explanation": "In bipolar disorder, antidepressant monotherapy can trigger mania or rapid cycling; mood stabilizer planning is important.", "optionExplanations": {"A": "Correct. Antidepressant monotherapy can precipitate mania.", "B": "It does not cure bipolar disorder.", "C": "Diagnosis is clinical, not based on response to antidepressants.", "D": "Postpartum relapse risk remains high and needs planning."}}, {"id": 14, "stem": "A pregnant patient with bipolar disorder asks about valproate. Which counseling point is most important", "topic": "Valproate teratogenicity", "options": {"A": "Valproate is avoided when possible due to teratogenic risk including neural tube defects", "B": "Valproate is preferred for all pregnant patients", "C": "Valproate has no fetal risks", "D": "Valproate prevents fetal neural tube defects"}, "correct": "A", "explanation": "Valproate is teratogenic and associated with neural tube defects and neurodevelopmental risks, so it is avoided when possible in pregnancy.", "optionExplanations": {"A": "Correct. Valproate is high-risk in pregnancy.", "B": "It is not preferred for all pregnant patients.", "C": "Valproate has significant fetal risks.", "D": "It increases, not prevents, neural tube defect risk."}}, {"id": 15, "stem": "A pregnant patient with bipolar disorder is taking lithium. Which fetal risk is classically associated with first-trimester lithium exposure", "topic": "Lithium in pregnancy", "options": {"A": "Choanal atresia from methimazole", "B": "Ebstein anomaly", "C": "Fetal alcohol syndrome", "D": "Fetal warfarin syndrome"}, "correct": "B", "explanation": "Lithium exposure is classically associated with Ebstein anomaly, although risk-benefit decisions may still support use in selected severe bipolar disorder cases.", "optionExplanations": {"A": "Methimazole in first trimester is linked to embryopathy including choanal atresia.", "B": "Correct. Lithium is classically linked to Ebstein anomaly.", "C": "Alcohol causes fetal alcohol syndrome.", "D": "Warfarin causes fetal warfarin syndrome."}}, {"id": 16, "stem": "A pregnant patient has schizophrenia and is stable on antipsychotic therapy. Which principle is most appropriate", "topic": "Psychosis in pregnancy", "options": {"A": "Stop all antipsychotics in every pregnancy", "B": "Treat only after delivery regardless of symptoms", "C": "Balance maternal stability and fetal risk; untreated psychosis can be dangerous", "D": "Use methotrexate as first-line"}, "correct": "C", "explanation": "Psychotic disorders in pregnancy require balancing medication risks with risks of untreated psychosis, which can endanger the patient and fetus.", "optionExplanations": {"A": "Universal discontinuation can cause relapse and harm.", "B": "Delaying all treatment may be unsafe.", "C": "Correct. Maternal stability is critical and treatment decisions are individualized.", "D": "Methotrexate is contraindicated in pregnancy and not an antipsychotic."}}, {"id": 17, "stem": "A postpartum patient reports thoughts of harming herself. What is the appropriate response", "topic": "Suicidality", "options": {"A": "Immediate safety assessment and urgent psychiatric intervention", "B": "Reassure and wait until routine 6-week postpartum visit", "C": "Tell her this is always normal postpartum blues", "D": "Ignore if she is breastfeeding"}, "correct": "A", "explanation": "Suicidal ideation requires immediate safety assessment, evaluation of plan/intent/access, and urgent psychiatric intervention.", "optionExplanations": {"A": "Correct. Suicidal thoughts are urgent.", "B": "Waiting is unsafe.", "C": "Suicidality is not normal postpartum blues.", "D": "Breastfeeding status does not reduce urgency."}}, {"id": 18, "stem": "A pregnant patient reveals intimate partner violence. Which response is most appropriate", "topic": "Intimate partner violence", "options": {"A": "Avoid documentation and support", "B": "Ask only when the partner is present", "C": "Blame the patient for staying", "D": "Provide private, supportive assessment and safety planning/resources"}, "correct": "D", "explanation": "IPV screening should be private, supportive, nonjudgmental, and include safety assessment and resources.", "optionExplanations": {"A": "Documentation and resources are important.", "B": "Screening with the partner present may endanger the patient and suppress disclosure.", "C": "Victim-blaming is inappropriate.", "D": "Correct. Safety and privacy are essential."}}, {"id": 19, "stem": "Which substance-use counseling approach is most appropriate during pregnancy", "topic": "Substance use in pregnancy", "options": {"A": "Nonjudgmental screening, brief intervention, and referral/treatment support", "B": "Recommend alcohol to reduce anxiety", "C": "Avoid asking because disclosure is impossible", "D": "Punitive counseling without treatment options"}, "correct": "A", "explanation": "Pregnancy substance-use care should involve nonjudgmental screening, counseling, harm reduction/treatment referral, and support.", "optionExplanations": {"A": "Correct. Nonjudgmental screening and treatment linkage are key.", "B": "Alcohol is teratogenic and should be avoided.", "C": "Screening is important and can identify treatable risk.", "D": "Punitive approaches discourage disclosure and care."}}, {"id": 20, "stem": "A pregnant patient has an eating disorder with restrictive intake. Which fetal complication is most concerning", "topic": "Eating disorders in pregnancy", "options": {"A": "Fetal growth restriction and low birth weight", "B": "Complete androgen insensitivity", "C": "Fetal warfarin syndrome", "D": "Placenta accreta only"}, "correct": "A", "explanation": "Eating disorders in pregnancy can increase risk of inadequate maternal weight gain, fetal growth restriction, low birth weight, preterm birth, and postpartum relapse.", "optionExplanations": {"A": "Correct. Poor nutrition/restriction can impair fetal growth.", "B": "Complete androgen insensitivity is a genetic androgen receptor condition.", "C": "Warfarin exposure causes fetal warfarin syndrome.", "D": "Placenta accreta is abnormal placental adherence, not the main eating disorder complication."}}];
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>

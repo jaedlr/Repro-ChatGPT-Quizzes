@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sexual Disorders Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = [{"id": 1, "stem": "A patient has persistent lack of interest in sexual activity with distress and no better explanation by relationship conflict, medications, substances, or medical illness. Which diagnosis is most likely", "topic": "Female sexual interest/arousal disorder", "options": {"A": "Genito-pelvic pain/penetration disorder", "B": "Gender dysphoria", "C": "Female sexual interest/arousal disorder", "D": "Premature ejaculation"}, "correct": "C", "explanation": "Female sexual interest/arousal disorder involves decreased sexual interest/arousal that causes distress and is not better explained by another condition, medication, substance, or relationship issue.", "optionExplanations": {"A": "Genito-pelvic pain/penetration disorder centers on pain, fear, or pelvic floor tightening with penetration.", "B": "Gender dysphoria involves distress from incongruence between experienced gender and assigned sex.", "C": "Correct. Low desire/arousal with distress fits this disorder.", "D": "Premature ejaculation is a male ejaculation disorder."}}, {"id": 2, "stem": "A patient reports recurrent inability to orgasm despite adequate stimulation, causing significant distress. Which diagnosis is most likely", "topic": "Female orgasmic disorder", "options": {"A": "Exhibitionistic disorder", "B": "Female orgasmic disorder", "C": "Hypoactive sexual desire disorder in males", "D": "Vaginismus only"}, "correct": "B", "explanation": "Female orgasmic disorder involves marked delay, infrequency, absence, or reduced intensity of orgasm with distress.", "optionExplanations": {"A": "Exhibitionistic disorder involves sexual arousal from exposing genitals to unsuspecting persons.", "B": "Correct. Persistent distressing difficulty with orgasm fits female orgasmic disorder.", "C": "Male hypoactive sexual desire disorder involves low male desire.", "D": "Vaginismus is included under genito-pelvic pain/penetration disorder and involves penetration difficulty/pelvic floor tightening."}}, {"id": 3, "stem": "A patient has recurrent vulvovaginal pain with attempted penetration, fear of pain, and involuntary pelvic floor tightening. Which diagnosis is most likely", "topic": "Genito-pelvic pain/penetration disorder", "options": {"A": "Male erectile disorder", "B": "Female orgasmic disorder", "C": "Frotteuristic disorder", "D": "Genito-pelvic pain/penetration disorder"}, "correct": "D", "explanation": "Genito-pelvic pain/penetration disorder includes penetration difficulty, vulvovaginal/pelvic pain, fear or anxiety about pain, and pelvic floor muscle tightening.", "optionExplanations": {"A": "Male erectile disorder involves difficulty obtaining or maintaining erection.", "B": "Female orgasmic disorder involves orgasm difficulty rather than penetration pain.", "C": "Frotteuristic disorder involves touching/rubbing against a nonconsenting person.", "D": "Correct. Pain/fear/tightening with penetration fits this disorder."}}, {"id": 4, "stem": "A patient has dyspareunia due to vulvovaginal atrophy after menopause. Which treatment is most targeted", "topic": "Dyspareunia due to atrophy", "options": {"A": "RhoGAM", "B": "Magnesium sulfate", "C": "Methotrexate", "D": "Local vaginal estrogen and lubricants/moisturizers"}, "correct": "D", "explanation": "Dyspareunia due to hypoestrogenic vaginal atrophy is treated with lubricants/moisturizers and local vaginal estrogen when appropriate.", "optionExplanations": {"A": "RhoGAM prevents Rh alloimmunization.", "B": "Magnesium sulfate prevents eclamptic seizures.", "C": "Methotrexate is used for ectopic pregnancy or medical treatment contexts, not atrophic dyspareunia.", "D": "Correct. Local estrogen targets genitourinary syndrome of menopause."}}, {"id": 5, "stem": "A male patient has persistent difficulty obtaining or maintaining an erection sufficient for sexual activity, causing distress. Which diagnosis is most likely", "topic": "Male erectile disorder", "options": {"A": "Premature ejaculation", "B": "Female sexual interest/arousal disorder", "C": "Male erectile disorder", "D": "Delayed ejaculation"}, "correct": "C", "explanation": "Male erectile disorder involves persistent difficulty obtaining or maintaining erection or decreased erectile rigidity, causing distress.", "optionExplanations": {"A": "Premature ejaculation involves ejaculation shortly after penetration and before desired.", "B": "Female sexual interest/arousal disorder applies to female desire/arousal symptoms.", "C": "Correct. Difficulty obtaining/maintaining erection = erectile disorder.", "D": "Delayed ejaculation involves delayed, infrequent, or absent ejaculation."}}, {"id": 6, "stem": "A male patient ejaculates within about 1 minute of penetration on nearly all occasions and is distressed. Which diagnosis is most likely", "topic": "Premature ejaculation", "options": {"A": "Pedophilic disorder", "B": "Male erectile disorder", "C": "Premature ejaculation", "D": "Delayed ejaculation"}, "correct": "C", "explanation": "Premature ejaculation involves ejaculation occurring sooner than desired, commonly within about 1 minute of penetration, causing distress.", "optionExplanations": {"A": "Pedophilic disorder involves sexual interest in prepubescent children.", "B": "Erectile disorder is difficulty achieving or maintaining erection.", "C": "Correct. Ejaculation within ~1 minute with distress fits premature ejaculation.", "D": "Delayed ejaculation is delayed/infrequent/absent ejaculation."}}, {"id": 7, "stem": "A male patient has marked delay or absence of ejaculation despite adequate stimulation and desire, causing distress. Which diagnosis is most likely", "topic": "Delayed ejaculation", "options": {"A": "Voyeuristic disorder", "B": "Premature ejaculation", "C": "Delayed ejaculation", "D": "Exhibitionistic disorder"}, "correct": "C", "explanation": "Delayed ejaculation involves marked delay, infrequency, or absence of ejaculation with distress.", "optionExplanations": {"A": "Voyeuristic disorder involves observing unsuspecting persons who are naked, disrobing, or sexually active.", "B": "Premature ejaculation is ejaculation sooner than desired.", "C": "Correct. Distressing delay/absence of ejaculation fits delayed ejaculation.", "D": "Exhibitionistic disorder involves exposing genitals to unsuspecting persons."}}, {"id": 8, "stem": "A patient has low sexual desire causing distress. Before diagnosing a primary sexual dysfunction, which evaluation principle is most important", "topic": "Sexual dysfunction evaluation", "options": {"A": "Avoid asking about safety or coercion", "B": "Assess medications, substances, medical illness, psychiatric illness, pain, and relationship factors", "C": "Assume the symptom is always voluntary", "D": "Diagnose a paraphilic disorder immediately"}, "correct": "B", "explanation": "Sexual dysfunction should be evaluated in context, including medication effects, substances, endocrine/medical illness, mood/anxiety disorders, pain, trauma, and relationship/safety factors.", "optionExplanations": {"A": "Safety, consent, coercion, and trauma history are clinically important.", "B": "Correct. Rule out common reversible contributors first.", "C": "Symptoms may be multifactorial and distressing, not voluntary.", "D": "Low desire does not automatically imply a paraphilic disorder."}}, {"id": 9, "stem": "Which medication class commonly contributes to decreased libido and delayed orgasm", "topic": "Medication-induced sexual dysfunction", "options": {"A": "Topical emollients", "B": "SSRIs", "C": "Prenatal vitamins", "D": "RhoGAM"}, "correct": "B", "explanation": "SSRIs commonly cause sexual side effects such as decreased libido, delayed orgasm, and anorgasmia.", "optionExplanations": {"A": "Topical emollients are not a classic cause.", "B": "Correct. SSRIs are a classic cause of sexual dysfunction.", "C": "Prenatal vitamins are not a classic cause.", "D": "RhoGAM does not typically cause sexual dysfunction."}}, {"id": 10, "stem": "A patient has sexual dysfunction related to depression and anxiety. Which management principle is most appropriate", "topic": "Psychiatric contributors", "options": {"A": "Use antibiotics first-line", "B": "Assume all sexual symptoms are endocrine only", "C": "Treat the underlying psychiatric condition and address medication side effects", "D": "Ignore psychiatric symptoms"}, "correct": "C", "explanation": "Mood and anxiety disorders can contribute to sexual dysfunction, so treatment should address underlying psychiatric symptoms while considering medication-related sexual side effects.", "optionExplanations": {"A": "Antibiotics do not treat psychiatric sexual dysfunction.", "B": "Sexual dysfunction is biopsychosocial, not always endocrine.", "C": "Correct. Treating underlying depression/anxiety and adjusting medications when appropriate can help.", "D": "Ignoring psychiatric symptoms misses a common contributor."}}, {"id": 11, "stem": "A patient experiences sexual pain after a history of trauma. Which approach is most appropriate", "topic": "Trauma-informed care", "options": {"A": "Avoid discussing consent", "B": "Dismiss symptoms if anatomy appears normal", "C": "Use trauma-informed care, validate symptoms, and avoid coercive examination", "D": "Force a pelvic exam immediately"}, "correct": "C", "explanation": "Trauma-informed care emphasizes safety, consent, validation, patient control, and avoiding retraumatization.", "optionExplanations": {"A": "Consent is central to sexual health care.", "B": "Symptoms can be real even if initial anatomy appears normal.", "C": "Correct. Trauma-informed, consent-based care is essential.", "D": "Forcing examination is harmful and inappropriate."}}, {"id": 12, "stem": "A patient has distress due to incongruence between experienced gender and sex assigned at birth. Which diagnosis may apply", "topic": "Gender dysphoria", "options": {"A": "Premature ejaculation", "B": "Female orgasmic disorder", "C": "Gender dysphoria", "D": "Fetishistic disorder"}, "correct": "C", "explanation": "Gender dysphoria involves distress or impairment related to incongruence between experienced/expressed gender and assigned sex.", "optionExplanations": {"A": "Premature ejaculation is ejaculation sooner than desired.", "B": "Female orgasmic disorder involves orgasm difficulty.", "C": "Correct. Distress from gender incongruence fits gender dysphoria.", "D": "Fetishistic disorder involves sexual arousal from nonliving objects or highly specific nongenital body parts."}}, {"id": 13, "stem": "Which principle is most important when caring for transgender and gender-diverse patients", "topic": "Gender-affirming care", "options": {"A": "Avoid preventive screening", "B": "Use respectful language, affirmed name/pronouns, and individualized care", "C": "Assume anatomy based only on gender identity", "D": "Refuse to discuss fertility or contraception"}, "correct": "B", "explanation": "Gender-affirming care uses respectful language, affirmed names/pronouns, anatomy-based preventive care, and individualized counseling.", "optionExplanations": {"A": "Preventive screening remains important based on organs present and risk.", "B": "Correct. Respectful individualized care is foundational.", "C": "Anatomy and screening needs should be assessed individually.", "D": "Fertility and contraception counseling may be relevant."}}, {"id": 14, "stem": "A person has recurrent intense sexual arousal from observing unsuspecting people who are naked or sexually active, causing distress or involving nonconsenting persons. Which paraphilic disorder is this", "topic": "Voyeuristic disorder", "options": {"A": "Exhibitionistic disorder", "B": "Frotteuristic disorder", "C": "Voyeuristic disorder", "D": "Sexual masochism disorder"}, "correct": "C", "explanation": "Voyeuristic disorder involves sexual arousal from observing unsuspecting persons who are naked, disrobing, or sexually active.", "optionExplanations": {"A": "Exhibitionistic disorder involves exposing genitals to unsuspecting persons.", "B": "Frotteuristic disorder involves touching/rubbing against nonconsenting persons.", "C": "Correct. Observing unsuspecting persons defines voyeuristic disorder.", "D": "Sexual masochism disorder involves arousal from being humiliated, beaten, bound, or otherwise made to suffer."}}, {"id": 15, "stem": "A person has recurrent sexual arousal from exposing genitals to unsuspecting strangers. Which paraphilic disorder is this", "topic": "Exhibitionistic disorder", "options": {"A": "Voyeuristic disorder", "B": "Frotteuristic disorder", "C": "Fetishistic disorder", "D": "Exhibitionistic disorder"}, "correct": "D", "explanation": "Exhibitionistic disorder involves sexual arousal from exposing genitals to an unsuspecting person.", "optionExplanations": {"A": "Voyeuristic disorder involves observing unsuspecting persons.", "B": "Frotteuristic disorder involves touching/rubbing against nonconsenting persons.", "C": "Fetishistic disorder involves arousal from nonliving objects or specific nongenital body parts.", "D": "Correct. Exposing genitals to unsuspecting persons defines exhibitionistic disorder."}}, {"id": 16, "stem": "A person repeatedly rubs against nonconsenting people in crowded public places for sexual arousal. Which paraphilic disorder is this", "topic": "Frotteuristic disorder", "options": {"A": "Voyeuristic disorder", "B": "Frotteuristic disorder", "C": "Sexual sadism disorder", "D": "Transvestic disorder"}, "correct": "B", "explanation": "Frotteuristic disorder involves sexual arousal from touching or rubbing against a nonconsenting person.", "optionExplanations": {"A": "Voyeuristic disorder involves observing unsuspecting persons.", "B": "Correct. Nonconsensual touching/rubbing defines frotteuristic disorder.", "C": "Sexual sadism disorder involves arousal from another person’s suffering.", "D": "Transvestic disorder involves sexual arousal from cross-dressing with distress/impairment."}}, {"id": 17, "stem": "A person has recurrent sexual arousal from nonliving objects causing distress and impairment. Which paraphilic disorder is most likely", "topic": "Fetishistic disorder", "options": {"A": "Fetishistic disorder", "B": "Exhibitionistic disorder", "C": "Delayed ejaculation", "D": "Pedophilic disorder"}, "correct": "A", "explanation": "Fetishistic disorder involves sexual arousal from nonliving objects or highly specific nongenital body parts, causing distress or impairment.", "optionExplanations": {"A": "Correct. Nonliving-object arousal with distress/impairment fits fetishistic disorder.", "B": "Exhibitionistic disorder involves exposing genitals.", "C": "Delayed ejaculation is a sexual dysfunction, not a paraphilic disorder.", "D": "Pedophilic disorder involves sexual interest in prepubescent children."}}, {"id": 18, "stem": "A person has recurrent sexual arousal from being humiliated, beaten, bound, or otherwise made to suffer, causing distress or impairment. Which disorder is this", "topic": "Sexual masochism disorder", "options": {"A": "Female orgasmic disorder", "B": "Sexual sadism disorder", "C": "Voyeuristic disorder", "D": "Sexual masochism disorder"}, "correct": "D", "explanation": "Sexual masochism disorder involves arousal from one’s own suffering or humiliation when it causes distress/impairment or involves dangerous behavior.", "optionExplanations": {"A": "Female orgasmic disorder involves orgasm difficulty.", "B": "Sadism involves arousal from another person’s suffering.", "C": "Voyeuristic disorder involves observing unsuspecting persons.", "D": "Correct. Arousal from one’s own suffering/humiliation = masochism."}}, {"id": 19, "stem": "A person has recurrent sexual arousal from the physical or psychological suffering of another person. Which disorder is this if distress, impairment, or nonconsenting behavior is present", "topic": "Sexual sadism disorder", "options": {"A": "Genito-pelvic pain/penetration disorder", "B": "Fetishistic disorder", "C": "Sexual sadism disorder", "D": "Sexual masochism disorder"}, "correct": "C", "explanation": "Sexual sadism disorder involves sexual arousal from another person’s suffering when associated with distress/impairment or acted on with a nonconsenting person.", "optionExplanations": {"A": "Genito-pelvic pain/penetration disorder involves pain/fear/tightening with penetration.", "B": "Fetishistic disorder involves objects or specific body parts.", "C": "Correct. Arousal from another person’s suffering = sadism.", "D": "Masochism involves one’s own suffering."}}, {"id": 20, "stem": "A person has sexual urges involving prepubescent children. What is the most important clinical and safety principle", "topic": "Pedophilic disorder and safety", "options": {"A": "Treat with reassurance only", "B": "Ignore unless the patient asks twice", "C": "Encourage acting on urges to reduce distress", "D": "Prioritize safety, mandated reporting when applicable, and urgent specialized psychiatric management"}, "correct": "D", "explanation": "Sexual interest or behavior involving children requires safety assessment, legal/mandated reporting when applicable, and specialized psychiatric management.", "optionExplanations": {"A": "Reassurance alone is insufficient.", "B": "Ignoring potential risk is inappropriate.", "C": "Encouraging harmful/illegal behavior is never appropriate.", "D": "Correct. Child safety and appropriate reporting/urgent care are paramount."}}];
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Placental Diseases and Hemorrhage Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = [{"id": 1, "stem": "A pregnant patient has painless bright red vaginal bleeding in the third trimester. The uterus is soft and nontender, and fetal status is initially reassuring. Which diagnosis is most likely", "topic": "Placenta previa", "options": {"A": "Uterine rupture", "B": "Ectopic pregnancy", "C": "Placenta previa", "D": "Placental abruption"}, "correct": "C", "explanation": "Placenta previa classically presents with painless bright red bleeding in the second or third trimester with a soft, nontender uterus.", "optionExplanations": {"A": "Uterine rupture causes sudden severe pain and fetal distress, often with prior uterine scar.", "B": "Ectopic pregnancy usually presents in early pregnancy with pelvic pain/bleeding.", "C": "Correct. Painless bright red bleeding + nontender uterus = placenta previa.", "D": "Abruption classically causes painful bleeding with uterine tenderness/rigidity."}}, {"id": 2, "stem": "A patient has third-trimester bleeding. Placenta previa is suspected. What should be avoided until placental location is known", "topic": "Placenta previa precautions", "options": {"A": "Fetal monitoring", "B": "Maternal vital signs", "C": "Transabdominal or transvaginal ultrasound", "D": "Digital vaginal examination"}, "correct": "D", "explanation": "Digital vaginal exam is contraindicated when placenta previa is suspected because it can provoke severe hemorrhage.", "optionExplanations": {"A": "Fetal monitoring is appropriate.", "B": "Maternal vitals are necessary.", "C": "Ultrasound is used to diagnose placental location.", "D": "Correct. Do not perform digital vaginal exam until previa is excluded."}}, {"id": 3, "stem": "Which imaging modality is used to diagnose placenta previa", "topic": "Placenta previa diagnosis", "options": {"A": "Pap smear", "B": "Ultrasound", "C": "Maternal serum AFP only", "D": "Kleihauer-Betke test alone"}, "correct": "B", "explanation": "Placenta previa is diagnosed by ultrasound showing placenta over or near the internal cervical os.", "optionExplanations": {"A": "Pap smear evaluates cervical cytology.", "B": "Correct. Ultrasound localizes the placenta.", "C": "AFP screening does not diagnose previa.", "D": "Kleihauer-Betke quantifies fetomaternal hemorrhage, not placental location."}}, {"id": 4, "stem": "A pregnant patient has sudden painful vaginal bleeding, uterine tenderness, a firm/rigid uterus, and fetal distress. Which diagnosis is most likely", "topic": "Placental abruption", "options": {"A": "Placental abruption", "B": "Placenta previa", "C": "Vasa previa", "D": "Cervical ectropion"}, "correct": "A", "explanation": "Placental abruption classically presents with painful bleeding, uterine tenderness or rigidity, and fetal distress.", "optionExplanations": {"A": "Correct. Painful bleeding + tender/rigid uterus = abruption.", "B": "Placenta previa classically causes painless bleeding.", "C": "Vasa previa causes bleeding after rupture of membranes with fetal bradycardia.", "D": "Cervical ectropion can cause spotting but not rigid uterus/fetal distress."}}, {"id": 5, "stem": "Which maternal risk factor is strongly associated with placental abruption", "topic": "Abruption risk factors", "options": {"A": "Low-risk first pregnancy only", "B": "Hypertension", "C": "Molar pregnancy only", "D": "Placenta covering the cervical os"}, "correct": "B", "explanation": "Placental abruption risk factors include hypertension, trauma, cocaine use, smoking, prior abruption, PPROM, and rapid uterine decompression.", "optionExplanations": {"A": "Low-risk pregnancy alone is not a typical risk factor.", "B": "Correct. Hypertension is a major abruption risk factor.", "C": "Molar pregnancy is gestational trophoblastic disease, not a classic abruption risk factor.", "D": "Placenta covering the os describes placenta previa."}}, {"id": 6, "stem": "A pregnant patient uses cocaine and develops acute painful vaginal bleeding with fetal distress. Which mechanism best explains the placental complication", "topic": "Cocaine and abruption", "options": {"A": "Placental implantation over the cervical os", "B": "Abnormal trophoblastic proliferation with grape-like villi", "C": "Fetal vessels crossing membranes over the os", "D": "Vasoconstriction causing placental separation"}, "correct": "D", "explanation": "Cocaine causes vasoconstriction, which increases risk of placental abruption.", "optionExplanations": {"A": "Placental implantation over the os is placenta previa.", "B": "Grape-like villi describe molar pregnancy.", "C": "Fetal vessels over the os describe vasa previa.", "D": "Correct. Cocaine-associated vasoconstriction can precipitate abruption."}}, {"id": 7, "stem": "A patient has placental abruption with a dead fetus. Which complication may develop from release of thromboplastin into maternal circulation", "topic": "Abruption complications", "options": {"A": "Lichen sclerosus", "B": "Disseminated intravascular coagulation", "C": "Condyloma acuminatum", "D": "Fetal alcohol syndrome"}, "correct": "B", "explanation": "Placental abruption can cause DIC due to thromboplastin release from the placenta, especially with fetal demise.", "optionExplanations": {"A": "Lichen sclerosus is a vulvar dermatosis.", "B": "Correct. Abruption is a classic obstetric cause of DIC.", "C": "Condyloma acuminatum is HPV-related genital warts.", "D": "Fetal alcohol syndrome is from alcohol exposure."}}, {"id": 8, "stem": "After rupture of membranes, a laboring patient has painless vaginal bleeding followed by fetal bradycardia. Which diagnosis is most concerning", "topic": "Vasa previa", "options": {"A": "Placental abruption", "B": "Placenta previa", "C": "Vasa previa", "D": "Bloody show"}, "correct": "C", "explanation": "Vasa previa presents with painless bleeding after rupture of membranes and fetal bradycardia due to rupture of fetal vessels.", "optionExplanations": {"A": "Abruption is painful with uterine tenderness/rigidity.", "B": "Placenta previa causes painless maternal bleeding but not specifically after ROM with fetal exsanguination.", "C": "Correct. Bleeding after ROM + fetal bradycardia = vasa previa.", "D": "Bloody show should not cause fetal bradycardia."}}, {"id": 9, "stem": "Which condition involves fetal blood vessels traversing the membranes over or near the internal cervical os", "topic": "Vasa previa anatomy", "options": {"A": "Vasa previa", "B": "Circumvallate placenta", "C": "Placenta accreta", "D": "Placental abruption"}, "correct": "A", "explanation": "Vasa previa occurs when unprotected fetal vessels run through membranes over or near the internal cervical os.", "optionExplanations": {"A": "Correct. Fetal vessels over/near the os define vasa previa.", "B": "Circumvallate placenta is an abnormal placental shape/membrane insertion.", "C": "Placenta accreta is abnormal adherence to myometrium.", "D": "Abruption is premature placental separation."}}, {"id": 10, "stem": "A patient has placenta previa and prior cesarean deliveries. Ultrasound suggests the placenta is abnormally adherent to the myometrium without a normal decidual plane. Which diagnosis is most likely", "topic": "Placenta accreta spectrum", "options": {"A": "Placenta accreta spectrum", "B": "Placental abruption", "C": "Complete mole", "D": "Vasa previa"}, "correct": "A", "explanation": "Placenta accreta spectrum is abnormal placental adherence/invasion due to defective decidua, strongly associated with prior cesarean and placenta previa.", "optionExplanations": {"A": "Correct. Prior C-section + previa + abnormal placental adherence = accreta spectrum.", "B": "Abruption is premature separation from the uterine wall.", "C": "Complete mole is abnormal trophoblastic proliferation with no fetal tissue.", "D": "Vasa previa involves fetal vessels over the os."}}, {"id": 11, "stem": "Which placenta accreta spectrum subtype invades through the myometrium to the serosa and may involve adjacent organs such as the bladder", "topic": "Placenta percreta", "options": {"A": "Placenta percreta", "B": "Placenta increta", "C": "Placenta previa", "D": "Placenta accreta"}, "correct": "A", "explanation": "Placenta percreta is the deepest accreta spectrum subtype, invading through the uterine serosa and sometimes into adjacent organs.", "optionExplanations": {"A": "Correct. Percreta penetrates through serosa and may involve bladder.", "B": "Increta invades into the myometrium.", "C": "Previa is placental location over/near the cervical os.", "D": "Accreta adheres to myometrium without deep invasion."}}, {"id": 12, "stem": "Which placenta accreta spectrum subtype invades into the myometrium but not through the serosa", "topic": "Placenta increta", "options": {"A": "Placenta increta", "B": "Vasa previa", "C": "Placenta percreta", "D": "Placenta accreta"}, "correct": "A", "explanation": "Placenta increta refers to placental villi invading into the myometrium.", "optionExplanations": {"A": "Correct. Increta invades into myometrium.", "B": "Vasa previa involves fetal vessels over the cervical os.", "C": "Percreta invades through serosa.", "D": "Accreta attaches to myometrium without invasion."}}, {"id": 13, "stem": "During the third stage of labor, the placenta does not separate and attempts at removal cause severe hemorrhage. Which placental disorder is most likely", "topic": "Retained placenta/accreta", "options": {"A": "Primary dysmenorrhea", "B": "Placenta accreta spectrum", "C": "Condyloma lata", "D": "Endometriosis"}, "correct": "B", "explanation": "Placenta accreta spectrum can present as failure of placental separation and severe postpartum hemorrhage.", "optionExplanations": {"A": "Primary dysmenorrhea is menstrual cramping.", "B": "Correct. Failure of separation with hemorrhage suggests accreta.", "C": "Condyloma lata is secondary syphilis.", "D": "Endometriosis causes chronic pelvic pain/infertility."}}, {"id": 14, "stem": "A patient delivers and has postpartum hemorrhage due to placenta accreta spectrum. What definitive surgical treatment is commonly required in severe cases", "topic": "Accreta management", "options": {"A": "Pap smear", "B": "Methotrexate only", "C": "Cesarean hysterectomy", "D": "Cryotherapy"}, "correct": "C", "explanation": "Severe placenta accreta spectrum often requires planned cesarean hysterectomy because attempts to remove the placenta can cause massive hemorrhage.", "optionExplanations": {"A": "Pap smear screens cervical cytology.", "B": "Methotrexate is not definitive management for severe accreta hemorrhage.", "C": "Correct. Cesarean hysterectomy is definitive for severe accreta spectrum.", "D": "Cryotherapy treats some cervical lesions, not accreta."}}, {"id": 15, "stem": "A pregnant patient has painless vaginal bleeding at 34 weeks. Ultrasound shows placenta completely covering the internal cervical os. Which classification is this", "topic": "Complete placenta previa", "options": {"A": "Placental abruption", "B": "Complete placenta previa", "C": "Placenta increta", "D": "Marginal cord insertion"}, "correct": "B", "explanation": "Complete placenta previa means the placenta completely covers the internal cervical os.", "optionExplanations": {"A": "Abruption is premature placental separation.", "B": "Correct. Complete coverage of internal os = complete previa.", "C": "Increta describes depth of invasion into myometrium, not os coverage.", "D": "Marginal cord insertion refers to cord insertion near placental edge."}}, {"id": 16, "stem": "A placenta implants low in the uterus and reaches the edge of the internal os but does not cover it. Which term best fits", "topic": "Marginal placenta previa", "options": {"A": "Velamentous cord insertion", "B": "Complete placenta previa", "C": "Marginal placenta previa", "D": "Placenta percreta"}, "correct": "C", "explanation": "Marginal previa reaches the margin of the internal os but does not cover it.", "optionExplanations": {"A": "Velamentous insertion is cord vessels inserting into membranes.", "B": "Complete previa covers the os.", "C": "Correct. Edge reaches the os = marginal previa.", "D": "Percreta invades through uterine serosa."}}, {"id": 17, "stem": "Which cord insertion abnormality is associated with unprotected fetal vessels traveling through membranes and increased risk of vasa previa", "topic": "Velamentous cord insertion", "options": {"A": "Placenta accreta", "B": "Circumvallate placenta only", "C": "Central cord insertion", "D": "Velamentous cord insertion"}, "correct": "D", "explanation": "Velamentous cord insertion leaves fetal vessels unprotected by Wharton jelly as they traverse membranes and is associated with vasa previa.", "optionExplanations": {"A": "Accreta is abnormal placental adherence/invasion.", "B": "Circumvallate placenta is a placental shape/membrane abnormality.", "C": "Central insertion is normal.", "D": "Correct. Velamentous insertion predisposes to vasa previa."}}, {"id": 18, "stem": "A postpartum patient has hemorrhage and suspected fetomaternal hemorrhage. Which test quantitatively determines the amount of fetal blood in maternal circulation", "topic": "Kleihauer-Betke test", "options": {"A": "Pap smear", "B": "Kleihauer-Betke test", "C": "RPR", "D": "Apt test"}, "correct": "B", "explanation": "The Kleihauer-Betke test is quantitative and estimates the amount of fetomaternal hemorrhage.", "optionExplanations": {"A": "Pap smear screens cervical cytology.", "B": "Correct. Kleihauer-Betke quantifies fetal blood in maternal circulation.", "C": "RPR screens for syphilis.", "D": "Apt test is qualitative and detects fetal vs maternal blood."}}, {"id": 19, "stem": "A newborn has blood in the stool, and clinicians need to determine whether the blood is fetal or swallowed maternal blood. Which test is qualitative for fetal blood presence", "topic": "Apt test", "options": {"A": "1-hour glucose test", "B": "Quad screen", "C": "Apt test", "D": "Kleihauer-Betke test"}, "correct": "C", "explanation": "The Apt test is qualitative and reports whether fetal blood is present.", "optionExplanations": {"A": "1-hour glucose test screens for gestational diabetes.", "B": "Quad screen evaluates fetal aneuploidy/neural tube defect risk.", "C": "Correct. Apt test qualitatively distinguishes fetal from maternal blood.", "D": "Kleihauer-Betke quantitatively estimates fetomaternal hemorrhage."}}, {"id": 20, "stem": "A pregnant patient has placental hemorrhage and is Rh-negative. Why might quantifying fetomaternal hemorrhage be important", "topic": "Rhogam dosing", "options": {"A": "To screen for gestational diabetes", "B": "To determine whether additional RhoGAM dosing is needed", "C": "To diagnose cervical cancer", "D": "To confirm fetal lung maturity"}, "correct": "B", "explanation": "Quantifying fetomaternal hemorrhage helps determine whether standard RhoGAM coverage is sufficient or additional dosing is needed.", "optionExplanations": {"A": "Gestational diabetes is screened with glucose testing.", "B": "Correct. Fetomaternal hemorrhage volume guides RhoGAM dosing.", "C": "Cervical cancer is diagnosed by biopsy after abnormal screening/clinical concern.", "D": "Fetal lung maturity is not assessed by fetomaternal hemorrhage testing."}}];
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>

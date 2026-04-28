@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pelvic Organ Prolapse Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = [{"id": 1, "stem": "A postmenopausal patient reports pelvic pressure, vaginal bulge, and symptoms worse with standing and straining. Which diagnosis is most likely", "topic": "Pelvic organ prolapse presentation", "options": {"A": "Pelvic organ prolapse", "B": "Primary dysmenorrhea", "C": "Placental abruption", "D": "Complete androgen insensitivity"}, "correct": "A", "explanation": "Pelvic organ prolapse commonly presents with vaginal bulge/pressure that worsens with standing, lifting, coughing, or straining.", "optionExplanations": {"A": "Correct. Vaginal bulge/pressure worsened by Valsalva-type activities fits POP.", "B": "Primary dysmenorrhea is menstrual cramping.", "C": "Placental abruption is painful bleeding in pregnancy with uterine tenderness.", "D": "Complete androgen insensitivity causes primary amenorrhea with absent uterus/testes."}}, {"id": 2, "stem": "Which risk factor most strongly contributes to pelvic organ prolapse through pelvic floor stretch and levator ani injury", "topic": "POP risk factors", "options": {"A": "Vaginal delivery", "B": "HPV vaccination", "C": "Hyperprolactinemia", "D": "First-trimester nausea"}, "correct": "A", "explanation": "Major POP risk factors include vaginal childbirth, parity, aging, menopause, obesity, chronic cough, constipation/straining, heavy lifting, and connective tissue disorders.", "optionExplanations": {"A": "Correct. Vaginal delivery is a major pelvic floor injury risk.", "B": "HPV vaccination does not cause POP.", "C": "Hyperprolactinemia causes galactorrhea/amenorrhea, not POP.", "D": "Nausea does not cause structural pelvic support failure."}}, {"id": 3, "stem": "A patient with chronic constipation and frequent straining develops pelvic organ prolapse. Which mechanism best explains the association", "topic": "Increased intra-abdominal pressure", "options": {"A": "Repeated increased intra-abdominal pressure weakens pelvic support", "B": "Placental invasion into myometrium", "C": "Direct HPV E6/E7 inhibition of p53 and Rb", "D": "Fetal renal insufficiency"}, "correct": "A", "explanation": "Chronic straining increases intra-abdominal pressure, which stresses and weakens pelvic floor support structures.", "optionExplanations": {"A": "Correct. Chronic Valsalva/straining contributes to POP.", "B": "Placental invasion describes accreta spectrum.", "C": "HPV E6/E7 explains HPV-related neoplasia.", "D": "Fetal renal insufficiency is a pregnancy medication complication."}}, {"id": 4, "stem": "A patient has anterior vaginal wall prolapse with bladder descent causing urinary symptoms. Which type of prolapse is this", "topic": "Cystocele", "options": {"A": "Cystocele", "B": "Enterocele", "C": "Uterine inversion", "D": "Rectocele"}, "correct": "A", "explanation": "Cystocele is anterior vaginal wall prolapse involving bladder descent.", "optionExplanations": {"A": "Correct. Anterior wall + bladder = cystocele.", "B": "Enterocele is herniation of small bowel/peritoneal sac.", "C": "Uterine inversion is postpartum fundal inversion, not chronic POP.", "D": "Rectocele is posterior vaginal wall prolapse involving rectum."}}, {"id": 5, "stem": "A patient has posterior vaginal wall bulging and difficulty with bowel movements requiring splinting. Which prolapse type is most likely", "topic": "Rectocele", "options": {"A": "Urethrocele", "B": "Rectocele", "C": "Placenta previa", "D": "Cystocele"}, "correct": "B", "explanation": "Rectocele is posterior vaginal wall prolapse involving the rectum and commonly causes defecatory dysfunction, incomplete evacuation, or need for splinting.", "optionExplanations": {"A": "Urethrocele involves urethral descent/anterior support.", "B": "Correct. Posterior wall bulge + bowel symptoms = rectocele.", "C": "Placenta previa causes painless bleeding in pregnancy.", "D": "Cystocele causes anterior wall/bladder symptoms."}}, {"id": 6, "stem": "A patient has prolapse of the cervix and uterus into the vaginal canal. Which type of prolapse is present", "topic": "Uterine prolapse", "options": {"A": "Cystocele", "B": "Gartner duct cyst", "C": "Uterine prolapse", "D": "Rectocele"}, "correct": "C", "explanation": "Uterine prolapse is descent of the uterus/cervix into or beyond the vaginal canal.", "optionExplanations": {"A": "Cystocele involves bladder/anterior wall.", "B": "Gartner duct cyst is a lateral vaginal wall cyst.", "C": "Correct. Descent of uterus/cervix = uterine prolapse.", "D": "Rectocele involves rectum/posterior wall."}}, {"id": 7, "stem": "A patient had hysterectomy years ago and now has descent of the vaginal apex. Which diagnosis is most likely", "topic": "Vaginal vault prolapse", "options": {"A": "Placenta accreta", "B": "Endometrioma", "C": "Uterine prolapse", "D": "Vaginal vault prolapse"}, "correct": "D", "explanation": "Vaginal vault prolapse is descent of the vaginal apex after hysterectomy.", "optionExplanations": {"A": "Placenta accreta is abnormal placental adherence during pregnancy.", "B": "Endometrioma is an ovarian endometriotic cyst.", "C": "Uterine prolapse requires a uterus.", "D": "Correct. Post-hysterectomy apical descent = vaginal vault prolapse."}}, {"id": 8, "stem": "A patient has a posterior apical vaginal bulge due to herniation of small bowel and peritoneal sac. Which diagnosis is most likely", "topic": "Enterocele", "options": {"A": "Cystocele", "B": "Bartholin cyst", "C": "Urethrocele", "D": "Enterocele"}, "correct": "D", "explanation": "Enterocele is herniation of small bowel/peritoneal sac into the vaginal canal, often posterior/apical.", "optionExplanations": {"A": "Cystocele involves bladder descent.", "B": "Bartholin cyst is posterior-lateral introitus duct obstruction.", "C": "Urethrocele involves urethral support loss.", "D": "Correct. Small bowel/peritoneal sac prolapse = enterocele."}}, {"id": 9, "stem": "A patient has pelvic organ prolapse with urinary leakage when coughing or sneezing. Which associated urinary disorder is most likely", "topic": "Stress urinary incontinence association", "options": {"A": "Overflow from spinal cord injury only", "B": "Diabetes insipidus", "C": "Stress urinary incontinence", "D": "Nephrotic syndrome"}, "correct": "C", "explanation": "POP can be associated with stress urinary incontinence due to pelvic floor and urethral support dysfunction.", "optionExplanations": {"A": "Overflow incontinence is due to retention/poor emptying, not cough leakage.", "B": "Diabetes insipidus causes polyuria/polydipsia.", "C": "Correct. Leakage with cough/sneeze/exertion = stress urinary incontinence.", "D": "Nephrotic syndrome causes proteinuria/edema, not cough leakage."}}, {"id": 10, "stem": "During POP exam, the patient is asked to bear down while the clinician inspects the vagina. Why is Valsalva used", "topic": "POP physical exam", "options": {"A": "To confirm hyperthyroidism", "B": "To diagnose syphilis", "C": "To accentuate prolapse and identify involved compartments", "D": "To measure fetal heart rate"}, "correct": "C", "explanation": "Valsalva increases intra-abdominal pressure and accentuates prolapse during pelvic exam.", "optionExplanations": {"A": "Hyperthyroidism is diagnosed with thyroid labs.", "B": "Syphilis is diagnosed with serologic testing/clinical findings.", "C": "Correct. Bearing down helps visualize and stage POP.", "D": "Fetal heart rate is assessed with Doppler/monitoring."}}, {"id": 11, "stem": "Which system is commonly used to objectively stage pelvic organ prolapse by measuring vaginal points relative to the hymen", "topic": "POP-Q", "options": {"A": "Gleason score", "B": "Bishop score", "C": "POP-Q system", "D": "Apgar score"}, "correct": "C", "explanation": "The POP-Q system quantifies pelvic organ prolapse by measuring specific vaginal points relative to the hymen.", "optionExplanations": {"A": "Gleason score grades prostate cancer.", "B": "Bishop score assesses cervical readiness for induction.", "C": "Correct. POP-Q is the objective POP staging system.", "D": "Apgar score evaluates newborn status after delivery."}}, {"id": 12, "stem": "In POP-Q staging, which reference point is used as the zero point", "topic": "POP-Q hymen reference", "options": {"A": "Ischial spine only", "B": "Umbilicus", "C": "Hymen", "D": "Cervical transformation zone"}, "correct": "C", "explanation": "POP-Q measurements are made relative to the hymen, with the hymen as the zero reference point.", "optionExplanations": {"A": "Ischial spines are obstetric station landmarks.", "B": "Umbilicus is used clinically for fundal height landmarks.", "C": "Correct. Hymen = 0 point in POP-Q.", "D": "Transformation zone is relevant to cervical cancer screening."}}, {"id": 13, "stem": "A patient has mild pelvic organ prolapse and minimal symptoms. Which conservative management is appropriate", "topic": "Conservative POP management", "options": {"A": "Immediate hysterectomy for all cases", "B": "Magnesium sulfate", "C": "Methotrexate", "D": "Pelvic floor muscle exercises and observation"}, "correct": "D", "explanation": "Mild or minimally symptomatic POP can be managed conservatively with observation, lifestyle modification, and pelvic floor muscle exercises.", "optionExplanations": {"A": "Surgery is not mandatory for all POP.", "B": "Magnesium sulfate prevents eclamptic seizures.", "C": "Methotrexate is used in ectopic pregnancy/medical abortion contexts.", "D": "Correct. Conservative management is appropriate for mild/minimal symptoms."}}, {"id": 14, "stem": "A patient with pelvic organ prolapse is not a surgical candidate but wants symptom relief. Which device can support the prolapsed organs", "topic": "Pessary", "options": {"A": "Foley bulb for cervical ripening", "B": "Pessary", "C": "Condom catheter", "D": "Intrauterine pressure catheter"}, "correct": "B", "explanation": "A pessary is a vaginal support device used for symptomatic POP, especially when surgery is not desired or contraindicated.", "optionExplanations": {"A": "Foley bulb ripens the cervix for induction.", "B": "Correct. Pessary mechanically supports prolapsed compartments.", "C": "Condom catheter collects urine externally and does not treat POP.", "D": "IUPC measures uterine contractions during labor."}}, {"id": 15, "stem": "Which counseling point is important for pessary use", "topic": "Pessary care", "options": {"A": "It is contraindicated in all postmenopausal patients", "B": "Regular removal, cleaning, and follow-up are needed to prevent irritation or ulceration", "C": "It should never be removed", "D": "It permanently cures prolapse after one day"}, "correct": "B", "explanation": "Pessaries require fitting, follow-up, and cleaning/removal schedules to prevent discharge, erosion, ulceration, or discomfort.", "optionExplanations": {"A": "Postmenopausal patients can use pessaries; vaginal estrogen may help atrophy.", "B": "Correct. Follow-up and cleaning are essential for safe pessary use.", "C": "Leaving a pessary indefinitely can cause complications.", "D": "Pessaries manage symptoms but do not permanently cure POP."}}, {"id": 16, "stem": "A postmenopausal patient using a pessary has vaginal atrophy and irritation. Which adjunct may help improve tissue tolerance", "topic": "Vaginal estrogen with pessary", "options": {"A": "RhoGAM", "B": "Topical vaginal estrogen", "C": "Warfarin", "D": "Cefazolin plus gentamicin"}, "correct": "B", "explanation": "Topical vaginal estrogen can help improve atrophic vaginal tissue and reduce pessary-related irritation in postmenopausal patients.", "optionExplanations": {"A": "RhoGAM prevents Rh alloimmunization.", "B": "Correct. Vaginal estrogen helps atrophic tissue tolerate pessary use.", "C": "Warfarin is an anticoagulant.", "D": "Cefazolin plus gentamicin treats pyelonephritis in pregnancy in prior lecture content."}}, {"id": 17, "stem": "Which lifestyle modification can reduce worsening of pelvic organ prolapse symptoms", "topic": "Lifestyle modification", "options": {"A": "Avoid all pelvic floor therapy", "B": "Ignore chronic cough", "C": "Treat constipation and avoid chronic straining", "D": "Increase heavy lifting"}, "correct": "C", "explanation": "Lifestyle management includes reducing intra-abdominal pressure by treating constipation, chronic cough, obesity, and avoiding heavy lifting/straining.", "optionExplanations": {"A": "Pelvic floor therapy can be helpful.", "B": "Chronic cough should be treated because it increases pressure.", "C": "Correct. Reducing straining decreases pelvic floor stress.", "D": "Heavy lifting increases intra-abdominal pressure and can worsen symptoms."}}, {"id": 18, "stem": "A patient with advanced symptomatic POP desires definitive treatment and has failed conservative therapy. Which management category is appropriate", "topic": "Surgical management", "options": {"A": "Emergency cesarean delivery", "B": "Surgical repair tailored to the prolapsed compartment and patient goals", "C": "No treatment is ever available", "D": "RPR testing only"}, "correct": "B", "explanation": "Surgery is considered for symptomatic POP when conservative measures fail or patient preference supports repair. Procedure depends on compartment, severity, sexual function goals, and surgical risk.", "optionExplanations": {"A": "Cesarean delivery is unrelated to nonpregnant POP repair.", "B": "Correct. Surgery is individualized by defect and goals.", "C": "Treatment options include conservative, pessary, and surgical approaches.", "D": "RPR screens syphilis and does not treat POP."}}, {"id": 19, "stem": "A patient has pelvic organ prolapse and wants to preserve sexual function. Why is this relevant to management planning", "topic": "POP surgical counseling", "options": {"A": "Sexual function does not affect procedure choice", "B": "Pessary use always prevents intercourse permanently", "C": "Some obliterative procedures close the vaginal canal and are only for patients not desiring vaginal intercourse", "D": "All POP surgery eliminates sexual function"}, "correct": "C", "explanation": "POP surgery should account for sexual function goals; obliterative procedures are effective but close the vaginal canal.", "optionExplanations": {"A": "Sexual function is important in counseling and procedure selection.", "B": "Some pessaries can be removed for intercourse or selected to allow intercourse.", "C": "Correct. Desire for vaginal intercourse matters when choosing reconstructive vs obliterative surgery.", "D": "Not all POP surgeries eliminate sexual function."}}, {"id": 20, "stem": "A patient with pelvic organ prolapse has urinary retention and recurrent UTIs. Which mechanism is most likely", "topic": "POP urinary complications", "options": {"A": "High-risk HPV infection of transformation zone", "B": "Increased fetal blood flow through MCA", "C": "Fetal vessel rupture after membrane rupture", "D": "Kinking or obstruction of urinary outflow from prolapsed support structures"}, "correct": "D", "explanation": "POP can alter bladder/urethral position and impair emptying, causing urinary retention, incomplete voiding, and recurrent UTIs.", "optionExplanations": {"A": "HPV transformation zone infection causes cervical dysplasia/cancer.", "B": "MCA Doppler evaluates fetal anemia.", "C": "Fetal vessel rupture after ROM describes vasa previa.", "D": "Correct. Structural support changes can obstruct/kink urinary outflow."}}];
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>

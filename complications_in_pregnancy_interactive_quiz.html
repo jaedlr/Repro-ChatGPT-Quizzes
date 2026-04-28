@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Complications in Pregnancy Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = [{"id": 1, "stem": "A pregnant patient has BP 145/92 on two readings 5 hours apart at 28 weeks. She has no proteinuria, headache, visual symptoms, or end-organ findings. Which diagnosis is most likely", "topic": "Gestational hypertension", "options": {"A": "Chronic hypertension", "B": "Eclampsia", "C": "Preeclampsia with severe features", "D": "Gestational hypertension"}, "correct": "D", "explanation": "Gestational hypertension is BP ≥140 systolic or ≥90 diastolic after 20 weeks on two readings 4–6 hours apart without proteinuria or symptoms.", "optionExplanations": {"A": "Chronic hypertension is elevated BP before 20 weeks.", "B": "Eclampsia requires seizures in the setting of preeclampsia.", "C": "Severe features require BP ≥160/110 or end-organ damage.", "D": "Correct. New hypertension after 20 weeks without proteinuria or symptoms fits gestational hypertension."}}, {"id": 2, "stem": "A stable patient with gestational hypertension has no severe-range pressures and reassuring fetal testing. At what gestational age should delivery occur according to the lecture", "topic": "Gestational hypertension management", "options": {"A": "28 weeks", "B": "Post-term only after 42 weeks", "C": "Immediately at diagnosis", "D": "37 weeks"}, "correct": "D", "explanation": "Stable gestational hypertension is managed with monitoring and delivery at 37 weeks.", "optionExplanations": {"A": "Delivery at 28 weeks is not indicated if stable.", "B": "Post-term delivery is unsafe in hypertensive disease.", "C": "Immediate delivery is reserved for severe/uncontrolled disease depending on gestational age and status.", "D": "Correct. Delivery at 37 weeks if stable is the listed management."}}, {"id": 3, "stem": "A pregnant patient has BP 150/95 at 16 weeks gestation. Which diagnosis best fits", "topic": "Chronic hypertension", "options": {"A": "Preeclampsia", "B": "Gestational hypertension", "C": "HELLP syndrome", "D": "Chronic hypertension"}, "correct": "D", "explanation": "Chronic hypertension is defined as elevated BP before 20 weeks gestation.", "optionExplanations": {"A": "Preeclampsia requires hypertension after 20 weeks plus proteinuria or end-organ features.", "B": "Gestational hypertension begins after 20 weeks.", "C": "HELLP requires hemolysis, elevated liver enzymes, and low platelets.", "D": "Correct. Hypertension before 20 weeks = chronic hypertension."}}, {"id": 4, "stem": "A pregnant patient with chronic hypertension needs medication. Which medication group is first-line according to the lecture", "topic": "Chronic hypertension treatment", "options": {"A": "Labetalol, nifedipine, or methyldopa", "B": "Warfarin or isotretinoin", "C": "Methotrexate or misoprostol", "D": "ACE inhibitors or ARBs"}, "correct": "A", "explanation": "First-line medications for chronic hypertension in pregnancy include labetalol, nifedipine, and methyldopa.", "optionExplanations": {"A": "Correct. These are the listed first-line antihypertensives.", "B": "Warfarin/isotretinoin are teratogenic and not antihypertensives.", "C": "Methotrexate/misoprostol are not used for chronic hypertension in pregnancy.", "D": "ACE inhibitors and ARBs are contraindicated due to fetal renal toxicity."}}, {"id": 5, "stem": "A patient at 31 weeks has BP 145/92 and 24-hour urine protein of 450 mg. Which diagnosis is most likely", "topic": "Preeclampsia", "options": {"A": "Preeclampsia", "B": "Chronic hypertension only", "C": "Gestational hypertension only", "D": "Normal pregnancy"}, "correct": "A", "explanation": "Preeclampsia is BP ≥140/90 after 20 weeks plus proteinuria. Proteinuria is ≥300 mg in 24 hours or protein/creatinine ratio ≥0.3.", "optionExplanations": {"A": "Correct. Hypertension after 20 weeks plus proteinuria = preeclampsia.", "B": "Chronic hypertension begins before 20 weeks.", "C": "Gestational hypertension has no proteinuria or symptoms.", "D": "These findings are not normal."}}, {"id": 6, "stem": "A preeclamptic patient has BP 165/112. Which feature makes this preeclampsia with severe features", "topic": "Severe preeclampsia", "options": {"A": "BP ≥160 systolic or ≥110 diastolic", "B": "Proteinuria of 100 mg/24 hr", "C": "Mild dependent edema only", "D": "BP 130/80 after 20 weeks"}, "correct": "A", "explanation": "Preeclampsia with severe features includes BP ≥160 systolic or ≥110 diastolic or BP ≥140/90 with end-organ damage.", "optionExplanations": {"A": "Correct. Severe-range BP is a severe feature.", "B": "Proteinuria threshold is ≥300 mg/24 hr, and this does not define severe features.", "C": "Edema alone is not a severe feature.", "D": "BP 130/80 does not meet hypertensive criteria."}}, {"id": 7, "stem": "A patient with preeclampsia with severe features is receiving magnesium sulfate intrapartum and postpartum. What is the primary purpose", "topic": "Magnesium sulfate", "options": {"A": "Treatment of proteinuria", "B": "Seizure prevention", "C": "Blood pressure control", "D": "Diagnosis of HELLP"}, "correct": "B", "explanation": "Magnesium sulfate prevents seizures in preeclampsia/eclampsia; it is not for blood pressure control. The lecture notes continuing it for 24 hours postpartum.", "optionExplanations": {"A": "Magnesium does not treat proteinuria.", "B": "Correct. Magnesium sulfate prevents seizures.", "C": "Antihypertensives control severe BP; magnesium is not for BP control.", "D": "HELLP is diagnosed by hemolysis, elevated liver enzymes, and low platelets."}}, {"id": 8, "stem": "A patient at 35 weeks has severe preeclampsia. According to the lecture, what is the management", "topic": "Severe preeclampsia delivery timing", "options": {"A": "Deliver immediately", "B": "Continue pregnancy until 42 weeks", "C": "Bed rest only", "D": "No delivery unless seizures occur"}, "correct": "A", "explanation": "Severe preeclampsia at ≥34 weeks is managed with immediate delivery. Definitive treatment for preeclampsia is delivery.", "optionExplanations": {"A": "Correct. Severe disease ≥34 weeks → deliver immediately.", "B": "Waiting until post-term is unsafe.", "C": "Bed rest alone is not definitive management.", "D": "Waiting for seizures risks maternal/fetal morbidity."}}, {"id": 9, "stem": "A patient at 30 weeks has severe preeclampsia but is stable. Which intervention is given before 34 weeks to promote fetal lung maturity", "topic": "Preterm severe preeclampsia", "options": {"A": "Isotretinoin", "B": "Warfarin", "C": "Methotrexate", "D": "Corticosteroids"}, "correct": "D", "explanation": "For severe preeclampsia before 34 weeks when stable, corticosteroids are given for fetal lung maturity.", "optionExplanations": {"A": "Isotretinoin is teratogenic.", "B": "Warfarin is teratogenic and not used here.", "C": "Methotrexate is contraindicated in pregnancy.", "D": "Correct. Corticosteroids promote fetal lung maturity before 34 weeks."}}, {"id": 10, "stem": "A pregnant patient has schistocytes, increased bilirubin, decreased haptoglobin, AST/ALT ≥2 times normal, LDH ≥2 times normal, and platelets below 100,000. Which syndrome is this", "topic": "HELLP syndrome", "options": {"A": "Alloimmunization", "B": "HELLP syndrome", "C": "Subclinical hypothyroidism", "D": "Gestational diabetes"}, "correct": "B", "explanation": "HELLP syndrome is hemolysis, elevated liver enzymes, and low platelets. Hemolysis findings include schistocytes/burr cells, increased bilirubin, decreased haptoglobin, and severe anemia.", "optionExplanations": {"A": "Alloimmunization involves maternal antibodies against fetal RBC antigens.", "B": "Correct. This is the HELLP triad.", "C": "Subclinical hypothyroidism has elevated TSH with normal free T4.", "D": "Gestational diabetes is abnormal glucose metabolism first recognized during pregnancy."}}, {"id": 11, "stem": "A pregnant patient undergoes 1-hour 50 g glucose screening. Her result is 155 mg/dL. What is the next step according to the lecture", "topic": "Gestational diabetes screening", "options": {"A": "Proceed to confirmatory 3-hour OGTT", "B": "Diagnose GDM immediately without further testing", "C": "No further testing because this is normal", "D": "Start thyroid medication"}, "correct": "A", "explanation": "On the 1-hour glucose screen, <140 is normal, ≥140 requires further testing, and ≥200 is diagnostic.", "optionExplanations": {"A": "Correct. A result ≥140 requires confirmatory 3-hour OGTT.", "B": "Diagnosis without further testing is listed at ≥200.", "C": "155 is not normal by the lecture cutoff.", "D": "This is glucose screening, not thyroid testing."}}, {"id": 12, "stem": "A pregnant patient has a 3-hour OGTT after a positive screen. Which result set is diagnostic of gestational diabetes", "topic": "3-hour OGTT", "options": {"A": "Only fasting glucose below 95", "B": "All values below cutoff", "C": "At least 2 abnormal values", "D": "Exactly 1 abnormal value"}, "correct": "C", "explanation": "The 3-hour 100 g OGTT diagnoses GDM when at least 2 values are abnormal.", "optionExplanations": {"A": "A fasting value below 95 is normal.", "B": "Normal values do not diagnose GDM.", "C": "Correct. Diagnosis requires ≥2 abnormal values.", "D": "One abnormal value alone is not diagnostic by this lecture table."}}, {"id": 13, "stem": "A patient with gestational diabetes asks for initial management. Which is first-line according to the lecture", "topic": "GDM management", "options": {"A": "Immediate cesarean delivery for all patients", "B": "Methimazole", "C": "Diet and exercise", "D": "RhoGAM"}, "correct": "C", "explanation": "First-line management for gestational diabetes is diet and exercise. Insulin is the preferred medication if pharmacologic treatment is needed.", "optionExplanations": {"A": "Cesarean is considered for very high estimated fetal weight, not all GDM.", "B": "Methimazole treats hyperthyroidism after the first trimester.", "C": "Correct. Diet and exercise are first-line.", "D": "RhoGAM prevents Rh alloimmunization, not hyperglycemia."}}, {"id": 14, "stem": "A patient with gestational diabetes requires medication. Which medication is preferred according to the lecture", "topic": "GDM medication", "options": {"A": "Glyburide as first-line", "B": "Insulin", "C": "PTU", "D": "Warfarin"}, "correct": "B", "explanation": "Insulin is the preferred medication for gestational diabetes. Glyburide increases insulin secretion but is no longer first-line.", "optionExplanations": {"A": "Glyburide is specifically noted as no longer first-line.", "B": "Correct. Insulin is preferred.", "C": "PTU treats hyperthyroidism in the first trimester.", "D": "Warfarin is teratogenic and unrelated to GDM management."}}, {"id": 15, "stem": "A pregnant patient has hyperthyroidism in the first trimester. Which medication is preferred", "topic": "Hyperthyroidism in pregnancy", "options": {"A": "Methimazole", "B": "PTU", "C": "Levothyroxine", "D": "RhoGAM"}, "correct": "B", "explanation": "PTU is used in the first trimester. Methimazole is used in the second trimester and beyond because first-trimester exposure can cause embryopathy.", "optionExplanations": {"A": "Methimazole in the first trimester can cause cutis aplasia, choanal atresia, TE fistula, and facial defects.", "B": "Correct. PTU is preferred in the first trimester.", "C": "Levothyroxine treats hypothyroidism.", "D": "RhoGAM prevents Rh alloimmunization."}}, {"id": 16, "stem": "A pregnant patient has fatigue, weight gain, cold intolerance, constipation, dry skin, and hair loss. Labs show hypothyroidism. Which treatment is indicated", "topic": "Hypothyroidism in pregnancy", "options": {"A": "Methimazole only", "B": "PTU only", "C": "Levothyroxine with TSH/T4 monitoring every 4–6 weeks", "D": "No treatment because fetal thyroid is unaffected"}, "correct": "C", "explanation": "Hypothyroidism in pregnancy is treated with levothyroxine, with TSH/T4 monitoring every 4–6 weeks. Fetal complications include PIH, preterm labor, stillbirth, low birth weight, and cretinism.", "optionExplanations": {"A": "Methimazole treats hyperthyroidism after first trimester.", "B": "PTU treats hyperthyroidism.", "C": "Correct. Levothyroxine is treatment.", "D": "Untreated hypothyroidism can harm the fetus."}}, {"id": 17, "stem": "A pregnant Rh-negative patient has antibody titers reaching 1:16. What test is used to assess whether the fetus is becoming anemic", "topic": "Alloimmunization", "options": {"A": "Middle cerebral artery Doppler", "B": "RPR", "C": "1-hour glucose test", "D": "Pap smear"}, "correct": "A", "explanation": "When antibody titer is ≥1:16, MCA Doppler is used to evaluate fetal anemia. Faster blood flow suggests anemia.", "optionExplanations": {"A": "Correct. MCA Doppler assesses fetal anemia risk.", "B": "RPR screens syphilis.", "C": "1-hour glucose test screens GDM.", "D": "Pap smear screens cervical disease."}}, {"id": 18, "stem": "A patient is Rh-negative and pregnant. When is RhoGAM given according to the lecture", "topic": "RhoGAM", "options": {"A": "Only if maternal BP reaches 160/110", "B": "Only after menopause", "C": "At 28 weeks and postpartum", "D": "Only at 6 weeks gestation"}, "correct": "C", "explanation": "RhoGAM is given at 28 weeks and postpartum. The lecture notes it covers 15 mL of fetal blood.", "optionExplanations": {"A": "RhoGAM is for Rh alloimmunization prevention, not BP.", "B": "Postmenopause is irrelevant.", "C": "Correct. RhoGAM timing is 28 weeks plus postpartum.", "D": "This is not the listed routine timing."}}, {"id": 19, "stem": "A pregnant patient with seizure disorder is planning pregnancy. Which prevention strategy is emphasized", "topic": "Seizures in pregnancy", "options": {"A": "Use valproate as mandatory first-line", "B": "Avoid anatomy scan and AFP screening", "C": "Stop all antiseizure medications in every patient", "D": "Folic acid 4 mg daily before conception and prefer monotherapy"}, "correct": "D", "explanation": "For seizure disorders in pregnancy, prevention includes folic acid 4 mg daily before conception and using monotherapy when possible. Level II anatomy scan at 19–20 weeks and maternal AFP are screening tools.", "optionExplanations": {"A": "Valproate is teratogenic and not mandatory first-line.", "B": "Level II anatomy scan and AFP screening are recommended.", "C": "Stopping meds is only considered if seizure-free 2–5 years, not universally.", "D": "Correct. High-dose folic acid and monotherapy are emphasized."}}, {"id": 20, "stem": "A pregnant patient has depression. Which treatment approach is first-line according to the lecture, with SSRIs preferred if medication is needed", "topic": "Depression in pregnancy", "options": {"A": "Methotrexate", "B": "Lithium for every patient", "C": "Cognitive behavioral therapy or interpersonal therapy", "D": "No screening or therapy postpartum"}, "correct": "C", "explanation": "First-line treatment for depression in pregnancy is CBT or interpersonal therapy. SSRIs are preferred if medications are needed, and postpartum screening can use the EPDS.", "optionExplanations": {"A": "Methotrexate is contraindicated in pregnancy and not an antidepressant.", "B": "Lithium is not first-line for routine depression in pregnancy.", "C": "Correct. CBT/interpersonal therapy are first-line.", "D": "Postpartum screening with EPDS is listed."}}];
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>
