@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Male Disorders Interactive Quiz</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-slate-900 min-h-screen">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    const questions = [
+      {
+        id: 1,
+        stem: 'A tall adolescent male presents with gynecomastia, small testes, sparse facial hair, and infertility. Labs show low testosterone with elevated FSH and LH. Which karyotype best explains these findings',
+        topic: 'Klinefelter syndrome',
+        options: {
+          A: '45,X',
+          B: '47,XXY',
+          C: '47,XYY',
+          D: '46,XY'
+        },
+        correct: 'B',
+        explanation: 'Klinefelter syndrome is 47,XXY and causes primary testicular failure. Seminiferous tubule hyalinization and germ cell loss lead to infertility, while low testosterone causes increased LH and FSH.',
+        optionExplanations: {
+          A: 'Turner syndrome is 45,X and presents with streak ovaries, short stature, webbed neck, and infertility.',
+          B: 'Correct. 47,XXY causes testicular atrophy, azoospermia, low testosterone, high gonadotropins, and gynecomastia.',
+          C: '47,XYY males are typically phenotypically male and usually have normal fertility.',
+          D: '46,XY is the normal male karyotype and does not explain this syndrome.'
+        }
+      },
+      {
+        id: 2,
+        stem: 'A day 1 neonate has lethargy, hypotension, ambiguous genitalia, no palpable gonads, low sodium, high ACTH, high 17-hydroxyprogesterone, and low cortisol. Ultrasound shows a uterus. Which diagnosis is most likely',
+        topic: 'Congenital adrenal hyperplasia',
+        options: {
+          A: 'Classic salt-wasting congenital adrenal hyperplasia',
+          B: 'Complete androgen insensitivity syndrome',
+          C: '5-alpha reductase deficiency',
+          D: 'Turner syndrome'
+        },
+        correct: 'A',
+        explanation: 'The combination of 46,XX internal organs, virilized/ambiguous external genitalia, salt wasting, high ACTH, high 17-OHP, and low cortisol is classic 21-hydroxylase deficiency CAH.',
+        optionExplanations: {
+          A: 'Correct. 21-hydroxylase deficiency causes decreased cortisol and aldosterone with increased ACTH and adrenal androgen excess.',
+          B: 'AIS is 46,XY with testes, female external genitalia, and absent uterus due to AMH.',
+          C: '5-alpha reductase deficiency is 46,XY and classically causes undervirilization at birth with virilization at puberty.',
+          D: 'Turner syndrome is 45,X with streak ovaries and short stature, not salt-wasting virilization.'
+        }
+      },
+      {
+        id: 3,
+        stem: 'A 46,XY patient has female external genitalia, a blind-ending partial vagina, undescended testes, and no uterus. Testosterone is normal to high but ineffective. What is the underlying defect',
+        topic: 'Androgen insensitivity syndrome',
+        options: {
+          A: '21-hydroxylase deficiency',
+          B: 'SRY translocation onto an X chromosome',
+          C: 'Failure of Sertoli cells to produce AMH',
+          D: 'Androgen receptor mutation'
+        },
+        correct: 'D',
+        explanation: 'AIS is caused by an androgen receptor mutation. Testes produce AMH, so Mullerian structures regress, but tissues cannot respond to androgens, causing feminized external genitalia.',
+        optionExplanations: {
+          A: '21-hydroxylase deficiency causes CAH in 46,XX patients with androgen excess and uterus present.',
+          B: 'SRY translocation onto X causes 46,XX testicular DSD with male external genitalia.',
+          C: 'If AMH were absent, Mullerian structures would persist.',
+          D: 'Correct. Androgen receptor mutation causes androgen resistance despite normal/high androgen levels.'
+        }
+      },
+      {
+        id: 4,
+        stem: 'A mutation prevents Sertoli cells from producing the hormone responsible for regression of Mullerian ducts. Which structures would be expected to persist',
+        topic: 'AMH and Mullerian ducts',
+        options: {
+          A: 'Epididymis and vas deferens',
+          B: 'Prostate and seminal vesicles',
+          C: 'Uterus, cervix, fallopian tubes, and upper vagina',
+          D: 'External male genitalia only'
+        },
+        correct: 'C',
+        explanation: 'Anti-Mullerian hormone from Sertoli cells prevents female internal organ development. Without AMH, Mullerian ducts develop into uterus, cervix, fallopian tubes, and upper vagina.',
+        optionExplanations: {
+          A: 'These are Wolffian derivatives supported by testosterone, not Mullerian structures.',
+          B: 'These are male accessory structures, not Mullerian derivatives.',
+          C: 'Correct. These are Mullerian duct derivatives.',
+          D: 'External genitalia are primarily influenced by DHT.'
+        }
+      },
+      {
+        id: 5,
+        stem: 'A man presents with infertility. Semen analysis shows no sperm. Which next test is most appropriate to further evaluate the cause',
+        topic: 'Male infertility',
+        options: {
+          A: 'Morning testosterone level',
+          B: 'MRI brain',
+          C: 'Repeat semen analysis as the key initial test',
+          D: 'Immediate testicular biopsy'
+        },
+        correct: 'A',
+        explanation: 'Semen analysis is the key initial diagnostic test, but this patient has already had one showing azoospermia. The next step is hormonal evaluation, including morning testosterone, to assess for hypogonadism and help classify the infertility.',
+        optionExplanations: {
+          A: 'Correct. After abnormal semen analysis with low or absent sperm, testosterone should be checked.',
+          B: 'MRI brain may be considered later if secondary hypogonadism is suggested.',
+          C: 'Semen analysis is initial, but the stem already provides the abnormal result.',
+          D: 'Testicular biopsy is not the immediate next step before hormonal evaluation.'
+        }
+      },
+      {
+        id: 6,
+        stem: 'A man develops a painful erection lasting more than 4 hours after taking trazodone. Which mechanism best explains the emergency',
+        topic: 'Priapism',
+        options: {
+          A: 'Excess DHT stimulation of penile tissue',
+          B: 'Low-flow trapping of blood with impaired outflow',
+          C: 'Autoimmune destruction of Leydig cells',
+          D: 'Increased AMH production from Sertoli cells'
+        },
+        correct: 'B',
+        explanation: 'Priapism is a prolonged erection unrelated to stimulation, often due to a low-flow state where blood is trapped, causing painful ischemia.',
+        optionExplanations: {
+          A: 'DHT is important for external male genital development, not priapism.',
+          B: 'Correct. Low-flow priapism traps blood and can cause ischemic injury.',
+          C: 'Autoimmune Leydig/Sertoli injury relates to hypogonadism, not acute priapism.',
+          D: 'AMH affects Mullerian duct regression, not penile blood flow.'
+        }
+      },
+      {
+        id: 7,
+        stem: 'An older uncircumcised man has a single velvety bright red patch on the glans. Biopsy shows noninvasive squamous dysplasia limited to the surface epithelium. Which lesion is this',
+        topic: 'SCC in situ',
+        options: {
+          A: 'Bowen disease',
+          B: 'Bowenoid papulosis',
+          C: 'Condyloma acuminata',
+          D: 'Erythroplasia of Queyrat'
+        },
+        correct: 'D',
+        explanation: 'Erythroplasia of Queyrat is squamous cell carcinoma in situ on mucous membranes such as the glans or prepuce, appearing as a velvety red patch.',
+        optionExplanations: {
+          A: 'Bowen disease usually appears as a gray-white hyperkeratotic plaque on keratinized penile shaft skin.',
+          B: 'Bowenoid papulosis usually causes multiple red-brown or warty papules in younger sexually active patients.',
+          C: 'Condyloma acuminata is a low-risk HPV 6/11 wart, not SCC in situ.',
+          D: 'Correct. Red velvety mucosal patch on the glans is erythroplasia of Queyrat.'
+        }
+      },
+      {
+        id: 8,
+        stem: 'A teenage boy has sudden severe testicular pain without trauma. The suspected mechanism is twisting of the spermatic cord with venous congestion followed by arterial compromise. What is the most appropriate management',
+        topic: 'Testicular torsion',
+        options: {
+          A: 'Rest and pain medication only',
+          B: 'Antibiotics for chlamydia and gonorrhea',
+          C: 'Immediate detorsion within 6 hours',
+          D: 'Observation until spontaneous resolution'
+        },
+        correct: 'C',
+        explanation: 'Testicular torsion is a medical emergency. Venous outflow obstruction rapidly progresses to arterial compromise and hemorrhagic infarction, so detorsion must occur quickly.',
+        optionExplanations: {
+          A: 'This is more appropriate for appendix testis torsion, not spermatic cord torsion.',
+          B: 'Antibiotics treat epididymitis, which typically has gradual pain and urinary symptoms.',
+          C: 'Correct. Testicular torsion requires urgent manual or surgical detorsion within 6 hours.',
+          D: 'Observation risks irreversible infarction.'
+        }
+      },
+      {
+        id: 9,
+        stem: 'A 1-year-old boy has an undescended testis arrested in the inguinal canal. Later biopsy would most likely show which change if untreated',
+        topic: 'Cryptorchidism',
+        options: {
+          A: 'Schiller-Duval bodies',
+          B: 'Rod-shaped crystalloids of Reinke',
+          C: 'Seminiferous tubular atrophy with Sertoli cells only',
+          D: 'Koilocytosis with perinuclear cytoplasmic vacuolization'
+        },
+        correct: 'C',
+        explanation: 'Cryptorchidism causes seminiferous tubular atrophy, absent spermatogenesis, thickened basement membranes, and increased interstitial Leydig cells due to atrophy and increased LH.',
+        optionExplanations: {
+          A: 'Schiller-Duval bodies are seen in yolk sac tumor.',
+          B: 'Crystalloids of Reinke are associated with Leydig cell tumors.',
+          C: 'Correct. Untreated cryptorchidism causes tubular atrophy and impaired spermatogenesis.',
+          D: 'Koilocytosis is characteristic of HPV infection.'
+        }
+      },
+      {
+        id: 10,
+        stem: 'A 2-year-old boy has painless testicular enlargement. Tumor markers show elevated AFP. Histology reveals Schiller-Duval bodies. Which tumor is most likely',
+        topic: 'Yolk sac tumor',
+        options: {
+          A: 'Seminoma',
+          B: 'Yolk sac tumor',
+          C: 'Choriocarcinoma',
+          D: 'Spermatocytic tumor'
+        },
+        correct: 'B',
+        explanation: 'Yolk sac tumor is the most common testicular tumor in children under 3 years old and produces AFP. Schiller-Duval bodies mimic yolk sac capillaries.',
+        optionExplanations: {
+          A: 'Seminoma usually occurs in adults and never produces AFP.',
+          B: 'Correct. AFP elevation and Schiller-Duval bodies identify yolk sac tumor.',
+          C: 'Choriocarcinoma produces hCG and is highly aggressive with hemorrhage/necrosis.',
+          D: 'Spermatocytic tumor occurs in older men and is unrelated to GCNIS.'
+        }
+      },
+      {
+        id: 11,
+        stem: 'A 40-year-old man has painless testicular enlargement. Tumor cells are uniform with abundant cytoplasm and large central nuclei, giving a fried egg appearance. AFP is normal and hCG is mildly elevated. Which tumor is most likely',
+        topic: 'Seminoma',
+        options: {
+          A: 'Seminoma',
+          B: 'Embryonal carcinoma',
+          C: 'Yolk sac tumor',
+          D: 'Teratoma'
+        },
+        correct: 'A',
+        explanation: 'Seminoma is the most common germ cell tumor, often occurs around the 40s, has fried egg cells, may mildly elevate hCG, never elevates AFP, and is radiosensitive.',
+        optionExplanations: {
+          A: 'Correct. Fried egg morphology with normal AFP and mild hCG fits seminoma.',
+          B: 'Embryonal carcinoma is locally aggressive and often mixed with other tumor types.',
+          C: 'Yolk sac tumor produces AFP and has Schiller-Duval bodies.',
+          D: 'Teratoma contains multiple tissue types.'
+        }
+      },
+      {
+        id: 12,
+        stem: 'A young man has a highly aggressive testicular tumor with extensive hemorrhage and necrosis. Labs show markedly elevated hCG causing gynecomastia and hyperthyroidism. Which tumor is most likely',
+        topic: 'Choriocarcinoma',
+        options: {
+          A: 'Seminoma',
+          B: 'Yolk sac tumor',
+          C: 'Spermatocytic tumor',
+          D: 'Choriocarcinoma'
+        },
+        correct: 'D',
+        explanation: 'Choriocarcinoma is highly aggressive, metastasizes early, has hemorrhage and necrosis, and contains syncytiotrophoblasts and cytotrophoblasts that produce hCG.',
+        optionExplanations: {
+          A: 'Seminoma may mildly elevate hCG but is not usually hemorrhagic and highly aggressive.',
+          B: 'Yolk sac tumor produces AFP, not marked hCG.',
+          C: 'Spermatocytic tumor has low malignant potential and occurs in older men.',
+          D: 'Correct. Marked hCG with hemorrhage/necrosis fits choriocarcinoma.'
+        }
+      },
+      {
+        id: 13,
+        stem: 'A man has a scrotal mass described as a bag of worms. He also has decreased sperm count and abnormal sperm due to increased testicular temperature. Which diagnosis is most likely',
+        topic: 'Varicocele',
+        options: {
+          A: 'Hydrocele',
+          B: 'Varicocele',
+          C: 'Spermatocele',
+          D: 'Inguinal hernia'
+        },
+        correct: 'B',
+        explanation: 'Varicocele is abnormal dilation of veins along the spermatic cord. Increased temperature damages germ cells, causing decreased sperm count and abnormal sperm.',
+        optionExplanations: {
+          A: 'Hydrocele is serous fluid between layers of tunica vaginalis and transilluminates.',
+          B: 'Correct. Bag of worms is classic for varicocele.',
+          C: 'Spermatocele is cystic sperm accumulation from the epididymal head.',
+          D: 'Inguinal hernia may move with Valsalva rather than feel like a bag of worms.'
+        }
+      },
+      {
+        id: 14,
+        stem: 'A newborn boy has the urethral opening on the ventral surface of the penis rather than at the tip. Which congenital anomaly is present',
+        topic: 'Hypospadias',
+        options: {
+          A: 'Hypospadias',
+          B: 'Epispadias',
+          C: 'Phimosis',
+          D: 'Paraphimosis'
+        },
+        correct: 'A',
+        explanation: 'Hypospadias is an abnormal urethral opening on the ventral underside of the penis.',
+        optionExplanations: {
+          A: 'Correct. Hypospadias is ventral.',
+          B: 'Epispadias is a dorsal urethral opening.',
+          C: 'Phimosis is inability to retract foreskin over the glans.',
+          D: 'Paraphimosis is trapped retracted foreskin causing restricted blood flow.'
+        }
+      },
+      {
+        id: 15,
+        stem: 'A patient with testicular cancer has elevated LDH. What does this marker best correlate with',
+        topic: 'Tumor markers',
+        options: {
+          A: 'Yolk sac differentiation only',
+          B: 'Pure seminoma exclusion',
+          C: 'Tumor cell mass and advanced disease',
+          D: 'Leydig cell hormone production'
+        },
+        correct: 'C',
+        explanation: 'LDH is a tumor marker that correlates with tumor cell mass and can suggest more advanced disease.',
+        optionExplanations: {
+          A: 'AFP is more associated with yolk sac tumor and some nonseminomas.',
+          B: 'Pure seminoma can have elevated LDH and mild hCG but not AFP.',
+          C: 'Correct. LDH correlates with tumor burden.',
+          D: 'Leydig cell tumors may produce hormones and can show crystalloids of Reinke.'
+        }
+      },
+      {
+        id: 16,
+        stem: 'A man has infertility with normal sperm production in the testes, but sperm cannot be ejaculated because the vas deferens failed to develop. Which genetic association is most likely',
+        topic: 'CBAVD',
+        options: {
+          A: 'SRY mutation',
+          B: 'DAX1 duplication',
+          C: 'Isochromosome 12p',
+          D: 'CFTR mutation'
+        },
+        correct: 'D',
+        explanation: 'Congenital bilateral absence of the vas deferens is closely linked to cystic fibrosis and CFTR mutations, commonly causing obstructive male infertility.',
+        optionExplanations: {
+          A: 'SRY mutation causes XY gonadal dysgenesis.',
+          B: 'DAX1 duplication can override SRY signaling and cause sex reversal.',
+          C: 'Isochromosome 12p is associated with testicular germ cell tumors.',
+          D: 'Correct. CBAVD is strongly associated with CFTR mutations.'
+        }
+      },
+      {
+        id: 17,
+        stem: 'A 25-year-old man has gradual testicular pain, swelling, dysuria, frequency, and relief of pain when the testis is lifted. Which organisms are the most likely cause',
+        topic: 'Epididymitis',
+        options: {
+          A: 'E coli only',
+          B: 'Chlamydia and gonorrhea',
+          C: 'Mumps virus',
+          D: 'HPV 6 and 11'
+        },
+        correct: 'B',
+        explanation: 'In young men under 35, epididymitis is most commonly caused by sexually transmitted infections such as Chlamydia and Gonorrhea. Prehn sign can be positive.',
+        optionExplanations: {
+          A: 'E coli is more typical in older men with UTI-associated epididymitis.',
+          B: 'Correct. Chlamydia and gonorrhea are common causes in younger men.',
+          C: 'Mumps causes orchitis, usually days after parotitis.',
+          D: 'HPV 6 and 11 cause condyloma acuminata.'
+        }
+      },
+      {
+        id: 18,
+        stem: 'A testicular germ cell tumor is found to have reduplication of the short arm of chromosome 12. Which genetic abnormality is this',
+        topic: 'Germ cell tumor genetics',
+        options: {
+          A: 'DAX1 duplication',
+          B: 'AZFc deletion',
+          C: 'Isochromosome 12p',
+          D: 'SRY translocation'
+        },
+        correct: 'C',
+        explanation: 'Most testicular germ cell tumors are strongly associated with isochromosome 12p, which contains genes involved in pluripotency and stem cell maintenance.',
+        optionExplanations: {
+          A: 'DAX1 duplication can override SRY and cause XY gonadal dysgenesis.',
+          B: 'AZF deletions are associated with infertility.',
+          C: 'Correct. Isochromosome 12p is linked to testicular germ cell tumors.',
+          D: 'SRY translocation can cause 46,XX testicular DSD.'
+        }
+      },
+      {
+        id: 19,
+        stem: 'A man has infertility due to deletion of a region on the long arm of the Y chromosome involved in spermatogenesis. Which region is deleted',
+        topic: 'Y chromosome infertility',
+        options: {
+          A: 'SRY',
+          B: 'Pseudoautosomal region only',
+          C: 'AZF region',
+          D: 'GBY region'
+        },
+        correct: 'C',
+        explanation: 'Deletions in AZFa, AZFb, or AZFc regions on the long arm of the Y chromosome are associated with male infertility.',
+        optionExplanations: {
+          A: 'SRY is on the short arm of the Y chromosome and initiates testicular development.',
+          B: 'Pseudoautosomal regions exchange genetic material with the X chromosome during meiosis.',
+          C: 'Correct. AZF deletions are associated with azoospermia/infertility.',
+          D: 'GBY region contributes to gonadoblastoma risk in dysgenetic gonads with Y material.'
+        }
+      },
+      {
+        id: 20,
+        stem: 'A man develops painful erections and penile curvature after repetitive microvascular trauma. Fibrous plaques are found in the tunica albuginea. Which diagnosis is most likely',
+        topic: 'Peyronie disease',
+        options: {
+          A: 'Condyloma acuminata',
+          B: 'Bowen disease',
+          C: 'Paraphimosis',
+          D: 'Peyronie disease'
+        },
+        correct: 'D',
+        explanation: 'Peyronie disease is a reactive process caused by microvascular trauma and organizing sclerosis, forming fibrous plaques in the tunica albuginea.',
+        optionExplanations: {
+          A: 'Condyloma acuminata is caused by low-risk HPV 6 and 11 and shows papillary architecture with koilocytosis.',
+          B: 'Bowen disease is SCC in situ on keratinized penile shaft skin.',
+          C: 'Paraphimosis is trapped retracted foreskin behind the glans.',
+          D: 'Correct. Tunica albuginea fibrosis causing curvature and painful erections is Peyronie disease.'
+        }
+      }
+    ];
+
+    function Quiz() {
+      const [currentIndex, setCurrentIndex] = useState(0);
+      const [answers, setAnswers] = useState({});
+
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice =
+        answers[currentQuestion.id] !== undefined ? answers[currentQuestion.id] : null;
+      const showExplanation = selectedChoice !== null;
+
+      const handleSelect = (letter) => {
+        setAnswers((prev) => ({ ...prev, [currentQuestion.id]: letter }));
+      };
+
+      const goToQuestion = (index) => {
+        let newIndex = index;
+        if (newIndex < 0) newIndex = questions.length - 1;
+        if (newIndex >= questions.length) newIndex = 0;
+        setCurrentIndex(newIndex);
+      };
+
+      const handleNext = () => goToQuestion(currentIndex + 1);
+      const handlePrev = () => goToQuestion(currentIndex - 1);
+
+      const isCorrect =
+        selectedChoice !== null && selectedChoice === currentQuestion.correct;
+
+      return (
+        <div className="p-6 max-w-4xl mx-auto space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex-1">
+              <div className="flex gap-1">
+                {questions.map((q, idx) => {
+                  const answered = answers[q.id] !== undefined;
+                  const isActive = idx === currentIndex;
+
+                  const cls =
+                    "h-2 rounded-full transition-colors cursor-pointer flex-1 min-w-[4px] " +
+                    (isActive
+                      ? "bg-slate-200"
+                      : answered
+                      ? "bg-[#6fa8dc]"
+                      : "bg-slate-700");
+
+                  return (
+                    <button
+                      key={q.id}
+                      className={cls}
+                      onClick={() => setCurrentIndex(idx)}
+                      aria-label={`Go to question ${idx + 1}`}
+                      title={q.topic || `Question ${idx + 1}`}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <div className="text-slate-200 text-sm font-semibold">
+                {currentIndex + 1} / {questions.length}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-red-900/60 text-red-100 text-sm font-semibold">
+                  <span className="text-base">×</span>
+                  <span>
+                    {Object.entries(answers).filter(([qid, choice]) => {
+                      const q = questions.find((qq) => qq.id === Number(qid));
+                      return q && choice !== q.correct;
+                    }).length}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-900/60 text-emerald-100 text-sm font-semibold">
+                  <span className="text-base">✓</span>
+                  <span>
+                    {Object.entries(answers).filter(([qid, choice]) => {
+                      const q = questions.find((qq) => qq.id === Number(qid));
+                      return q && choice === q.correct;
+                    }).length}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="border rounded-xl p-4 shadow-md bg-white space-y-4">
+            <div className="flex justify-between text-xs text-gray-500">
+              <span>
+                Question {currentIndex + 1} of {questions.length}
+              </span>
+              {currentQuestion.topic ? <span>Topic: {currentQuestion.topic}</span> : null}
+            </div>
+
+            <p className="font-semibold mt-1">{currentQuestion.stem}?</p>
+
+            <div className="mt-3 space-y-2">
+              {Object.entries(currentQuestion.options).map(([letter, text]) => {
+                const isSelected = selectedChoice === letter;
+                const isAnswer = letter === currentQuestion.correct;
+                let classes =
+                  "w-full text-left p-2 rounded-lg border bg-gray-50 hover:bg-gray-100";
+
+                if (showExplanation && isAnswer) {
+                  classes =
+                    "w-full text-left p-2 rounded-lg border bg-green-100 border-green-500";
+                } else if (showExplanation && isSelected && !isAnswer) {
+                  classes =
+                    "w-full text-left p-2 rounded-lg border bg-red-100 border-red-500";
+                } else if (isSelected && !showExplanation) {
+                  classes = "w-full text-left p-2 rounded-lg border bg-gray-100";
+                }
+
+                return (
+                  <button
+                    key={letter}
+                    onClick={() => handleSelect(letter)}
+                    className={classes}
+                  >
+                    <strong>{letter}.</strong> {" "}
+                    {text}
+                  </button>
+                );
+              })}
+            </div>
+
+            {showExplanation && (
+              <div className="mt-4 p-3 rounded-lg bg-gray-50 border text-sm space-y-2">
+                <p>
+                  <strong>
+                    Correct answer: {currentQuestion.correct}
+                  </strong>{" "}
+                  ({currentQuestion.options[currentQuestion.correct]})
+                </p>
+                <p className={isCorrect ? "text-green-700" : "text-red-700"}>
+                  {isCorrect ? "Nice job. " : "Good attempt. "}
+                  {currentQuestion.explanation}
+                </p>
+                {currentQuestion.optionExplanations ? (
+                  <div className="mt-2 space-y-1">
+                    <p className="font-semibold">Why each option is right or wrong:</p>
+                    {Object.entries(currentQuestion.optionExplanations).map(
+                      ([letter, text]) => (
+                        <p key={letter}>
+                          <strong>{letter}.</strong> {" "}
+                          {text}
+                        </p>
+                      )
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            )}
+
+            <div className="flex justify-between mt-4">
+              <button
+                onClick={handlePrev}
+                className="inline-flex items-center px-3 py-2 rounded-lg border text-xs font-medium hover:bg-gray-100"
+              >
+                Previous
+              </button>
+              <button
+                onClick={handleNext}
+                className="inline-flex items-center px-3 py-2 rounded-lg border text-xs font-medium hover:bg-gray-100"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+
+          <p className="text-xs text-gray-500"></p>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<Quiz />);
+  </script>
+</body>
+</html>
