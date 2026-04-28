@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pelvic Pain Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = 
+[
+  {
+    id: 1,
+    stem: 'A patient presents with acute pelvic pain. Before narrowing the differential, which test should always be performed first in reproductive-age patients',
+    topic: 'Pelvic pain initial approach',
+    options: {
+      A: 'Urine pregnancy test',
+      B: 'CA-125',
+      C: 'Pap smear',
+      D: 'Mammography'
+    },
+    correct: 'A',
+    explanation: 'The lecture emphasizes that pregnancy must always be ruled out in pelvic pain with a urine pregnancy test.',
+    optionExplanations: {
+      A: 'Correct. Always rule out pregnancy first.',
+      B: 'CA-125 is used in ovarian cancer contexts, not first-line pelvic pain triage.',
+      C: 'Pap smear screens cervical dysplasia/cancer, not acute pelvic pain first step.',
+      D: 'Mammography evaluates breast disease.'
+    }
+  },
+  {
+    id: 2,
+    stem: 'A patient with acute pelvic pain has a positive pregnancy test and unilateral adnexal pain. Which diagnosis must be considered as pregnancy-related acute pelvic pain',
+    topic: 'Pregnancy-related acute pelvic pain',
+    options: {
+      A: 'Ectopic pregnancy',
+      B: 'Lichen sclerosus',
+      C: 'Fibroadenoma',
+      D: 'Peyronie disease'
+    },
+    correct: 'A',
+    explanation: 'Pregnancy-related causes of acute pelvic pain include ectopic pregnancy and miscarriage.',
+    optionExplanations: {
+      A: 'Correct. Ectopic pregnancy is a key life-threatening pelvic pain diagnosis.',
+      B: 'Lichen sclerosus causes vulvar pruritic white plaques.',
+      C: 'Fibroadenoma is a benign breast mass.',
+      D: 'Peyronie disease is penile tunica albuginea fibrosis.'
+    }
+  },
+  {
+    id: 3,
+    stem: 'A patient has chronic pelvic pain. Which definition best fits chronic pelvic pain from the lecture',
+    topic: 'Chronic pelvic pain definition',
+    options: {
+      A: 'Non-cyclic pelvic pain lasting at least 6 months',
+      B: 'Pain only during the first hour of menses',
+      C: 'Any pelvic pain lasting less than 24 hours',
+      D: 'Pain that must always be due to endometriosis'
+    },
+    correct: 'A',
+    explanation: 'Chronic pelvic pain is defined in the lecture as non-cyclic pain lasting at least 6 months. Dysmenorrhea and CPP are symptoms, not diagnoses.',
+    optionExplanations: {
+      A: 'Correct. CPP is non-cyclic pain ≥6 months.',
+      B: 'That is too narrow and describes menstrual pain timing, not CPP.',
+      C: 'Less than 24 hours does not meet CPP duration.',
+      D: 'Endometriosis is one cause, but CPP has gynecologic, GI, urinary, musculoskeletal, and systemic causes.'
+    }
+  },
+  {
+    id: 4,
+    stem: 'A woman has chronic pelvic pain that clearly worsens cyclically with menses. Which broad category is usually suggested by cyclical pelvic pain',
+    topic: 'CPP history',
+    options: {
+      A: 'Gynecologic cause',
+      B: 'Only renal cancer',
+      C: 'Only musculoskeletal strain',
+      D: 'Only appendicitis'
+    },
+    correct: 'A',
+    explanation: 'The lecture notes that cyclical pain is usually gynecologic.',
+    optionExplanations: {
+      A: 'Correct. Cyclical pattern points toward gynecologic causes.',
+      B: 'Renal cancer is not the typical implication of cyclical pain.',
+      C: 'Musculoskeletal pain may vary with posture/movement rather than menses.',
+      D: 'Appendicitis is an acute GI cause, not usually cyclic.'
+    }
+  },
+  {
+    id: 5,
+    stem: 'A patient with chronic pelvic pain is being evaluated. Which imaging test is listed as first-line diagnostic workup',
+    topic: 'CPP diagnostic workup',
+    options: {
+      A: 'Pelvic transvaginal ultrasound',
+      B: 'Chest x-ray',
+      C: 'Mammogram',
+      D: 'Bone scan'
+    },
+    correct: 'A',
+    explanation: 'First-line diagnostic workup for pelvic pain in the lecture is pelvic transvaginal ultrasound.',
+    optionExplanations: {
+      A: 'Correct. TVUS is first-line for pelvic workup.',
+      B: 'Chest x-ray is not first-line for pelvic pain.',
+      C: 'Mammogram evaluates breast pathology.',
+      D: 'Bone scan is used for bone metastasis evaluation, not initial pelvic pain.'
+    }
+  },
+  {
+    id: 6,
+    stem: 'A patient with chronic pelvic pain has suspected adenomyosis, fibroids, or deep endometriosis after initial workup. Which imaging modality is listed for further evaluation',
+    topic: 'MRI indications',
+    options: {
+      A: 'MRI',
+      B: 'Mammography',
+      C: 'DEXA scan',
+      D: 'Chest CT only'
+    },
+    correct: 'A',
+    explanation: 'MRI is listed for evaluation of adenomyosis, fibroids, and deep endometriosis.',
+    optionExplanations: {
+      A: 'Correct. MRI is useful for adenomyosis, fibroids, and deep endometriosis.',
+      B: 'Mammography is unrelated.',
+      C: 'DEXA evaluates bone density.',
+      D: 'Chest CT does not evaluate these pelvic causes.'
+    }
+  },
+  {
+    id: 7,
+    stem: 'A patient with suspected ovarian pathology has a CT abdomen/pelvis that is negative, but pain and exam remain concerning. Which lecture pearl applies',
+    topic: 'CT limitations',
+    options: {
+      A: 'CT is famous for missing ovarian pathologies',
+      B: 'CT definitively rules out ovarian torsion',
+      C: 'CT is always preferred over pelvic ultrasound',
+      D: 'CT replaces surgical consult when peritoneal signs exist'
+    },
+    correct: 'A',
+    explanation: 'The lecture specifically warns that CT is famous for missing ovarian pathologies.',
+    optionExplanations: {
+      A: 'Correct. Do not rely on CT alone for ovarian pathology.',
+      B: 'CT does not definitively rule out torsion.',
+      C: 'Pelvic transvaginal ultrasound is first-line.',
+      D: 'Peritoneal signs still require urgent evaluation/surgical consult.'
+    }
+  },
+  {
+    id: 8,
+    stem: 'A woman presents with sudden severe unilateral pelvic pain, nausea, vomiting, and intermittent sharp pain. She has an ovarian cyst. Which diagnosis is most likely',
+    topic: 'Ovarian torsion',
+    options: {
+      A: 'Ovarian torsion',
+      B: 'Primary dysmenorrhea',
+      C: 'Lichen simplex chronicus',
+      D: 'Bacterial vaginosis'
+    },
+    correct: 'A',
+    explanation: 'Ovarian torsion presents with sudden severe unilateral pain, nausea/vomiting, and may be intermittent due to torsion-detorsion. Risk factors include ovarian cyst/mass, long ligaments, and infertility treatment.',
+    optionExplanations: {
+      A: 'Correct. Severe unilateral pain with nausea/vomiting and cyst risk factor fits torsion.',
+      B: 'Primary dysmenorrhea is cyclic menstrual cramping with normal exam.',
+      C: 'Lichen simplex chronicus causes vulvar pruritic plaques.',
+      D: 'Bacterial vaginosis causes malodorous discharge, not acute unilateral severe pain.'
+    }
+  },
+  {
+    id: 9,
+    stem: 'A patient has suspected ovarian torsion. Doppler ultrasound still shows some ovarian blood flow. What is the correct interpretation',
+    topic: 'Ovarian torsion diagnosis',
+    options: {
+      A: 'Torsion is still possible because ovaries can twist and untwist',
+      B: 'Blood flow completely rules out torsion',
+      C: 'The patient cannot have torsion if vomiting is present',
+      D: 'CT is now required before surgical consult'
+    },
+    correct: 'A',
+    explanation: 'The lecture notes that ovaries can twist and untwist, so some blood flow may still be seen on ultrasound. Laparoscopy may be needed to rule out torsion.',
+    optionExplanations: {
+      A: 'Correct. Doppler flow does not fully exclude torsion.',
+      B: 'This is unsafe; blood flow can persist with intermittent torsion.',
+      C: 'Nausea/vomiting supports torsion.',
+      D: 'Surgical consultation should not be delayed when torsion/peritoneal abdomen is suspected.'
+    }
+  },
+  {
+    id: 10,
+    stem: 'A patient with suspected ovarian torsion has peritoneal abdominal findings but ultrasound is negative. What should happen next',
+    topic: 'Ovarian torsion management',
+    options: {
+      A: 'Surgical consult despite negative ultrasound',
+      B: 'Discharge without follow-up',
+      C: 'Treat with topical estrogen',
+      D: 'Wait 6 months for pain diary'
+    },
+    correct: 'A',
+    explanation: 'The lecture emphasizes that if the patient has a peritoneal abdomen and ultrasound is negative, surgical consult is still needed.',
+    optionExplanations: {
+      A: 'Correct. Peritoneal signs override reassuring imaging.',
+      B: 'Discharge is unsafe.',
+      C: 'Topical estrogen treats vaginal atrophy, not torsion.',
+      D: 'Pain diary is for chronic pelvic pain, not suspected emergency torsion.'
+    }
+  },
+  {
+    id: 11,
+    stem: 'A patient has confirmed ovarian torsion. What is the treatment',
+    topic: 'Ovarian torsion treatment',
+    options: {
+      A: 'Emergency surgery to untwist the ovary; remove if necrotic',
+      B: 'NSAIDs only for 6 months',
+      C: 'Pap smear and HPV co-testing',
+      D: 'Metronidazole only'
+    },
+    correct: 'A',
+    explanation: 'Ovarian torsion is an emergency. Treatment is emergency surgery to untwist the ovary, with removal if necrotic.',
+    optionExplanations: {
+      A: 'Correct. Torsion requires urgent surgical management.',
+      B: 'NSAIDs alone are insufficient and dangerous.',
+      C: 'Pap/HPV screening does not treat torsion.',
+      D: 'Metronidazole treats BV/trichomonas, not torsion.'
+    }
+  },
+  {
+    id: 12,
+    stem: 'A 17 year old has crampy lower abdominal pain radiating to the back during days 1 to 3 of menses, with nausea and diarrhea. Pelvic exam is normal. Which mechanism explains this',
+    topic: 'Primary dysmenorrhea',
+    options: {
+      A: 'Increased prostaglandin F2 alpha',
+      B: 'Endometrial glands inside myometrium',
+      C: 'Ovary twisting around the infundibulopelvic ligament',
+      D: 'HPV E6/E7-mediated dysplasia'
+    },
+    correct: 'A',
+    explanation: 'Primary dysmenorrhea is due to increased PGF2 alpha, causing uterine contractions and GI smooth muscle effects such as nausea, vomiting, and diarrhea. Exam is normal.',
+    optionExplanations: {
+      A: 'Correct. PGF2 alpha drives primary dysmenorrhea.',
+      B: 'Endometrial tissue inside myometrium is adenomyosis.',
+      C: 'Ovarian torsion causes acute unilateral pain and nausea/vomiting.',
+      D: 'HPV oncogenesis explains dysplasia/cancer, not primary dysmenorrhea.'
+    }
+  },
+  {
+    id: 13,
+    stem: 'A teen with primary dysmenorrhea asks how to use NSAIDs. Which counseling point best matches the lecture',
+    topic: 'Primary dysmenorrhea treatment',
+    options: {
+      A: 'Start before prostaglandins are produced, preferably the day before menses',
+      B: 'Only take after pain has been severe for 5 days',
+      C: 'Avoid NSAIDs because they increase PGF2 alpha',
+      D: 'Use antibiotics as first-line therapy'
+    },
+    correct: 'A',
+    explanation: 'NSAIDs inhibit COX-1/2 to decrease PGF2 alpha production and work best when taken before prostaglandins are produced, preferably a day before the period.',
+    optionExplanations: {
+      A: 'Correct. Pre-treatment improves NSAID effectiveness.',
+      B: 'Waiting until late reduces benefit.',
+      C: 'NSAIDs decrease prostaglandin synthesis.',
+      D: 'Antibiotics are not first-line for primary dysmenorrhea.'
+    }
+  },
+  {
+    id: 14,
+    stem: 'A patient has progressive dysmenorrhea, deep dyspareunia, chronic pelvic pain, infertility, and pain before menses. Which diagnosis is most likely',
+    topic: 'Endometriosis',
+    options: {
+      A: 'Endometriosis',
+      B: 'Primary dysmenorrhea',
+      C: 'Bacterial vaginosis',
+      D: 'Fibroadenoma'
+    },
+    correct: 'A',
+    explanation: 'Endometriosis is endometrial tissue outside the uterus. Pain before menses is emphasized as pathognomonic in the lecture. Classic symptoms include dysmenorrhea, deep dyspareunia, chronic pelvic pain, and infertility.',
+    optionExplanations: {
+      A: 'Correct. Pain before menses plus infertility/deep dyspareunia fits endometriosis.',
+      B: 'Primary dysmenorrhea has normal exam and typically day 1–3 menstrual cramping.',
+      C: 'BV causes malodorous discharge and clue cells.',
+      D: 'Fibroadenoma is a benign breast tumor.'
+    }
+  },
+  {
+    id: 15,
+    stem: 'A patient with suspected endometriosis has an initial pelvic ultrasound that is negative. Which statement is correct',
+    topic: 'Endometriosis diagnosis',
+    options: {
+      A: 'Ultrasound may be negative; definitive diagnosis requires laparoscopy and biopsy',
+      B: 'Negative ultrasound permanently excludes endometriosis',
+      C: 'Diagnosis is made by Pap smear',
+      D: 'Diagnosis requires CA-125 only'
+    },
+    correct: 'A',
+    explanation: 'Initial pelvic ultrasound is often negative in endometriosis. Definitive diagnosis is by laparoscopy and biopsy showing endometrial glands and stroma.',
+    optionExplanations: {
+      A: 'Correct. Laparoscopy + biopsy is definitive.',
+      B: 'Negative ultrasound does not exclude endometriosis.',
+      C: 'Pap smear evaluates cervical cytology.',
+      D: 'CA-125 is nonspecific and not definitive.'
+    }
+  },
+  {
+    id: 16,
+    stem: 'During laparoscopy for pelvic pain, black lesions are seen on the peritoneum. Biopsy shows endometrial glands and stroma. Which finding name is classically associated',
+    topic: 'Endometriosis findings',
+    options: {
+      A: 'Powder burn lesions',
+      B: 'Schiller-Duval bodies',
+      C: 'Call-Exner bodies',
+      D: 'Donovan bodies'
+    },
+    correct: 'A',
+    explanation: 'Endometriosis can show powder burn lesions on laparoscopy. Biopsy must reveal endometrial stroma and glands.',
+    optionExplanations: {
+      A: 'Correct. Powder burn lesions are classic for endometriosis.',
+      B: 'Schiller-Duval bodies are yolk sac tumor.',
+      C: 'Call-Exner bodies are granulosa tumor.',
+      D: 'Donovan bodies are granuloma inguinale.'
+    }
+  },
+  {
+    id: 17,
+    stem: 'A patient with endometriosis is treated medically before surgery. Which medication class suppresses ovarian function and creates a hypoestrogenic menopausal-like state',
+    topic: 'Endometriosis treatment',
+    options: {
+      A: 'GnRH agonists such as leuprolide or goserelin',
+      B: 'Ceftriaxone only',
+      C: 'PDE-5 inhibitors',
+      D: 'RPR/VDRL'
+    },
+    correct: 'A',
+    explanation: 'GnRH agonists such as leuprolide and goserelin suppress ovarian function and produce a hypoestrogenic menopausal-like state in endometriosis treatment.',
+    optionExplanations: {
+      A: 'Correct. GnRH agonists suppress ovarian estrogen production.',
+      B: 'Ceftriaxone treats gonorrhea/PID components, not endometriosis suppression.',
+      C: 'PDE-5 inhibitors treat erectile dysfunction.',
+      D: 'RPR/VDRL are syphilis tests.'
+    }
+  },
+  {
+    id: 18,
+    stem: 'A patient with severe dysmenorrhea, heavy bleeding, and an enlarged uterus without a discrete mass has ultrasound showing tiny subendometrial cysts. Which diagnosis is most likely',
+    topic: 'Adenomyosis',
+    options: {
+      A: 'Adenomyosis',
+      B: 'Primary dysmenorrhea',
+      C: 'Ovarian torsion',
+      D: 'Condyloma acuminatum'
+    },
+    correct: 'A',
+    explanation: 'Adenomyosis is endometrial tissue inside the myometrium and causes heavy bleeding, severe dysmenorrhea, and enlarged uterus without mass. Subendometrial cysts on ultrasound are specific.',
+    optionExplanations: {
+      A: 'Correct. Enlarged uterus without mass plus subendometrial cysts fits adenomyosis.',
+      B: 'Primary dysmenorrhea has a normal physical exam.',
+      C: 'Ovarian torsion causes sudden unilateral pain.',
+      D: 'Condyloma acuminatum causes HPV-related warts.'
+    }
+  },
+  {
+    id: 19,
+    stem: 'A woman has chronic pelvic pressure, heavy menstrual bleeding, prolonged bleeding, and benign smooth muscle uterine tumors surrounded by a pseudocapsule. Which diagnosis is most likely',
+    topic: 'Fibroids',
+    options: {
+      A: 'Fibroids/leiomyomas',
+      B: 'Endometriosis',
+      C: 'Tubo-ovarian abscess',
+      D: 'Vulvar melanoma'
+    },
+    correct: 'A',
+    explanation: 'Fibroids/leiomyomas are benign smooth muscle tumors of the uterus, very common, surrounded by pseudocapsule, and commonly cause heavy menstrual bleeding and pelvic pressure.',
+    optionExplanations: {
+      A: 'Correct. Leiomyomas cause heavy bleeding and pressure symptoms.',
+      B: 'Endometriosis involves ectopic endometrial tissue outside the uterus.',
+      C: 'Tubo-ovarian abscess is an inflammatory mass from PID.',
+      D: 'Vulvar melanoma is a pigmented vulvar malignancy.'
+    }
+  },
+  {
+    id: 20,
+    stem: 'A patient with chronic pelvic pain has rectal bleeding, weight loss, new bowel symptoms after age 50, new postmenopausal pain, pelvic mass, irregular bleeding after age 40, and postcoital bleeding. What should these findings trigger',
+    topic: 'Pelvic pain red flags',
+    options: {
+      A: 'Rule out malignancy or systemic disease',
+      B: 'Reassurance only with no workup',
+      C: 'Immediate diagnosis of primary dysmenorrhea',
+      D: 'Topical antifungal therapy only'
+    },
+    correct: 'A',
+    explanation: 'These are red flag symptoms from the lecture and must prompt evaluation for malignancy or systemic disease.',
+    optionExplanations: {
+      A: 'Correct. Red flags require malignancy/systemic disease evaluation.',
+      B: 'Reassurance alone is unsafe.',
+      C: 'Primary dysmenorrhea has normal exam and occurs in teens/early 20s with cyclic pain.',
+      D: 'Antifungal therapy treats candidiasis, not pelvic pain red flags.'
+    }
+  }
+]
+;
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>

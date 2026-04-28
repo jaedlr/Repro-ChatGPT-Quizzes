@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AUB Endometrial Cancer Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = 
+[
+  {
+    id: 1,
+    stem: 'A 16 year old girl has heavy menstrual bleeding since menarche. She also reports frequent nosebleeds and easy bruising. Which AUB category should be primarily evaluated first',
+    topic: 'AUB-C Coagulopathy',
+    options: {
+      A: 'AUB-C coagulopathy',
+      B: 'AUB-P polyp',
+      C: 'AUB-I iatrogenic',
+      D: 'AUB-M malignancy'
+    },
+    correct: 'A',
+    explanation: 'Heavy bleeding since menarche plus epistaxis and ecchymosis suggests a disorder of coagulation. The lecture emphasizes von Willebrand disease as the most common coagulopathy tested.',
+    optionExplanations: {
+      A: 'Correct. Teen with heavy bleeding since menarche should be evaluated for coagulopathy, especially von Willebrand disease.',
+      B: 'Polyps can cause AUB but do not explain lifelong bleeding with mucocutaneous bleeding signs.',
+      C: 'Iatrogenic AUB is due to medications such as hormonal preparations or risperidone.',
+      D: 'Malignancy is less likely in a teen with bleeding since menarche and systemic bleeding symptoms.'
+    }
+  },
+  {
+    id: 2,
+    stem: 'A woman reports excessive menstrual bleeding lasting 9 days, but cycles occur at regular intervals. Which term best describes this pattern',
+    topic: 'Menorrhagia',
+    options: {
+      A: 'Metrorrhagia',
+      B: 'Menorrhagia',
+      C: 'Polymenorrhea',
+      D: 'Menometrorrhagia'
+    },
+    correct: 'B',
+    explanation: 'Menorrhagia, also called hypermenorrhea, is excessive menstrual bleeding greater than 80 mL or prolonged menses greater than 7 days occurring at normal intervals.',
+    optionExplanations: {
+      A: 'Metrorrhagia means irregular episodes of uterine bleeding.',
+      B: 'Correct. Heavy or prolonged bleeding at normal intervals is menorrhagia.',
+      C: 'Polymenorrhea means abnormally frequent menses at intervals less than 24 days.',
+      D: 'Menometrorrhagia is heavy and irregular bleeding.'
+    }
+  },
+  {
+    id: 3,
+    stem: 'A patient has heavy and irregular uterine bleeding. Which term best describes this pattern',
+    topic: 'Menometrorrhagia',
+    options: {
+      A: 'Menometrorrhagia',
+      B: 'Menorrhagia',
+      C: 'Polymenorrhea',
+      D: 'Dysmenorrhea'
+    },
+    correct: 'A',
+    explanation: 'Menometrorrhagia means heavy and irregular bleeding.',
+    optionExplanations: {
+      A: 'Correct. Heavy plus irregular bleeding is menometrorrhagia.',
+      B: 'Menorrhagia is heavy/prolonged bleeding at normal intervals.',
+      C: 'Polymenorrhea is frequent menses occurring less than every 24 days.',
+      D: 'Dysmenorrhea means painful menses, not a bleeding pattern definition.'
+    }
+  },
+  {
+    id: 4,
+    stem: 'A patient reports uterine bleeding episodes that occur unpredictably between expected menstrual periods. Which term best applies',
+    topic: 'Metrorrhagia',
+    options: {
+      A: 'Amenorrhea',
+      B: 'Metrorrhagia',
+      C: 'Menorrhagia',
+      D: 'Oligomenorrhea'
+    },
+    correct: 'B',
+    explanation: 'Metrorrhagia is irregular episodes of uterine bleeding.',
+    optionExplanations: {
+      A: 'Amenorrhea is absence of menses.',
+      B: 'Correct. Irregular uterine bleeding episodes are metrorrhagia.',
+      C: 'Menorrhagia is excessive or prolonged menses at normal intervals.',
+      D: 'Oligomenorrhea means infrequent menstruation, not irregular bleeding episodes.'
+    }
+  },
+  {
+    id: 5,
+    stem: 'A 12 year old recently began menstruating and has irregular heavy bleeding. Workup shows no structural lesion. Which mechanism best explains her AUB-O',
+    topic: 'Anovulatory bleeding after menarche',
+    options: {
+      A: 'Immature HPO axis fails positive estrogen feedback and LH surge',
+      B: 'Corpus luteum overproduces progesterone',
+      C: 'Direct myometrial invasion by carcinoma',
+      D: 'Von Willebrand factor excess'
+    },
+    correct: 'A',
+    explanation: 'After menarche, anovulatory bleeding occurs due to immaturity of the HPO axis, impaired positive estrogen feedback, absent LH surge, and continuous estrogen exposure without corpus luteum progesterone.',
+    optionExplanations: {
+      A: 'Correct. Immature HPO axis causes anovulation at menarche.',
+      B: 'There is no corpus luteum formation in anovulation, so progesterone is lacking.',
+      C: 'Myometrial invasion is a cancer feature, not adolescent anovulatory AUB.',
+      D: 'Von Willebrand disease is a bleeding disorder, not vWF excess.'
+    }
+  },
+  {
+    id: 6,
+    stem: 'A perimenopausal woman has heavy irregular bleeding due to ovarian decline and poor HPO synchrony. Which pathophysiology produces the bleeding',
+    topic: 'Anovulatory bleeding near menopause',
+    options: {
+      A: 'Continuous estradiol without progesterone causes proliferative endometrium, vascular overgrowth, and necrosis',
+      B: 'Uniform sloughing down to basalis layer prevents bleeding',
+      C: 'Progesterone-only stimulation causes endometrial atrophy with no bleeding',
+      D: 'LH surge causes excessive corpus luteum formation'
+    },
+    correct: 'A',
+    explanation: 'At extremes of age, anovulation causes continuous estradiol production without corpus luteum progesterone. The endometrium proliferates with overgrowth of blood supply and necrosis, causing heavy bleeding because uniform sloughing does not occur.',
+    optionExplanations: {
+      A: 'Correct. Unopposed estrogen with no progesterone causes disordered proliferative bleeding.',
+      B: 'Uniform sloughing does not occur in anovulatory bleeding.',
+      C: 'The problem is lack of progesterone, not progesterone-only stimulation.',
+      D: 'Anovulation means no LH surge/corpus luteum formation.'
+    }
+  },
+  {
+    id: 7,
+    stem: 'A patient develops abnormal bleeding after starting oral contraceptives. Another patient develops hyperprolactinemia after risperidone use. Which AUB category includes these causes',
+    topic: 'AUB-I iatrogenic',
+    options: {
+      A: 'AUB-I iatrogenic',
+      B: 'AUB-E endometrial',
+      C: 'AUB-L leiomyoma',
+      D: 'AUB-A adenomyosis'
+    },
+    correct: 'A',
+    explanation: 'Iatrogenic AUB is abnormal bleeding from medications. Common causes include hormonal preparations causing breakthrough bleeding and antipsychotics such as risperidone causing dopamine antagonism and hyperprolactinemia.',
+    optionExplanations: {
+      A: 'Correct. Medication-related bleeding is AUB-I.',
+      B: 'AUB-E is heavy bleeding without other abnormalities, linked to prostaglandin imbalance.',
+      C: 'AUB-L is due to leiomyomas.',
+      D: 'AUB-A is due to adenomyosis.'
+    }
+  },
+  {
+    id: 8,
+    stem: 'A woman has heavy uterine bleeding but no structural lesion, coagulopathy, ovulatory dysfunction, or medication cause. The lecture suggests decreased uterine PGF2 alpha and increased PGE may contribute. Which AUB category is this',
+    topic: 'AUB-E endometrial',
+    options: {
+      A: 'AUB-E endometrial',
+      B: 'AUB-P polyp',
+      C: 'AUB-M malignant',
+      D: 'AUB-C coagulopathy'
+    },
+    correct: 'A',
+    explanation: 'AUB-E refers to heavy bleeding in the absence of other abnormalities. Possible mechanisms include deficient uterine PGF2 alpha, which normally helps platelet plug formation and uterine contractility, and excessive vasodilatory PGE.',
+    optionExplanations: {
+      A: 'Correct. Isolated heavy bleeding without other abnormalities fits AUB-E.',
+      B: 'AUB-P involves localized endometrial overgrowth with glands, stroma, and vessels.',
+      C: 'AUB-M is due to malignancy or hyperplasia.',
+      D: 'AUB-C is due to coagulation disorders.'
+    }
+  },
+  {
+    id: 9,
+    stem: 'A reproductive-age woman has intermenstrual bleeding. Hysteroscopy shows a localized overgrowth of endometrial tissue containing glands, stroma, and vessels, covered by epithelium. Which AUB cause is most likely',
+    topic: 'AUB-P endometrial polyp',
+    options: {
+      A: 'AUB-P polyp',
+      B: 'AUB-O ovulatory dysfunction',
+      C: 'AUB-C coagulopathy',
+      D: 'AUB-N not otherwise classified'
+    },
+    correct: 'A',
+    explanation: 'Endometrial polyps are localized overgrowths of endometrial tissue with glands, stroma, and vessels covered by epithelium. They are often benign and treated with operative hysteroscopy.',
+    optionExplanations: {
+      A: 'Correct. Localized endometrial overgrowth with glands/stroma/vessels is a polyp.',
+      B: 'AUB-O is anovulatory bleeding from HPO axis dysfunction.',
+      C: 'AUB-C is bleeding due to coagulation disorders.',
+      D: 'AUB-N is used when bleeding is not otherwise classified, such as foreign body or trauma.'
+    }
+  },
+  {
+    id: 10,
+    stem: 'A multiparous woman with prior C-section and D&C has AUB and dysmenorrhea. Ultrasound shows an enlarged uterus. Pathology would show endometrial glands and stroma in the myometrium with hypertrophy of surrounding myometrium. Which AUB category is this',
+    topic: 'AUB-A adenomyosis',
+    options: {
+      A: 'AUB-A adenomyosis',
+      B: 'AUB-L leiomyoma',
+      C: 'AUB-P polyp',
+      D: 'AUB-I iatrogenic'
+    },
+    correct: 'A',
+    explanation: 'Adenomyosis is endometrial glands and stroma in the uterine myometrium, causing hypertrophy of surrounding myometrium, enlarged uterus, AUB, and dysmenorrhea. Risk factors include multiparity, D&C, C-section, and SAB.',
+    optionExplanations: {
+      A: 'Correct. Endometrial tissue in myometrium plus enlarged uterus and dysmenorrhea indicates adenomyosis.',
+      B: 'Leiomyoma is a benign smooth muscle tumor.',
+      C: 'Polyp is localized endometrial overgrowth in the cavity.',
+      D: 'Iatrogenic AUB is medication-related.'
+    }
+  },
+  {
+    id: 11,
+    stem: 'A 61 year old woman presents with new vaginal bleeding after 8 years without menses. What is the most important interpretation',
+    topic: 'Postmenopausal bleeding',
+    options: {
+      A: 'Postmenopausal bleeding is always abnormal and must be evaluated',
+      B: 'Bleeding is normal if painless',
+      C: 'Bleeding is expected after menopause due to ovulation',
+      D: 'Bleeding should be ignored unless it lasts over 7 days'
+    },
+    correct: 'A',
+    explanation: 'Postmenopausal bleeding is always abnormal and is a key clinical presentation of endometrial cancer.',
+    optionExplanations: {
+      A: 'Correct. Postmenopausal bleeding requires evaluation.',
+      B: 'Painless bleeding can still indicate malignancy.',
+      C: 'Postmenopausal patients do not have normal ovulatory cycles.',
+      D: 'Any postmenopausal bleeding is abnormal regardless of duration.'
+    }
+  },
+  {
+    id: 12,
+    stem: 'A postmenopausal woman has vaginal bleeding. Which initial diagnostic tool is used to evaluate the endometrial stripe',
+    topic: 'TVUS initial evaluation',
+    options: {
+      A: 'Transvaginal ultrasound',
+      B: 'Dilation and curettage',
+      C: 'Chest CT',
+      D: 'Pap smear only'
+    },
+    correct: 'A',
+    explanation: 'Transvaginal ultrasound is the initial imaging modality used to evaluate endometrial stripe and is the imaging modality of choice for pelvic masses in premenopausal and postmenopausal women.',
+    optionExplanations: {
+      A: 'Correct. TVUS is the initial test to evaluate the endometrial stripe.',
+      B: 'D&C is the gold standard/definitive diagnostic method, not the initial imaging test.',
+      C: 'Chest CT is not the initial test for AUB/endometrial stripe.',
+      D: 'Pap smear screens cervical pathology and does not evaluate the endometrial stripe.'
+    }
+  },
+  {
+    id: 13,
+    stem: 'A postmenopausal woman with bleeding undergoes TVUS. Endometrial stripe is 3 mm. Which interpretation is most consistent with the lecture',
+    topic: 'Endometrial stripe',
+    options: {
+      A: 'Unlikely risk of endometrial hyperplasia or cancer',
+      B: 'Biopsy is required solely due to stripe thickness',
+      C: 'This proves endometrial cancer',
+      D: 'D&C must be therapeutic for polyps'
+    },
+    correct: 'A',
+    explanation: 'In postmenopausal women, an endometrial stripe less than 4 mm is unlikely to indicate endometrial hyperplasia or cancer.',
+    optionExplanations: {
+      A: 'Correct. <4 mm is low risk for hyperplasia/cancer in the lecture.',
+      B: 'Biopsy is required when the stripe is >5 mm, or if symptoms persist despite reassuring tests.',
+      C: 'A thin stripe does not prove cancer.',
+      D: 'D&C can be therapeutic for hyperplasia or polyps, but this statement does not interpret the stripe.'
+    }
+  },
+  {
+    id: 14,
+    stem: 'A postmenopausal patient with bleeding has TVUS showing endometrial stripe of 8 mm. What is the next appropriate diagnostic step',
+    topic: 'Endometrial stripe biopsy threshold',
+    options: {
+      A: 'Endometrial biopsy',
+      B: 'No evaluation because 8 mm is normal',
+      C: 'Treat with antibiotics only',
+      D: 'Screen with mammography'
+    },
+    correct: 'A',
+    explanation: 'In postmenopausal women, an endometrial stripe greater than 5 mm requires biopsy.',
+    optionExplanations: {
+      A: 'Correct. >5 mm in a postmenopausal bleeding patient requires biopsy.',
+      B: '8 mm is not automatically normal in this context.',
+      C: 'Antibiotics do not evaluate endometrial cancer risk.',
+      D: 'Mammography does not evaluate postmenopausal bleeding.'
+    }
+  },
+  {
+    id: 15,
+    stem: 'A 39 year old woman has persistent irregular uterine bleeding. Which sampling method is indicated and has approximately 90 percent diagnostic accuracy',
+    topic: 'Endometrial biopsy indications',
+    options: {
+      A: 'Endometrial biopsy',
+      B: 'Pap smear only',
+      C: 'Colposcopy only',
+      D: 'Wet mount only'
+    },
+    correct: 'A',
+    explanation: 'Endometrial biopsy samples endometrial tissue and is indicated for postmenopausal bleeding or irregular bleeding in women over age 35. It has approximately 90 percent diagnostic accuracy.',
+    optionExplanations: {
+      A: 'Correct. EMB is indicated in irregular bleeding over age 35 and has about 90 percent diagnostic accuracy.',
+      B: 'Pap smear evaluates cervical cytology, not endometrial sampling.',
+      C: 'Colposcopy evaluates cervix/vagina/vulva after abnormal screening, not endometrial tissue.',
+      D: 'Wet mount evaluates vaginitis.'
+    }
+  },
+  {
+    id: 16,
+    stem: 'A patient has persistent postmenopausal bleeding despite a negative endometrial biopsy. What is the gold standard definitive diagnostic test for endometrial cancer',
+    topic: 'D&C gold standard',
+    options: {
+      A: 'Dilation and curettage',
+      B: 'Urinalysis',
+      C: 'Serum CA-125 only',
+      D: 'KOH prep'
+    },
+    correct: 'A',
+    explanation: 'Dilation and curettage is the gold standard for diagnosing endometrial cancer and is performed if EMB is negative but symptoms persist. It can also be therapeutic for hyperplasia or polyps.',
+    optionExplanations: {
+      A: 'Correct. D&C is definitive/gold standard in the lecture.',
+      B: 'Urinalysis does not diagnose endometrial cancer.',
+      C: 'CA-125 is associated with ovarian cancer monitoring and is not definitive for endometrial cancer diagnosis.',
+      D: 'KOH prep evaluates Candida or whiff test, not endometrial cancer.'
+    }
+  },
+  {
+    id: 17,
+    stem: 'A woman asks why obesity increases risk of endometrial cancer. Which mechanism best explains this risk',
+    topic: 'Obesity and endometrial cancer',
+    options: {
+      A: 'Peripheral aromatization of androstenedione to estrone',
+      B: 'Decreased estrogen exposure from adipose tissue',
+      C: 'Direct HPV infection of endometrial glands',
+      D: 'Loss of myoepithelial cells in uterine lining'
+    },
+    correct: 'A',
+    explanation: 'Obesity increases endometrial cancer risk because adipose tissue aromatizes androstenedione to estrone, increasing unopposed estrogenic stimulation.',
+    optionExplanations: {
+      A: 'Correct. Adipose aromatization increases estrone exposure.',
+      B: 'Obesity increases rather than decreases estrogenic stimulation.',
+      C: 'HPV is strongly linked to cervical carcinoma, not typical endometrial carcinoma risk.',
+      D: 'Myoepithelial cell loss is a breast pathology concept.'
+    }
+  },
+  {
+    id: 18,
+    stem: 'A postmenopausal woman uses estrogen-only hormone replacement therapy for menopausal symptoms. Compared with combination HRT, what is the effect on endometrial cancer risk',
+    topic: 'HRT and endometrial cancer',
+    options: {
+      A: '4 to 8 times higher risk',
+      B: 'No increased risk',
+      C: 'Complete protection from endometrial cancer',
+      D: 'Only increases cervical cancer risk'
+    },
+    correct: 'A',
+    explanation: 'Estrogen-only hormone replacement therapy carries a 4 to 8 times higher risk of endometrial cancer than combination hormone replacement therapy.',
+    optionExplanations: {
+      A: 'Correct. Estrogen-only HRT markedly increases endometrial cancer risk.',
+      B: 'Unopposed estrogen does increase risk.',
+      C: 'Progestin protects the endometrium; estrogen-only does not.',
+      D: 'The key risk here is endometrial cancer, not only cervical cancer.'
+    }
+  },
+  {
+    id: 19,
+    stem: 'A patient with endometrial cancer is found to have local extension. Which route of spread is most common according to the lecture',
+    topic: 'Endometrial cancer spread',
+    options: {
+      A: 'Direct extension through myometrium to serosa and cervix',
+      B: 'Hematogenous spread to brain as the first route',
+      C: 'Only exfoliation through vagina',
+      D: 'Only transplacental spread'
+    },
+    correct: 'A',
+    explanation: 'Endometrial cancer most commonly spreads by direct extension through the myometrium to serosa and cervix. It can also spread by exfoliation through fallopian tubes, lymphatics, and rarely hematogenously to lung/liver.',
+    optionExplanations: {
+      A: 'Correct. Direct extension is the most common route.',
+      B: 'Hematogenous spread is rare and classically to lungs/liver, not first route to brain.',
+      C: 'Exfoliation can occur through fallopian tubes to ovary/peritoneum/omentum, but direct extension is most common.',
+      D: 'Transplacental spread is not a route for endometrial cancer.'
+    }
+  },
+  {
+    id: 20,
+    stem: 'A 28 year old woman with heavy menstrual bleeding does not desire pregnancy and malignancy is not suspected. Which management option from the lecture is appropriate',
+    topic: 'Heavy menstrual bleeding management',
+    options: {
+      A: 'Oral contraceptive pills',
+      B: 'Immediate hysterectomy for all patients',
+      C: 'No treatment is ever needed',
+      D: 'Chest radiation'
+    },
+    correct: 'A',
+    explanation: 'For heavy menstrual bleeding in young women when malignancy is not suspected and pregnancy is not desired, OCPs are an appropriate management option.',
+    optionExplanations: {
+      A: 'Correct. OCPs are used when pregnancy is not desired in likely non-cancer heavy menstrual bleeding.',
+      B: 'Hysterectomy is not first-line for all young patients.',
+      C: 'Symptomatic heavy bleeding often requires treatment and evaluation.',
+      D: 'Chest radiation has no role in routine AUB management.'
+    }
+  }
+]
+;
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>
