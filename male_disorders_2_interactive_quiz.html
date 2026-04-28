@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Male Disorders 2 Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = 
+[
+  {
+    id: 1,
+    stem: 'A 24 year old sexually active male presents with dysuria and thick purulent urethral discharge. Gram stain shows gram negative diplococci within neutrophils. Which virulence factor allows the organism to attach to epithelial cells',
+    topic: 'Gonorrhea',
+    options: {
+      A: 'Pili',
+      B: 'M protein',
+      C: 'Protein A',
+      D: 'Polyribitol phosphate capsule'
+    },
+    correct: 'A',
+    explanation: 'Neisseria gonorrhoeae uses pili to adhere to epithelial cells, causing urethritis with purulent discharge and dysuria.',
+    optionExplanations: {
+      A: 'Correct. Gonococcal pili mediate epithelial adherence and help establish infection.',
+      B: 'M protein is a virulence factor of Streptococcus pyogenes.',
+      C: 'Protein A is a virulence factor of Staphylococcus aureus.',
+      D: 'Polyribitol phosphate capsule is associated with Haemophilus influenzae type b, not gonorrhea.'
+    }
+  },
+  {
+    id: 2,
+    stem: 'A newborn develops conjunctivitis 3 days after vaginal delivery. The infant has copious purulent eye discharge. Which organism is most likely',
+    topic: 'Neonatal gonococcal conjunctivitis',
+    options: {
+      A: 'Chlamydia trachomatis',
+      B: 'Neisseria gonorrhoeae',
+      C: 'Treponema pallidum',
+      D: 'Trichomonas vaginalis'
+    },
+    correct: 'B',
+    explanation: 'Neisseria gonorrhoeae can cause neonatal conjunctivitis 2 to 5 days after birth.',
+    optionExplanations: {
+      A: 'Chlamydial conjunctivitis usually presents later, classically 5 to 14 days after birth.',
+      B: 'Correct. Gonococcal conjunctivitis occurs early and is purulent.',
+      C: 'Treponema pallidum causes congenital syphilis, not this acute purulent conjunctivitis pattern.',
+      D: 'Trichomonas causes genitourinary infection, not neonatal purulent conjunctivitis.'
+    }
+  },
+  {
+    id: 3,
+    stem: 'A 21 year old male has urethritis. NAAT is positive for Chlamydia trachomatis. Which form is infectious and enters epithelial cells',
+    topic: 'Chlamydia life cycle',
+    options: {
+      A: 'Reticulate body',
+      B: 'Elementary body',
+      C: 'Trophozoite',
+      D: 'Spore'
+    },
+    correct: 'B',
+    explanation: 'Chlamydia alternates between infectious elementary bodies and replicating reticulate bodies. Elementary bodies attach to epithelial cells and are taken up by endocytosis.',
+    optionExplanations: {
+      A: 'Reticulate bodies replicate intracellularly but are not the infectious extracellular form.',
+      B: 'Correct. Elementary bodies are infectious and enter host cells.',
+      C: 'Trophozoites are seen in protozoa such as Trichomonas.',
+      D: 'Chlamydia does not form spores.'
+    }
+  },
+  {
+    id: 4,
+    stem: 'A sexually active male presents with recurrent urethritis despite prior treatment. Symptoms are mild with burning and scant discharge. The causative organism lacks a cell wall and is strongly associated with persistent urethritis. Which organism is most likely',
+    topic: 'Mycoplasma genitalium',
+    options: {
+      A: 'Haemophilus ducreyi',
+      B: 'Mycoplasma genitalium',
+      C: 'Klebsiella granulomatis',
+      D: 'Neisseria gonorrhoeae'
+    },
+    correct: 'B',
+    explanation: 'Mycoplasma genitalium is a common cause of recurrent or persistent urethritis, often with mild discharge and burning.',
+    optionExplanations: {
+      A: 'Haemophilus ducreyi causes chancroid with painful ulcers and buboes.',
+      B: 'Correct. Mycoplasma genitalium is associated with persistent urethritis.',
+      C: 'Klebsiella granulomatis causes granuloma inguinale with painless beefy red ulcers.',
+      D: 'Gonorrhea more classically causes purulent urethritis and dysuria.'
+    }
+  },
+  {
+    id: 5,
+    stem: 'A man presents 3 weeks after a sexual exposure with a painless red genital papule that ulcerated. The ulcer has a firm indurated border and plasma cell rich infiltrate. Which process is central to the pathology',
+    topic: 'Primary syphilis',
+    options: {
+      A: 'Ischemia from small vessel lesions',
+      B: 'Epithelial toxin mediated necrosis',
+      C: 'Direct invasion of neutrophils by virus',
+      D: 'IgE mediated mast cell degranulation'
+    },
+    correct: 'A',
+    explanation: 'Syphilis pathology is driven by vascular lesions with small vessel inflammation, endothelial proliferation, and intimal fibrosis leading to ischemic injury.',
+    optionExplanations: {
+      A: 'Correct. Syphilis causes endarteritis and ischemic tissue injury.',
+      B: 'Toxin mediated necrosis is not the main mechanism of syphilis.',
+      C: 'Syphilis is caused by a spirochete, not a virus.',
+      D: 'This is type I hypersensitivity and does not explain a chancre.'
+    }
+  },
+  {
+    id: 6,
+    stem: 'A patient develops a diffuse rash involving the palms and soles, oral erosions, fever, lymphadenopathy, and condylomata lata. Which diagnostic test pair is most appropriate for screening and confirmation',
+    topic: 'Secondary syphilis testing',
+    options: {
+      A: 'NAAT followed by culture',
+      B: 'RPR or VDRL followed by FTA-ABS or TP-PA',
+      C: 'Wet mount followed by KOH prep',
+      D: 'Tzanck smear followed by viral culture'
+    },
+    correct: 'B',
+    explanation: 'Syphilis screening uses nontreponemal tests such as RPR or VDRL, while confirmation uses treponemal tests such as FTA-ABS or TP-PA.',
+    optionExplanations: {
+      A: 'NAAT is used for organisms such as chlamydia and gonorrhea, not the classic syphilis algorithm.',
+      B: 'Correct. Nontreponemal tests screen and treponemal tests confirm.',
+      C: 'Wet mount and KOH are used for vaginitis evaluation.',
+      D: 'Tzanck smear is associated with HSV cytopathic effect.'
+    }
+  },
+  {
+    id: 7,
+    stem: 'A patient with syphilis receives penicillin G and develops fever, chills, headache, myalgias, and hypotension several hours later. Which mechanism explains this reaction',
+    topic: 'Jarisch-Herxheimer reaction',
+    options: {
+      A: 'IgE mediated penicillin allergy',
+      B: 'Rapid lysis of spirochetes causing cytokine release',
+      C: 'Immune complex deposition in renal glomeruli',
+      D: 'Complement deficiency causing bacteremia'
+    },
+    correct: 'B',
+    explanation: 'The Jarisch-Herxheimer reaction occurs within hours of antibiotic treatment due to rapid spirochete lysis and inflammatory cytokine release.',
+    optionExplanations: {
+      A: 'Penicillin allergy would more classically cause urticaria, angioedema, or anaphylaxis.',
+      B: 'Correct. It is a cytokine reaction from dying spirochetes, not a true allergy.',
+      C: 'Immune complex disease does not cause this acute post-treatment syndrome.',
+      D: 'Complement deficiency is not the mechanism.'
+    }
+  },
+  {
+    id: 8,
+    stem: 'A patient presents with a painful genital ulcer with ragged borders, gray exudate, and tender inguinal lymphadenopathy that developed into buboes. Which organism is responsible',
+    topic: 'Chancroid',
+    options: {
+      A: 'Treponema pallidum',
+      B: 'Haemophilus ducreyi',
+      C: 'Klebsiella granulomatis',
+      D: 'HSV-2'
+    },
+    correct: 'B',
+    explanation: 'Chancroid is caused by Haemophilus ducreyi and presents as a painful soft chancre with ragged borders, gray exudate, and painful buboes.',
+    optionExplanations: {
+      A: 'Treponema pallidum causes a painless hard chancre in primary syphilis.',
+      B: 'Correct. Haemophilus ducreyi causes painful chancroid.',
+      C: 'Klebsiella granulomatis causes painless beefy red ulcers with Donovan bodies.',
+      D: 'HSV causes painful grouped vesicles that ulcerate, not classically ragged ulcers with buboes.'
+    }
+  },
+  {
+    id: 9,
+    stem: 'A patient returning from a tropical region presents with a painless beefy red genital ulcer that bleeds easily. Biopsy shows macrophages containing Donovan bodies. Which stain can help visualize these organisms',
+    topic: 'Granuloma inguinale',
+    options: {
+      A: 'Silver stain',
+      B: 'Acid fast stain',
+      C: 'India ink',
+      D: 'Gram stain only'
+    },
+    correct: 'A',
+    explanation: 'Granuloma inguinale is caused by Klebsiella granulomatis. Donovan bodies are intracellular organisms in macrophages and can be visualized with silver stain.',
+    optionExplanations: {
+      A: 'Correct. Donovan bodies can be seen with silver stain.',
+      B: 'Acid fast stain is for mycobacteria and some related organisms.',
+      C: 'India ink is associated with Cryptococcus.',
+      D: 'Gram stain alone is not the key diagnostic clue for Donovan bodies.'
+    }
+  },
+  {
+    id: 10,
+    stem: 'A man has urethritis and balanitis after exposure to a partner with frothy yellow green discharge and strawberry cervix. Which organism is most likely',
+    topic: 'Trichomoniasis',
+    options: {
+      A: 'Candida albicans',
+      B: 'Gardnerella vaginalis',
+      C: 'Trichomonas vaginalis',
+      D: 'Chlamydia trachomatis'
+    },
+    correct: 'C',
+    explanation: 'Trichomonas vaginalis is a protozoan that can cause urethritis and balanitis in men and classically causes frothy yellow green discharge and strawberry cervix in women.',
+    optionExplanations: {
+      A: 'Candida causes thick white discharge and pruritus, not strawberry cervix.',
+      B: 'Gardnerella causes bacterial vaginosis with fishy odor and clue cells.',
+      C: 'Correct. Trichomonas is associated with strawberry cervix and frothy discharge.',
+      D: 'Chlamydia causes urethritis/cervicitis but not strawberry cervix.'
+    }
+  },
+  {
+    id: 11,
+    stem: 'A patient has painful grouped vesicles on an erythematous base that later ulcerate and crust. Tzanck smear shows multinucleated syncytia. Which microscopic finding is also associated with this infection',
+    topic: 'HSV',
+    options: {
+      A: 'Koilocytosis',
+      B: 'Cowdry type A intranuclear inclusions',
+      C: 'Donovan bodies',
+      D: 'Schiller-Duval bodies'
+    },
+    correct: 'B',
+    explanation: 'HSV causes painful grouped vesicles and can show Cowdry type A intranuclear inclusions and multinucleated syncytia on Tzanck smear.',
+    optionExplanations: {
+      A: 'Koilocytosis is associated with HPV infection.',
+      B: 'Correct. HSV causes Cowdry type A intranuclear inclusions.',
+      C: 'Donovan bodies are seen in granuloma inguinale.',
+      D: 'Schiller-Duval bodies are seen in yolk sac tumors.'
+    }
+  },
+  {
+    id: 12,
+    stem: 'A young sexually active man has multiple small red brown warty papules on the penile shaft. Biopsy shows squamous cells with perinuclear cytoplasmic vacuolization. Which viral types are most likely responsible for typical condyloma acuminata',
+    topic: 'HPV condyloma acuminata',
+    options: {
+      A: 'HPV 6 and 11',
+      B: 'HPV 16 and 18',
+      C: 'HSV 1 and 2',
+      D: 'HBV S and polymerase genes'
+    },
+    correct: 'A',
+    explanation: 'Condyloma acuminata is caused by low risk HPV types 6 and 11 and shows koilocytosis with papillary architecture, hyperkeratosis, and acanthosis.',
+    optionExplanations: {
+      A: 'Correct. HPV 6 and 11 cause genital warts.',
+      B: 'HPV 16 and 18 are high risk oncogenic strains associated with squamous cell carcinoma.',
+      C: 'HSV causes painful vesicles and ulcers, not warts with koilocytosis.',
+      D: 'HBV causes hepatitis and is not the cause of condyloma acuminata.'
+    }
+  },
+  {
+    id: 13,
+    stem: 'A man with high risk sexual exposure is tested for HIV. Which test detects infection earliest after exposure',
+    topic: 'HIV testing window',
+    options: {
+      A: 'Antibody only test',
+      B: 'Rapid antigen antibody finger stick test',
+      C: 'Nucleic acid test',
+      D: 'Western blot'
+    },
+    correct: 'C',
+    explanation: 'HIV nucleic acid testing detects viral nucleic acid earliest, approximately 10 to 33 days after exposure.',
+    optionExplanations: {
+      A: 'Antibody only tests detect later, about 23 to 90 days after exposure.',
+      B: 'Rapid antigen/antibody testing has a wider later window, about 18 to 90 days.',
+      C: 'Correct. NAT detects infection earliest.',
+      D: 'Western blot is a confirmatory antibody-based test and is not the earliest detection method.'
+    }
+  },
+  {
+    id: 14,
+    stem: 'A patient with HIV has fever, weight loss, diarrhea, lymphadenopathy, and opportunistic infections. Which CD4 count threshold defines AIDS in the notes',
+    topic: 'AIDS definition',
+    options: {
+      A: '<50 cells/microL',
+      B: '<100 cells/microL',
+      C: '<200 cells/microL',
+      D: '<500 cells/microL'
+    },
+    correct: 'C',
+    explanation: 'AIDS is defined by a CD4+ T cell count below 200 cells/microL or AIDS-defining illnesses.',
+    optionExplanations: {
+      A: 'CD4 <50 is profound immunosuppression associated with infections such as MAC, but it is not the AIDS cutoff.',
+      B: 'CD4 <100 is used for toxoplasmosis prophylaxis in certain contexts, not the main AIDS definition.',
+      C: 'Correct. CD4 <200 cells/microL defines AIDS.',
+      D: 'CD4 500 is not an AIDS-defining threshold.'
+    }
+  },
+  {
+    id: 15,
+    stem: 'A patient recently started HAART and within the first few months develops a hyperinflammatory response to a latent infection. What is the mechanism',
+    topic: 'Immune reconstitution syndrome',
+    options: {
+      A: 'Worsening viral mutation from reverse transcriptase error',
+      B: 'Restored immune function causing exaggerated response to latent infection',
+      C: 'Drug induced direct destruction of CD4 cells',
+      D: 'Type I hypersensitivity to antiretroviral therapy'
+    },
+    correct: 'B',
+    explanation: 'Immune reconstitution syndrome occurs after HAART lowers viral load and restores CD4 function, producing an exaggerated inflammatory response to latent infections.',
+    optionExplanations: {
+      A: 'Mutation can cause resistance but does not explain immune reconstitution syndrome.',
+      B: 'Correct. Recovering immunity reacts strongly against latent organisms.',
+      C: 'HAART aims to restore CD4 cells, not destroy them.',
+      D: 'This is not primarily an IgE mediated drug allergy.'
+    }
+  },
+  {
+    id: 16,
+    stem: 'A man develops AIDS-related vascular tumors presenting as purple skin lesions. Which virus is associated with this malignancy',
+    topic: 'Kaposi sarcoma',
+    options: {
+      A: 'HHV-8',
+      B: 'EBV',
+      C: 'CMV',
+      D: 'HSV-2'
+    },
+    correct: 'A',
+    explanation: 'Kaposi sarcoma is a vascular tumor associated with HHV-8 infection and can occur in AIDS.',
+    optionExplanations: {
+      A: 'Correct. HHV-8 causes Kaposi sarcoma.',
+      B: 'EBV is associated with some B cell lymphomas.',
+      C: 'CMV causes retinitis and systemic disease in immunosuppressed patients.',
+      D: 'HSV-2 causes genital herpes.'
+    }
+  },
+  {
+    id: 17,
+    stem: 'A patient with HIV develops B cell lymphoma. Which mechanism described in the notes contributes to this risk',
+    topic: 'HIV-associated lymphoma',
+    options: {
+      A: 'Unchecked EBV infection with B cell hyperplasia',
+      B: 'Direct HPV infection of B cells',
+      C: 'AMH deficiency causing lymphoid dysgenesis',
+      D: 'Loss of SRY gene function'
+    },
+    correct: 'A',
+    explanation: 'HIV increases risk of B cell lymphoma through B cell hyperplasia and unchecked EBV infection.',
+    optionExplanations: {
+      A: 'Correct. EBV-driven B cell proliferation contributes to lymphoma risk in HIV.',
+      B: 'HPV is linked to squamous cancers, not HIV-associated B cell lymphoma.',
+      C: 'AMH is involved in reproductive tract development, not lymphoma.',
+      D: 'SRY is involved in testicular development, not lymphoma.'
+    }
+  },
+  {
+    id: 18,
+    stem: 'A patient has urethritis. NAAT is ordered for suspected gonorrhea. Which target region may be used for Neisseria gonorrhoeae detection',
+    topic: 'NAAT targets',
+    options: {
+      A: 'Cryptic plasmid or ompA gene',
+      B: 'opa genes or porA pseudogene',
+      C: 'L1 gene',
+      D: 'gB or UL30'
+    },
+    correct: 'B',
+    explanation: 'NAAT for Neisseria gonorrhoeae can target opa genes or the porA pseudogene.',
+    optionExplanations: {
+      A: 'Cryptic plasmid or ompA gene targets are used for Chlamydia trachomatis.',
+      B: 'Correct. These are gonorrhea NAAT targets.',
+      C: 'L1 gene is an HPV target.',
+      D: 'gB or UL30 targets are used for HSV.'
+    }
+  },
+  {
+    id: 19,
+    stem: 'A patient has active hepatitis B infection. Which marker indicates active disease in the notes',
+    topic: 'Hepatitis B',
+    options: {
+      A: 'Anti-HBs only',
+      B: 'HBsAg',
+      C: 'Anti-HBc IgG only',
+      D: 'Anti-HBe only'
+    },
+    correct: 'B',
+    explanation: 'The presence of HBsAg indicates active hepatitis B disease.',
+    optionExplanations: {
+      A: 'Anti-HBs indicates immunity rather than active disease.',
+      B: 'Correct. HBsAg is the active disease marker listed in the notes.',
+      C: 'Anti-HBc IgG indicates prior or chronic exposure but is not the listed active disease marker.',
+      D: 'Anti-HBe is not the active disease marker emphasized here.'
+    }
+  },
+  {
+    id: 20,
+    stem: 'A patient with HIV has progressive encephalopathy and dementia. What proportion of AIDS patients may develop CNS progressive encephalopathy according to the notes',
+    topic: 'HIV CNS complications',
+    options: {
+      A: '1-5%',
+      B: '10-15%',
+      C: '40-60%',
+      D: '90-100%'
+    },
+    correct: 'C',
+    explanation: 'The notes state that progressive encephalopathy or dementia occurs in 40 to 60 percent of AIDS patients.',
+    optionExplanations: {
+      A: 'Too low for the CNS progressive encephalopathy statistic in the notes.',
+      B: 'Too low for the stated AIDS dementia/encephalopathy range.',
+      C: 'Correct. CNS progressive encephalopathy is listed as occurring in 40 to 60 percent.',
+      D: 'Too high for the statistic given.'
+    }
+  }
+]
+;
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>
