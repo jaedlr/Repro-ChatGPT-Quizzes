@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HIV Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = 
+[
+  {
+    id: 1,
+    stem: 'A patient is diagnosed with HIV-1. Which viral feature best explains why infection becomes lifelong even with effective therapy',
+    topic: 'HIV fundamentals',
+    options: {
+      A: 'Integration of viral DNA into the host genome',
+      B: 'Formation of bacterial spores',
+      C: 'Replication only in extracellular fluid',
+      D: 'Lack of reverse transcriptase'
+    },
+    correct: 'A',
+    explanation: 'HIV is a retrovirus that uses reverse transcriptase to convert RNA into DNA, which integrates into the host genome. Latent reservoirs, especially in memory T cells, prevent eradication.',
+    optionExplanations: {
+      A: 'Correct. Integration into host DNA creates lifelong persistence and latent reservoirs.',
+      B: 'HIV is a virus and does not form spores.',
+      C: 'HIV replicates intracellularly after entry into susceptible cells.',
+      D: 'HIV requires reverse transcriptase.'
+    }
+  },
+  {
+    id: 2,
+    stem: 'A viral envelope glycoprotein binds CD4 on helper T cells and macrophages, initiating HIV entry. Which glycoprotein performs this binding step',
+    topic: 'HIV entry',
+    options: {
+      A: 'gp41',
+      B: 'p24',
+      C: 'gp120',
+      D: 'L1 capsid protein'
+    },
+    correct: 'C',
+    explanation: 'HIV gp120 binds CD4, while gp41 mediates membrane penetration/fusion.',
+    optionExplanations: {
+      A: 'gp41 mediates membrane penetration/fusion after gp120 binds CD4.',
+      B: 'p24 is a capsid antigen, not the CD4 binding glycoprotein.',
+      C: 'Correct. gp120 binds CD4.',
+      D: 'L1 is the major capsid protein of HPV.'
+    }
+  },
+  {
+    id: 3,
+    stem: 'A researcher blocks the HIV protein responsible for membrane penetration after CD4 binding. Which viral glycoprotein is being targeted',
+    topic: 'HIV entry',
+    options: {
+      A: 'gp41',
+      B: 'gp120',
+      C: 'p24',
+      D: 'E7'
+    },
+    correct: 'A',
+    explanation: 'gp41 mediates membrane penetration/fusion, whereas gp120 mediates CD4 binding.',
+    optionExplanations: {
+      A: 'Correct. gp41 is involved in membrane fusion/penetration.',
+      B: 'gp120 binds CD4 but does not mediate the fusion step itself.',
+      C: 'p24 is the HIV capsid antigen.',
+      D: 'E7 is an HPV oncogenic protein that inhibits Rb.'
+    }
+  },
+  {
+    id: 4,
+    stem: 'A patient presents 3 weeks after high-risk exposure with fever, diffuse maculopapular erythematous rash, lymphadenopathy, headache, arthralgias, malaise, and oral ulcers. Which stage is most likely',
+    topic: 'Acute retroviral syndrome',
+    options: {
+      A: 'Acute retroviral syndrome',
+      B: 'Asymptomatic clinical latency only',
+      C: 'Tertiary syphilis',
+      D: 'Immune reconstitution syndrome'
+    },
+    correct: 'A',
+    explanation: 'Acute retroviral syndrome occurs in about 50 to 60 percent of patients approximately 2 to 6 weeks after infection and may mimic mononucleosis or flu with fever, rash, lymphadenopathy, oral ulcers, headache, arthralgias, and malaise.',
+    optionExplanations: {
+      A: 'Correct. Timing and mononucleosis-like symptoms fit acute HIV.',
+      B: 'Clinical latency usually has minimal symptoms and can last years.',
+      C: 'Tertiary syphilis occurs years later with gummas, aortitis, or neurosyphilis.',
+      D: 'IRIS occurs after starting ART, usually within the first 6 months.'
+    }
+  },
+  {
+    id: 5,
+    stem: 'A patient in acute HIV infection develops headache, fever, and neck stiffness. According to the lecture, acute aseptic meningitis occurs in approximately what percentage of acute cases',
+    topic: 'Acute HIV complications',
+    options: {
+      A: '1%',
+      B: '10%',
+      C: '50%',
+      D: '90%'
+    },
+    correct: 'B',
+    explanation: 'The lecture notes state that acute aseptic meningitis occurs in about 10 percent of acute retroviral syndrome cases.',
+    optionExplanations: {
+      A: 'Too low for the lecture statistic.',
+      B: 'Correct. Acute aseptic meningitis occurs in about 10 percent.',
+      C: '50 to 60 percent refers to the proportion of patients who develop acute retroviral syndrome.',
+      D: 'Too high for this complication.'
+    }
+  },
+  {
+    id: 6,
+    stem: 'A patient with untreated HIV feels well for several years but has ongoing low-level viral production. Which stage does this describe',
+    topic: 'Clinical latency',
+    options: {
+      A: 'Clinical latency',
+      B: 'Acute retroviral syndrome',
+      C: 'Crisis phase only',
+      D: 'Jarisch-Herxheimer reaction'
+    },
+    correct: 'A',
+    explanation: 'Clinical latency is a period where the virus remains active with low-level viral production, but symptoms may be minimal and the stage can last years.',
+    optionExplanations: {
+      A: 'Correct. Clinical latency can be prolonged with minimal symptoms despite active virus.',
+      B: 'Acute retroviral syndrome occurs early, usually 2 to 6 weeks after infection.',
+      C: 'Crisis phase/AIDS involves profound immunosuppression and opportunistic infections.',
+      D: 'Jarisch-Herxheimer reaction occurs after treating syphilis.'
+    }
+  },
+  {
+    id: 7,
+    stem: 'An untreated HIV-positive patient asks about progression. According to the lecture, approximately what fraction of untreated individuals develop AIDS within 10 years',
+    topic: 'HIV progression',
+    options: {
+      A: 'Less than 5%',
+      B: '10%',
+      C: '50%',
+      D: 'Almost 100%'
+    },
+    correct: 'C',
+    explanation: 'The lecture notes state that about 50 percent of untreated individuals develop AIDS within 10 years.',
+    optionExplanations: {
+      A: 'Too low for untreated HIV progression.',
+      B: '10 percent is not the lecture statistic for untreated progression at 10 years.',
+      C: 'Correct. About half develop AIDS within 10 years if untreated.',
+      D: 'Too high for the 10-year untreated statistic.'
+    }
+  },
+  {
+    id: 8,
+    stem: 'A patient with HIV has CD4 count of 180 cells/microL, fever, weight loss, diarrhea, lymphadenopathy, and opportunistic infections. Which interpretation is correct',
+    topic: 'AIDS definition',
+    options: {
+      A: 'This defines AIDS',
+      B: 'This indicates cure',
+      C: 'This rules out opportunistic infection',
+      D: 'This is only acute retroviral syndrome'
+    },
+    correct: 'A',
+    explanation: 'AIDS is defined by CD4+ T cell count below 200 cells/microL or AIDS-defining illness. Symptoms can include fever, weight loss, diarrhea, lymphadenopathy, and opportunistic infections.',
+    optionExplanations: {
+      A: 'Correct. CD4 below 200 cells/microL defines AIDS.',
+      B: 'Low CD4 indicates advanced immunosuppression, not cure.',
+      C: 'Opportunistic infections begin appearing when CD4 drops below 200.',
+      D: 'Acute retroviral syndrome occurs shortly after infection and does not require CD4 below 200.'
+    }
+  },
+  {
+    id: 9,
+    stem: 'A patient with HIV has CD4 count below 50 cells/microL. According to the lecture, what does this indicate',
+    topic: 'Profound immunosuppression',
+    options: {
+      A: 'Normal immune function',
+      B: 'Profound immunosuppression with highest mortality in the next 12 to 24 months',
+      C: 'No risk of opportunistic infections',
+      D: 'Successful immune reconstitution'
+    },
+    correct: 'B',
+    explanation: 'CD4 below 50 cells/microL indicates profound immunosuppression and is associated with the highest mortality within 12 to 24 months.',
+    optionExplanations: {
+      A: 'CD4 below 50 is severely abnormal.',
+      B: 'Correct. This is the lecture’s key prognostic statement.',
+      C: 'Risk of opportunistic infections is very high at this level.',
+      D: 'Immune reconstitution would increase functional CD4 response, not severe CD4 depletion.'
+    }
+  },
+  {
+    id: 10,
+    stem: 'A patient with advanced AIDS develops blurry vision. Fundoscopy shows granular white retinal dots with hemorrhage and perivasculitis. Which opportunistic disease is most likely',
+    topic: 'CMV retinitis',
+    options: {
+      A: 'CMV retinitis',
+      B: 'Pneumocystis pneumonia',
+      C: 'Disseminated MAC',
+      D: 'Oral hairy leukoplakia'
+    },
+    correct: 'A',
+    explanation: 'CMV retinitis in AIDS is described as granular white dots on the retina with hemorrhage and perivasculitis.',
+    optionExplanations: {
+      A: 'Correct. This retinal description is classic for CMV retinitis.',
+      B: 'Pneumocystis causes pneumonia, not retinal hemorrhagic lesions.',
+      C: 'Disseminated MAC is marked by acid-fast organisms within macrophages.',
+      D: 'Oral hairy leukoplakia is an EBV-associated mucocutaneous lesion.'
+    }
+  },
+  {
+    id: 11,
+    stem: 'A patient with AIDS has disseminated infection by organisms seen as bright red acid-fast rods within macrophages. Which organism complex is most likely',
+    topic: 'Disseminated MAC/MAI',
+    options: {
+      A: 'Mycobacterium avium-intracellulare complex',
+      B: 'Candida albicans',
+      C: 'Cryptococcus neoformans',
+      D: 'Pneumocystis jirovecii'
+    },
+    correct: 'A',
+    explanation: 'Disseminated MAI/MAC infection in AIDS is caused by Mycobacterium avium-intracellulare complex and shows acid-fast organisms within macrophages.',
+    optionExplanations: {
+      A: 'Correct. MAC/MAI includes M. avium and M. intracellulare.',
+      B: 'Candida causes mucosal or esophageal candidiasis and is not acid-fast.',
+      C: 'Cryptococcus is an encapsulated yeast, not acid-fast rods.',
+      D: 'Pneumocystis causes pneumonia and is not described as bright red acid-fast rods in macrophages.'
+    }
+  },
+  {
+    id: 12,
+    stem: 'A patient newly diagnosed with HIV asks when antiretroviral therapy should begin. What is the best answer',
+    topic: 'When to start ART',
+    options: {
+      A: 'Start immediately regardless of CD4 count',
+      B: 'Wait until CD4 count is below 200',
+      C: 'Wait until the first opportunistic infection',
+      D: 'Start only if viral load is undetectable'
+    },
+    correct: 'A',
+    explanation: 'The lecture emphasizes starting ART immediately upon diagnosis regardless of CD4 count to decrease viral load, increase CD4, and prevent transmission.',
+    optionExplanations: {
+      A: 'Correct. Start ART immediately after diagnosis.',
+      B: 'Waiting until CD4 <200 delays prevention of immune decline and transmission.',
+      C: 'Waiting for opportunistic disease is inappropriate.',
+      D: 'ART is used to achieve undetectable viral load, not only after it is already undetectable.'
+    }
+  },
+  {
+    id: 13,
+    stem: 'A patient on ART asks what monitoring is used to assess response. Which pair is most important',
+    topic: 'ART monitoring',
+    options: {
+      A: 'CD4 count and viral load',
+      B: 'PSA and DRE',
+      C: 'RPR and VDRL only',
+      D: 'CA-125 and AFP'
+    },
+    correct: 'A',
+    explanation: 'ART monitoring includes CD4 count and HIV RNA viral load.',
+    optionExplanations: {
+      A: 'Correct. CD4 tracks immune status and viral load tracks viral replication.',
+      B: 'PSA and DRE are prostate screening tools.',
+      C: 'RPR and VDRL are syphilis nontreponemal tests.',
+      D: 'CA-125 and AFP are tumor markers, not standard HIV ART monitoring.'
+    }
+  },
+  {
+    id: 14,
+    stem: 'A patient with recent high-risk exposure and flu-like symptoms has a negative antigen/antibody test. Which test should be considered because it detects infection earliest',
+    topic: 'HIV testing window',
+    options: {
+      A: 'Nucleic acid test',
+      B: 'Antibody-only oral self-test',
+      C: 'Rapid antigen/antibody finger-stick test only',
+      D: 'CD4 count only'
+    },
+    correct: 'A',
+    explanation: 'Nucleic acid testing detects actual viral RNA/DNA and is the earliest HIV test, with a detection window around 10 to 33 days after exposure. It is useful when recent exposure or early symptoms are present with a negative Ag/Ab result.',
+    optionExplanations: {
+      A: 'Correct. NAT has the earliest detection window.',
+      B: 'Antibody-only tests detect later, about 23 to 90 days after exposure.',
+      C: 'Rapid Ag/Ab finger-stick testing has a broader later window of about 18 to 90 days.',
+      D: 'CD4 count monitors immune status but is not the earliest diagnostic test.'
+    }
+  },
+  {
+    id: 15,
+    stem: 'A patient wants to know when a laboratory antigen/antibody HIV test detects most infections. Which detection window matches the lecture',
+    topic: 'HIV antigen antibody testing',
+    options: {
+      A: '1 to 3 days',
+      B: '10 to 33 days',
+      C: '18 to 45 days',
+      D: '6 to 12 months'
+    },
+    correct: 'C',
+    explanation: 'Laboratory antigen/antibody testing detects p24 antigen and HIV antibodies with a window of about 18 to 45 days after exposure.',
+    optionExplanations: {
+      A: 'No standard HIV test reliably detects infection within 1 to 3 days.',
+      B: '10 to 33 days is the NAT detection window.',
+      C: 'Correct. Lab Ag/Ab testing detects infection about 18 to 45 days after exposure.',
+      D: 'This is far too late for modern HIV testing windows.'
+    }
+  },
+  {
+    id: 16,
+    stem: 'A patient uses the only FDA-approved HIV self-test type. Which target does this test detect and what is the approximate window',
+    topic: 'HIV antibody test',
+    options: {
+      A: 'HIV antibodies, 23 to 90 days',
+      B: 'HIV RNA, 10 to 33 days',
+      C: 'p24 antigen and antibodies, 18 to 45 days',
+      D: 'CD4 antigen, 1 to 5 days'
+    },
+    correct: 'A',
+    explanation: 'Antibody tests detect HIV antibodies in blood or oral fluid. The lecture notes identify antibody testing as the only FDA-approved HIV self-test type with a detection window around 23 to 90 days.',
+    optionExplanations: {
+      A: 'Correct. Self-tests are antibody tests with a later window.',
+      B: 'NAT detects HIV RNA earlier but is not the self-test described.',
+      C: 'Lab Ag/Ab tests detect p24 and antibodies with an 18 to 45 day window.',
+      D: 'CD4 antigen is not used as an early diagnostic target.'
+    }
+  },
+  {
+    id: 17,
+    stem: 'A patient with positive HIV screening needs confirmation. Which concept best describes the current confirmatory strategy from the lecture',
+    topic: 'HIV confirmatory testing',
+    options: {
+      A: 'Different supplemental HIV test or virologic test such as NAT',
+      B: 'Urinalysis only',
+      C: 'RPR followed by FTA-ABS',
+      D: 'KOH prep'
+    },
+    correct: 'A',
+    explanation: 'The lecture describes confirmatory testing using a multitest algorithm with a positive initial antibody or Ag/Ab test followed by a different supplemental HIV test, and virologic tests such as NAT can detect HIV directly.',
+    optionExplanations: {
+      A: 'Correct. Orthogonal supplemental testing or virologic testing confirms HIV.',
+      B: 'Urinalysis does not confirm HIV.',
+      C: 'RPR and FTA-ABS are syphilis tests.',
+      D: 'KOH prep is used for fungal vaginitis evaluation.'
+    }
+  },
+  {
+    id: 18,
+    stem: 'A patient starts HAART and three months later develops a severe inflammatory response to a latent infection. Viral load is falling and immune function is improving. What is the diagnosis',
+    topic: 'Immune reconstitution syndrome',
+    options: {
+      A: 'Immune reconstitution inflammatory syndrome',
+      B: 'Acute retroviral syndrome',
+      C: 'Jarisch-Herxheimer reaction',
+      D: 'Seroconversion failure'
+    },
+    correct: 'A',
+    explanation: 'HIV immune reconstitution syndrome occurs in the first 6 months of HAART as viral load decreases and CD4/immune function recovers, causing an exaggerated inflammatory response to latent infections.',
+    optionExplanations: {
+      A: 'Correct. Timing after HAART plus inflammatory response to latent infection fits IRIS.',
+      B: 'Acute retroviral syndrome occurs shortly after initial infection.',
+      C: 'Jarisch-Herxheimer reaction occurs after treating spirochetal infections such as syphilis.',
+      D: 'Seroconversion failure does not explain inflammatory worsening after immune recovery.'
+    }
+  },
+  {
+    id: 19,
+    stem: 'A patient with AIDS develops purple vascular skin tumors. Which virus is responsible',
+    topic: 'Kaposi sarcoma',
+    options: {
+      A: 'HHV-8',
+      B: 'EBV',
+      C: 'CMV',
+      D: 'HSV-2'
+    },
+    correct: 'A',
+    explanation: 'Kaposi sarcoma is a vascular tumor associated with HHV-8 and is an AIDS-associated malignancy.',
+    optionExplanations: {
+      A: 'Correct. HHV-8 causes Kaposi sarcoma.',
+      B: 'EBV is associated with B-cell lymphomas and oral hairy leukoplakia.',
+      C: 'CMV causes retinitis and systemic disease in advanced AIDS.',
+      D: 'HSV-2 causes genital herpes and chronic ulcers in immunosuppressed patients.'
+    }
+  },
+  {
+    id: 20,
+    stem: 'A patient with AIDS develops B-cell lymphoma. Which mechanism from the lecture contributes to this risk',
+    topic: 'AIDS malignancy',
+    options: {
+      A: 'B-cell hyperplasia with unchecked EBV infection',
+      B: 'HPV E6 and E7 inhibition of p53 and Rb only',
+      C: 'Loss of SRY gene function',
+      D: 'Increased 5 alpha reductase activity'
+    },
+    correct: 'A',
+    explanation: 'The lecture notes state that about 10 percent of patients with AIDS develop B-cell lymphoma through B-cell hyperplasia and unchecked EBV infection.',
+    optionExplanations: {
+      A: 'Correct. HIV-associated immune dysfunction permits EBV-driven B-cell proliferation.',
+      B: 'HPV E6/E7 explains HPV-associated squamous cancers, not AIDS B-cell lymphoma.',
+      C: 'SRY is involved in testicular development, not lymphoma pathogenesis.',
+      D: '5 alpha reductase is involved in DHT production, not AIDS lymphoma.'
+    }
+  }
+]
+;
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>

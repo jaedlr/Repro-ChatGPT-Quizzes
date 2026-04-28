@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sexually Transmitted Disease Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = 
+[
+  {
+    id: 1,
+    stem: 'A clinician is taking a sexual history using the Five P’s framework. Which item belongs in this framework',
+    topic: 'Sexual history Five Ps',
+    options: {
+      A: 'Partners',
+      B: 'Pulse',
+      C: 'Platelets',
+      D: 'Perfusion'
+    },
+    correct: 'A',
+    explanation: 'The Five P’s sexual history framework includes Partners, Practices, Protection from STIs, Past history of STIs, and Pregnancy intention/prevention.',
+    optionExplanations: {
+      A: 'Correct. Partners is one of the Five P’s.',
+      B: 'Pulse is a vital sign, not part of the sexual history Five P’s.',
+      C: 'Platelets are part of a CBC, not the Five P’s.',
+      D: 'Perfusion is a hemodynamic concept, not part of the Five P’s.'
+    }
+  },
+  {
+    id: 2,
+    stem: 'A sexually active 22 year old woman is asymptomatic and presents for routine screening. Which STI screening is recommended based on age and sexual activity',
+    topic: 'STI screening under 25',
+    options: {
+      A: 'Annual chlamydia and gonorrhea screening',
+      B: 'Annual syphilis lumbar puncture',
+      C: 'Annual HSV serology for all patients',
+      D: 'No screening unless symptomatic'
+    },
+    correct: 'A',
+    explanation: 'Sexually active women younger than 25 should be screened annually for Chlamydia trachomatis and Neisseria gonorrhoeae, even if asymptomatic.',
+    optionExplanations: {
+      A: 'Correct. Annual GC/CT screening is recommended for sexually active women under 25.',
+      B: 'Lumbar puncture is not routine syphilis screening.',
+      C: 'Routine HSV serology for all asymptomatic patients is not the standard screening approach.',
+      D: 'Many STIs are asymptomatic, so screening is still important.'
+    }
+  },
+  {
+    id: 3,
+    stem: 'A 24 year old man has dysuria and copious purulent urethral discharge. Gram stain shows intracellular gram negative diplococci. Which treatment should be given',
+    topic: 'Gonorrhea treatment',
+    options: {
+      A: 'Acyclovir',
+      B: 'Ceftriaxone',
+      C: 'Fluconazole',
+      D: 'Penicillin G only'
+    },
+    correct: 'B',
+    explanation: 'Gonorrhea is treated with ceftriaxone. If chlamydia has not been excluded, doxycycline is also added.',
+    optionExplanations: {
+      A: 'Acyclovir treats HSV, not gonorrhea.',
+      B: 'Correct. Ceftriaxone is first-line treatment for gonorrhea.',
+      C: 'Fluconazole treats candidiasis.',
+      D: 'Penicillin G treats syphilis, not uncomplicated gonorrhea.'
+    }
+  },
+  {
+    id: 4,
+    stem: 'A neonate develops purulent conjunctivitis 3 days after vaginal delivery. Which maternal infection is most likely responsible',
+    topic: 'Neonatal gonococcal conjunctivitis',
+    options: {
+      A: 'Neisseria gonorrhoeae',
+      B: 'Chlamydia trachomatis',
+      C: 'Treponema pallidum',
+      D: 'Candida albicans'
+    },
+    correct: 'A',
+    explanation: 'Neonatal conjunctivitis from Neisseria gonorrhoeae typically occurs 2 to 5 days after delivery and can be severe and purulent.',
+    optionExplanations: {
+      A: 'Correct. Gonococcal conjunctivitis presents early, around days 2 to 5.',
+      B: 'Chlamydial conjunctivitis typically presents later, about 5 to 14 days after birth.',
+      C: 'Treponema pallidum causes congenital syphilis, not this early purulent conjunctivitis pattern.',
+      D: 'Candida causes vulvovaginitis or neonatal thrush, not classic early purulent conjunctivitis.'
+    }
+  },
+  {
+    id: 5,
+    stem: 'A neonate develops conjunctivitis 10 days after birth. The mother had untreated cervicitis during pregnancy. Which organism best fits the timing',
+    topic: 'Neonatal chlamydial conjunctivitis',
+    options: {
+      A: 'Neisseria gonorrhoeae',
+      B: 'Chlamydia trachomatis',
+      C: 'HSV-2',
+      D: 'Haemophilus ducreyi'
+    },
+    correct: 'B',
+    explanation: 'Chlamydial neonatal conjunctivitis classically appears 5 to 14 days after delivery.',
+    optionExplanations: {
+      A: 'Gonococcal conjunctivitis usually appears earlier, around 2 to 5 days.',
+      B: 'Correct. Chlamydia fits the 5 to 14 day timing.',
+      C: 'HSV neonatal infection can cause skin, eye, mouth disease or disseminated disease, but this timing clue is classic for chlamydia.',
+      D: 'Haemophilus ducreyi causes chancroid, not neonatal conjunctivitis.'
+    }
+  },
+  {
+    id: 6,
+    stem: 'A patient has urethritis and NAAT is positive for Chlamydia trachomatis. Which form is infectious and enters host epithelial cells',
+    topic: 'Chlamydia life cycle',
+    options: {
+      A: 'Elementary body',
+      B: 'Reticulate body',
+      C: 'Trophozoite',
+      D: 'Spore'
+    },
+    correct: 'A',
+    explanation: 'The elementary body is the infectious extracellular form of Chlamydia. It enters cells and converts into the reticulate body, which replicates intracellularly.',
+    optionExplanations: {
+      A: 'Correct. Elementary bodies are infectious.',
+      B: 'Reticulate bodies replicate intracellularly but are not the infectious form.',
+      C: 'Trophozoite refers to protozoa such as Trichomonas.',
+      D: 'Chlamydia does not form spores.'
+    }
+  },
+  {
+    id: 7,
+    stem: 'A patient has recurrent or persistent urethritis after standard empiric STI therapy. Testing identifies an organism without a cell wall. Which organism is most likely',
+    topic: 'Mycoplasma genitalium',
+    options: {
+      A: 'Mycoplasma genitalium',
+      B: 'Treponema pallidum',
+      C: 'Klebsiella granulomatis',
+      D: 'Neisseria gonorrhoeae'
+    },
+    correct: 'A',
+    explanation: 'Mycoplasma genitalium lacks a cell wall and is associated with persistent or recurrent urethritis.',
+    optionExplanations: {
+      A: 'Correct. M. genitalium is a wall-less cause of persistent urethritis.',
+      B: 'Treponema pallidum is a spirochete causing syphilis.',
+      C: 'Klebsiella granulomatis causes granuloma inguinale.',
+      D: 'N. gonorrhoeae is a gram negative diplococcus with a cell wall.'
+    }
+  },
+  {
+    id: 8,
+    stem: 'A man presents with a painless genital chancre with a clean base and indurated border. Which pathologic process is central to this infection',
+    topic: 'Primary syphilis',
+    options: {
+      A: 'Endarteritis with plasma cell-rich inflammation',
+      B: 'Superantigen-mediated cytokine storm',
+      C: 'Pseudohyphae invasion of squamous mucosa',
+      D: 'Koilocytosis from viral capsid assembly'
+    },
+    correct: 'A',
+    explanation: 'Syphilis is caused by Treponema pallidum and causes endarteritis with plasma cell-rich inflammation, leading to ischemic tissue injury.',
+    optionExplanations: {
+      A: 'Correct. Endarteritis and plasma cells are classic syphilis pathology.',
+      B: 'Superantigen cytokine storm is toxic shock syndrome.',
+      C: 'Pseudohyphae suggest Candida.',
+      D: 'Koilocytosis is caused by HPV infection.'
+    }
+  },
+  {
+    id: 9,
+    stem: 'A patient has fever, malaise, diffuse maculopapular rash involving palms and soles, mucous patches, and condylomata lata. Which stage of syphilis is this',
+    topic: 'Secondary syphilis',
+    options: {
+      A: 'Primary syphilis',
+      B: 'Secondary syphilis',
+      C: 'Tertiary syphilis',
+      D: 'Latent syphilis only'
+    },
+    correct: 'B',
+    explanation: 'Secondary syphilis occurs after hematogenous spread and causes systemic symptoms, diffuse rash including palms/soles, mucous patches, lymphadenopathy, and condylomata lata.',
+    optionExplanations: {
+      A: 'Primary syphilis causes a painless chancre.',
+      B: 'Correct. Rash on palms/soles plus mucous patches and condylomata lata is secondary syphilis.',
+      C: 'Tertiary syphilis causes gummas, aortitis, and neurosyphilis years later.',
+      D: 'Latent syphilis is seroreactivity without symptoms.'
+    }
+  },
+  {
+    id: 10,
+    stem: 'A clinician orders RPR for syphilis screening. Which statement best describes this test',
+    topic: 'Nontreponemal testing',
+    options: {
+      A: 'It detects anticardiolipin antibodies and can be followed quantitatively',
+      B: 'It detects Treponema-specific antibodies and remains positive for life only',
+      C: 'It is a viral culture',
+      D: 'It detects motile protozoa'
+    },
+    correct: 'A',
+    explanation: 'RPR and VDRL are nontreponemal tests that detect anticardiolipin antibodies. Titers are used to monitor disease activity and treatment response.',
+    optionExplanations: {
+      A: 'Correct. RPR/VDRL are nontreponemal, quantitative screening tests.',
+      B: 'FTA-ABS and TP-PA are treponemal confirmatory tests and often remain positive long-term.',
+      C: 'RPR is not a viral culture.',
+      D: 'Wet mount detects motile Trichomonas.'
+    }
+  },
+  {
+    id: 11,
+    stem: 'A patient has a positive RPR. Which test is appropriate for confirmation',
+    topic: 'Treponemal confirmatory testing',
+    options: {
+      A: 'FTA-ABS or TP-PA',
+      B: 'Wet mount',
+      C: 'KOH prep',
+      D: 'Gram stain for diplococci only'
+    },
+    correct: 'A',
+    explanation: 'Positive nontreponemal screening tests such as RPR or VDRL are confirmed with treponemal tests such as FTA-ABS or TP-PA.',
+    optionExplanations: {
+      A: 'Correct. Treponemal tests confirm syphilis infection.',
+      B: 'Wet mount is used for trichomoniasis or vaginitis evaluation.',
+      C: 'KOH prep is used for Candida and whiff testing.',
+      D: 'Gram stain can help with gonorrhea but does not confirm syphilis.'
+    }
+  },
+  {
+    id: 12,
+    stem: 'A patient is treated with penicillin G for syphilis and develops fever, chills, headache, myalgias, and hypotension within hours. What is the mechanism',
+    topic: 'Jarisch-Herxheimer reaction',
+    options: {
+      A: 'IgE-mediated penicillin anaphylaxis',
+      B: 'Rapid spirochete lysis causing inflammatory cytokine release',
+      C: 'Delayed type IV hypersensitivity to penicillin',
+      D: 'Direct adrenal suppression'
+    },
+    correct: 'B',
+    explanation: 'Jarisch-Herxheimer reaction occurs within hours of syphilis treatment due to rapid lysis of spirochetes and cytokine release.',
+    optionExplanations: {
+      A: 'Anaphylaxis presents with urticaria, bronchospasm, angioedema, and shock due to IgE.',
+      B: 'Correct. It is an inflammatory reaction to dying spirochetes.',
+      C: 'Delayed type IV reactions are not the mechanism of this acute post-treatment syndrome.',
+      D: 'Adrenal suppression is unrelated.'
+    }
+  },
+  {
+    id: 13,
+    stem: 'A patient has painful grouped genital vesicles on an erythematous base that ulcerate. Tzanck smear shows multinucleated giant cells. Which treatment is most appropriate',
+    topic: 'Genital HSV',
+    options: {
+      A: 'Acyclovir',
+      B: 'Ceftriaxone',
+      C: 'Metronidazole',
+      D: 'Penicillin G'
+    },
+    correct: 'A',
+    explanation: 'Genital HSV causes painful grouped vesicles and ulcers and is treated with nucleoside analogs such as acyclovir, valacyclovir, or famciclovir.',
+    optionExplanations: {
+      A: 'Correct. Acyclovir treats HSV by inhibiting viral DNA synthesis after activation by viral thymidine kinase.',
+      B: 'Ceftriaxone treats gonorrhea.',
+      C: 'Metronidazole treats trichomoniasis and bacterial vaginosis.',
+      D: 'Penicillin G treats syphilis.'
+    }
+  },
+  {
+    id: 14,
+    stem: 'A patient has painless beefy red genital ulcers that bleed easily. Tissue smear shows Donovan bodies inside macrophages. Which disease is this',
+    topic: 'Granuloma inguinale',
+    options: {
+      A: 'Chancroid',
+      B: 'Granuloma inguinale',
+      C: 'Primary syphilis',
+      D: 'Genital herpes'
+    },
+    correct: 'B',
+    explanation: 'Granuloma inguinale is caused by Klebsiella granulomatis and presents with painless beefy red ulcers that bleed easily with Donovan bodies in macrophages.',
+    optionExplanations: {
+      A: 'Chancroid causes painful soft ulcers with ragged borders and tender buboes.',
+      B: 'Correct. Donovan bodies and painless beefy red ulcers define granuloma inguinale.',
+      C: 'Primary syphilis causes a painless hard chancre, not Donovan bodies.',
+      D: 'Genital herpes causes painful vesicles and ulcers.'
+    }
+  },
+  {
+    id: 15,
+    stem: 'A patient has painful ragged genital ulcers with gray exudate and tender suppurative inguinal lymphadenopathy. Which organism is most likely',
+    topic: 'Chancroid',
+    options: {
+      A: 'Haemophilus ducreyi',
+      B: 'Klebsiella granulomatis',
+      C: 'Treponema pallidum',
+      D: 'HPV 6'
+    },
+    correct: 'A',
+    explanation: 'Chancroid is caused by Haemophilus ducreyi and presents with painful soft chancres and painful inguinal buboes.',
+    optionExplanations: {
+      A: 'Correct. H. ducreyi causes chancroid.',
+      B: 'Klebsiella granulomatis causes painless beefy red ulcers.',
+      C: 'Treponema pallidum causes syphilis with painless hard chancre in primary disease.',
+      D: 'HPV 6 causes genital warts.'
+    }
+  },
+  {
+    id: 16,
+    stem: 'A patient initially had a small transient painless genital ulcer. Weeks later, he develops painful inguinal lymphadenopathy with necrotic nodes and later strictures. Which organism is responsible',
+    topic: 'Lymphogranuloma venereum',
+    options: {
+      A: 'Chlamydia trachomatis L1-L3',
+      B: 'Chlamydia trachomatis D-K',
+      C: 'Neisseria gonorrhoeae',
+      D: 'Gardnerella vaginalis'
+    },
+    correct: 'A',
+    explanation: 'Lymphogranuloma venereum is caused by Chlamydia trachomatis serovars L1-L3 and can cause transient ulcer, painful necrotic lymph nodes, strictures, fistulas, and genital elephantiasis.',
+    optionExplanations: {
+      A: 'Correct. L1-L3 serovars cause LGV.',
+      B: 'D-K serovars cause typical urogenital chlamydial infections and neonatal conjunctivitis/pneumonia.',
+      C: 'Gonorrhea causes purulent urethritis/cervicitis and disseminated arthritis/dermatitis.',
+      D: 'Gardnerella is associated with bacterial vaginosis.'
+    }
+  },
+  {
+    id: 17,
+    stem: 'A patient has cauliflower-like genital warts. Biopsy shows koilocytosis. Which HPV types are most commonly responsible',
+    topic: 'Condyloma acuminata',
+    options: {
+      A: 'HPV 6 and 11',
+      B: 'HPV 16 and 18',
+      C: 'HSV 1 and 2',
+      D: 'HHV-8'
+    },
+    correct: 'A',
+    explanation: 'Condyloma acuminata are genital warts caused mainly by low-risk HPV types 6 and 11 and show koilocytosis.',
+    optionExplanations: {
+      A: 'Correct. HPV 6 and 11 cause genital warts.',
+      B: 'HPV 16 and 18 are high-risk oncogenic types associated with squamous cancers.',
+      C: 'HSV causes painful vesicles and ulcers.',
+      D: 'HHV-8 causes Kaposi sarcoma.'
+    }
+  },
+  {
+    id: 18,
+    stem: 'High-risk HPV causes malignant transformation by viral proteins E6 and E7. Which tumor suppressor targets are inhibited',
+    topic: 'High-risk HPV oncogenesis',
+    options: {
+      A: 'p53 and Rb',
+      B: 'BRCA1 and BRCA2',
+      C: 'APC and KRAS',
+      D: 'PTEN and JAK2'
+    },
+    correct: 'A',
+    explanation: 'High-risk HPV E6 promotes degradation of p53 and E7 inhibits Rb, driving dysregulated cell cycle progression and malignancy risk.',
+    optionExplanations: {
+      A: 'Correct. E6 inhibits p53 and E7 inhibits Rb.',
+      B: 'BRCA1/2 are DNA repair genes associated with hereditary breast/ovarian cancer.',
+      C: 'APC and KRAS are important in colorectal carcinogenesis.',
+      D: 'PTEN is associated with endometrial lesions; JAK2 with myeloproliferative disorders.'
+    }
+  },
+  {
+    id: 19,
+    stem: 'A patient with suspected acute HIV infection wants the earliest diagnostic test after exposure. Which test detects infection first',
+    topic: 'HIV testing window',
+    options: {
+      A: 'Antibody-only test',
+      B: 'Nucleic acid test',
+      C: 'Western blot only',
+      D: 'CD4 count only'
+    },
+    correct: 'B',
+    explanation: 'HIV nucleic acid testing detects viral RNA earliest after exposure, before antigen/antibody or antibody-only tests become positive.',
+    optionExplanations: {
+      A: 'Antibody-only tests become positive later than nucleic acid testing.',
+      B: 'Correct. NAT detects HIV earliest.',
+      C: 'Western blot is not the earliest screening test.',
+      D: 'CD4 count assesses immune status but does not diagnose earliest infection.'
+    }
+  },
+  {
+    id: 20,
+    stem: 'A patient with HIV has CD4 count below 200 cells per microliter. Which interpretation is correct',
+    topic: 'AIDS definition',
+    options: {
+      A: 'This defines AIDS',
+      B: 'This indicates cure',
+      C: 'This excludes opportunistic infections',
+      D: 'This means HIV testing was false positive'
+    },
+    correct: 'A',
+    explanation: 'AIDS is defined by CD4 count below 200 cells per microliter or by AIDS-defining illness.',
+    optionExplanations: {
+      A: 'Correct. CD4 <200 defines AIDS.',
+      B: 'Low CD4 indicates advanced immunosuppression, not cure.',
+      C: 'Opportunistic infections become more likely as CD4 count falls.',
+      D: 'Low CD4 in HIV supports disease progression, not false positivity.'
+    }
+  }
+]
+;
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Androgens Anti-Androgens Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = 
+[
+  {
+    id: 1,
+    stem: 'A male patient receives physiologic pulsatile GnRH therapy. Which downstream effect is expected',
+    topic: 'HPG axis',
+    options: {
+      A: 'Pituitary desensitization with decreased LH and FSH',
+      B: 'Increased LH and FSH with gonadal steroid production',
+      C: 'Immediate androgen receptor blockade',
+      D: 'CYP17 inhibition in adrenal tissue'
+    },
+    correct: 'B',
+    explanation: 'Physiologic pulsatile GnRH stimulates the pituitary to release LH and FSH, supporting gonadal steroid production and gametogenesis.',
+    optionExplanations: {
+      A: 'Continuous GnRH causes receptor downregulation and decreased LH/FSH, not pulsatile GnRH.',
+      B: 'Correct. Pulsatile GnRH preserves pituitary responsiveness and increases LH/FSH.',
+      C: 'Androgen receptor blockade is caused by AR antagonists such as bicalutamide or enzalutamide.',
+      D: 'CYP17 inhibition is caused by abiraterone.'
+    }
+  },
+  {
+    id: 2,
+    stem: 'A patient with metastatic prostate cancer is treated with continuous leuprolide. Shortly after starting therapy, his bone pain worsens. What explains this early effect',
+    topic: 'GnRH agonist flare',
+    options: {
+      A: 'Initial increase in LH and FSH before pituitary downregulation',
+      B: 'Direct androgen receptor antagonism',
+      C: 'Immediate CYP17 blockade',
+      D: 'Inhibition of 5 alpha reductase'
+    },
+    correct: 'A',
+    explanation: 'Continuous GnRH agonists initially stimulate the pituitary causing transient LH/FSH and testosterone increase, which can worsen symptoms before receptor downregulation.',
+    optionExplanations: {
+      A: 'Correct. GnRH agonists cause an initial tumor flare before medical castration.',
+      B: 'Androgen receptor antagonists block receptor signaling and do not cause this pituitary flare.',
+      C: 'CYP17 blockade is the mechanism of abiraterone.',
+      D: '5 alpha reductase inhibitors reduce DHT but do not cause acute tumor flare.'
+    }
+  },
+  {
+    id: 3,
+    stem: 'A patient with advanced prostate cancer needs rapid suppression of LH and FSH without initial tumor flare. Which drug class is preferred',
+    topic: 'GnRH antagonists',
+    options: {
+      A: 'GnRH agonist',
+      B: 'GnRH antagonist',
+      C: '5 alpha reductase inhibitor',
+      D: 'Testosterone replacement'
+    },
+    correct: 'B',
+    explanation: 'GnRH antagonists directly block pituitary GnRH receptors, rapidly suppressing LH and FSH without an initial flare.',
+    optionExplanations: {
+      A: 'GnRH agonists initially increase LH/FSH and can cause flare.',
+      B: 'Correct. Degarelix and relugolix suppress LH/FSH quickly without flare.',
+      C: '5 alpha reductase inhibitors reduce DHT but do not rapidly shut down LH/FSH.',
+      D: 'Testosterone replacement would worsen androgen-driven prostate cancer.'
+    }
+  },
+  {
+    id: 4,
+    stem: 'A patient receiving testosterone replacement develops infertility and testicular atrophy. Which mechanism best explains this adverse effect',
+    topic: 'Testosterone replacement infertility',
+    options: {
+      A: 'Increased GnRH pulsatility causing excess spermatogenesis',
+      B: 'Negative feedback suppressing GnRH, LH, and FSH',
+      C: 'Direct destruction of Sertoli cells by testosterone',
+      D: 'CYP17 inhibition causing mineralocorticoid excess'
+    },
+    correct: 'B',
+    explanation: 'Exogenous testosterone suppresses the HPG axis through negative feedback, decreasing GnRH, LH, and FSH, which lowers intratesticular testosterone and spermatogenesis.',
+    optionExplanations: {
+      A: 'Exogenous testosterone suppresses, not increases, GnRH/LH/FSH.',
+      B: 'Correct. HPG axis suppression causes decreased spermatogenesis and testicular atrophy.',
+      C: 'The effect is endocrine feedback, not direct Sertoli cell destruction.',
+      D: 'Mineralocorticoid excess is associated with abiraterone.'
+    }
+  },
+  {
+    id: 5,
+    stem: 'A man with symptomatic hypogonadism is started on testosterone therapy. Several months later his hematocrit is markedly increased. Which mechanism explains this adverse effect',
+    topic: 'Testosterone erythrocytosis',
+    options: {
+      A: 'Increased erythropoietin and erythropoiesis',
+      B: 'Decreased iron absorption',
+      C: 'Direct platelet activation',
+      D: 'Suppression of renal erythropoietin'
+    },
+    correct: 'A',
+    explanation: 'Androgens increase erythropoietin and stimulate erythropoiesis, which can cause erythrocytosis or polycythemia and increase thrombosis risk.',
+    optionExplanations: {
+      A: 'Correct. Testosterone increases EPO and red cell production.',
+      B: 'Decreased iron absorption would contribute to anemia, not erythrocytosis.',
+      C: 'Platelet activation is not the mechanism of increased hematocrit.',
+      D: 'EPO is increased, not suppressed.'
+    }
+  },
+  {
+    id: 6,
+    stem: 'A man on testosterone replacement develops breast enlargement. Which mechanism most directly explains this finding',
+    topic: 'Testosterone gynecomastia',
+    options: {
+      A: 'Aromatization of testosterone to estradiol',
+      B: 'Blockade of estrogen receptors in breast tissue',
+      C: 'Decreased peripheral estrogen production',
+      D: 'Increased 5 alpha reductase activity only'
+    },
+    correct: 'A',
+    explanation: 'Testosterone can be aromatized to estradiol, and increased estradiol activity can cause gynecomastia.',
+    optionExplanations: {
+      A: 'Correct. Aromatization increases estrogenic stimulation of breast tissue.',
+      B: 'Blocking estrogen receptors would reduce gynecomastia, not cause it.',
+      C: 'Estrogen production is increased by aromatization.',
+      D: '5 alpha reductase converts testosterone to DHT and does not directly explain estrogenic breast tissue growth.'
+    }
+  },
+  {
+    id: 7,
+    stem: 'A man with symptomatic hypogonadism asks for testosterone therapy. Which finding is an absolute contraindication listed in the notes',
+    topic: 'Testosterone contraindications',
+    options: {
+      A: 'Mild fatigue',
+      B: 'Known prostate cancer',
+      C: 'Low morning testosterone',
+      D: 'Low libido'
+    },
+    correct: 'B',
+    explanation: 'Known or suspected prostate cancer and male breast cancer are contraindications to testosterone replacement therapy.',
+    optionExplanations: {
+      A: 'Fatigue is a symptom that may prompt evaluation, not a contraindication.',
+      B: 'Correct. Prostate cancer is androgen-sensitive and testosterone therapy is contraindicated.',
+      C: 'Low morning testosterone supports diagnosis if symptomatic.',
+      D: 'Low libido is a symptom of hypogonadism, not a contraindication.'
+    }
+  },
+  {
+    id: 8,
+    stem: 'A patient with metastatic castration-resistant prostate cancer is treated with abiraterone. Which enzyme is irreversibly inhibited',
+    topic: 'Abiraterone mechanism',
+    options: {
+      A: '5 alpha reductase',
+      B: 'CYP17',
+      C: 'Aromatase',
+      D: 'Dihydrofolate reductase'
+    },
+    correct: 'B',
+    explanation: 'Abiraterone irreversibly inhibits CYP17, including 17 alpha hydroxylase and 17,20 lyase, decreasing adrenal and intratumoral androgen synthesis.',
+    optionExplanations: {
+      A: '5 alpha reductase is inhibited by finasteride and dutasteride.',
+      B: 'Correct. Abiraterone blocks CYP17.',
+      C: 'Aromatase converts androgens to estrogens and is inhibited by aromatase inhibitors.',
+      D: 'Dihydrofolate reductase is inhibited by methotrexate, not abiraterone.'
+    }
+  },
+  {
+    id: 9,
+    stem: 'A patient on abiraterone develops hypertension, hypokalemia, and edema. Why is prednisone given with this medication',
+    topic: 'Abiraterone adverse effects',
+    options: {
+      A: 'To stimulate LH production',
+      B: 'To decrease ACTH and limit mineralocorticoid excess',
+      C: 'To increase DHT production',
+      D: 'To prevent androgen receptor blockade'
+    },
+    correct: 'B',
+    explanation: 'Abiraterone decreases cortisol synthesis, causing increased ACTH and shunting of steroid precursors toward mineralocorticoids. Prednisone suppresses ACTH and limits mineralocorticoid excess.',
+    optionExplanations: {
+      A: 'Prednisone suppresses ACTH, not LH.',
+      B: 'Correct. Prednisone reduces ACTH-driven mineralocorticoid excess.',
+      C: 'Abiraterone decreases androgen synthesis, and prednisone is not used to increase DHT.',
+      D: 'Abiraterone inhibits synthesis; AR blockade is a separate drug mechanism.'
+    }
+  },
+  {
+    id: 10,
+    stem: 'A man with benign prostatic hyperplasia is prescribed finasteride. Which hormonal conversion is directly inhibited',
+    topic: '5 alpha reductase inhibitors',
+    options: {
+      A: 'Testosterone to DHT',
+      B: 'Androstenedione to estrone',
+      C: 'Cholesterol to pregnenolone',
+      D: 'Testosterone to estradiol'
+    },
+    correct: 'A',
+    explanation: 'Finasteride inhibits type II 5 alpha reductase, decreasing conversion of testosterone to DHT in prostate and skin.',
+    optionExplanations: {
+      A: 'Correct. 5 alpha reductase converts testosterone to DHT.',
+      B: 'Androstenedione to estrone occurs through aromatization in adipose tissue.',
+      C: 'Cholesterol to pregnenolone is the first steroidogenesis step.',
+      D: 'Testosterone to estradiol is catalyzed by aromatase.'
+    }
+  },
+  {
+    id: 11,
+    stem: 'A patient with BPH asks why tamsulosin helps urinary symptoms faster than finasteride. What is the best explanation',
+    topic: 'BPH symptom relief',
+    options: {
+      A: 'Tamsulosin rapidly relaxes smooth muscle, while finasteride slowly shrinks prostate over months',
+      B: 'Tamsulosin directly blocks androgen receptors',
+      C: 'Finasteride immediately blocks alpha 1 receptors',
+      D: 'Finasteride increases DHT within days'
+    },
+    correct: 'A',
+    explanation: 'Alpha 1 blockers such as tamsulosin provide rapid symptom relief by relaxing smooth muscle, while 5 alpha reductase inhibitors require months to reduce DHT-driven prostate volume.',
+    optionExplanations: {
+      A: 'Correct. Tamsulosin works in days; finasteride takes 3 to 6 or more months.',
+      B: 'Tamsulosin is an alpha 1 blocker, not an androgen receptor blocker.',
+      C: 'Finasteride inhibits 5 alpha reductase, not alpha 1 receptors.',
+      D: 'Finasteride decreases DHT.'
+    }
+  },
+  {
+    id: 12,
+    stem: 'A patient takes dutasteride for BPH. Which adverse effect is most directly related to reduced DHT signaling',
+    topic: '5 alpha reductase inhibitor adverse effects',
+    options: {
+      A: 'Increased ejaculate volume',
+      B: 'Decreased libido and erectile dysfunction',
+      C: 'Tumor flare',
+      D: 'Severe mineralocorticoid excess'
+    },
+    correct: 'B',
+    explanation: '5 alpha reductase inhibitors decrease DHT signaling, which can cause sexual adverse effects including decreased libido, erectile dysfunction, and decreased ejaculate volume.',
+    optionExplanations: {
+      A: 'Ejaculate volume decreases rather than increases.',
+      B: 'Correct. Reduced androgenic signaling can cause sexual adverse effects.',
+      C: 'Tumor flare is associated with GnRH agonists.',
+      D: 'Mineralocorticoid excess is associated with abiraterone.'
+    }
+  },
+  {
+    id: 13,
+    stem: 'A patient begins androgen deprivation therapy with a GnRH agonist and later develops decreased bone mineral density. Which mechanism best explains this',
+    topic: 'ADT bone loss',
+    options: {
+      A: 'Hypogonadal state increasing bone resorption',
+      B: 'Direct osteoblast stimulation',
+      C: 'Increased DHT mediated bone formation',
+      D: 'Increased estrogen receptor activation in bone'
+    },
+    correct: 'A',
+    explanation: 'Androgen deprivation therapy causes a hypogonadal state that increases bone resorption and decreases bone mineral density, increasing fracture risk.',
+    optionExplanations: {
+      A: 'Correct. Loss of androgen signaling contributes to bone loss.',
+      B: 'ADT does not directly stimulate osteoblasts to build bone.',
+      C: 'ADT decreases androgens/DHT rather than increasing them.',
+      D: 'Reduced sex steroid signaling, not increased estrogen activation, drives bone loss.'
+    }
+  },
+  {
+    id: 14,
+    stem: 'A patient on androgen deprivation therapy develops increased fat mass, insulin resistance, and dyslipidemia. Which adverse effect category is this',
+    topic: 'ADT metabolic effects',
+    options: {
+      A: 'Metabolic effects from loss of androgen signaling',
+      B: 'IgE mediated drug reaction',
+      C: 'Mineralocorticoid escape only',
+      D: 'Isolated pituitary tumor flare'
+    },
+    correct: 'A',
+    explanation: 'ADT can worsen cardiometabolic profile by shifting body composition, increasing fat mass, insulin resistance, and dyslipidemia.',
+    optionExplanations: {
+      A: 'Correct. These are metabolic adverse effects of ADT.',
+      B: 'This is not an allergic reaction pattern.',
+      C: 'Mineralocorticoid excess is specific to abiraterone and causes HTN, hypokalemia, and edema.',
+      D: 'Tumor flare is an early GnRH agonist effect, not chronic metabolic syndrome.'
+    }
+  },
+  {
+    id: 15,
+    stem: 'A prostate cancer drug blocks testosterone and DHT from activating androgen receptor driven gene transcription. Which drug class does this describe',
+    topic: 'Androgen receptor antagonists',
+    options: {
+      A: '5 alpha reductase inhibitors',
+      B: 'Androgen receptor antagonists',
+      C: 'CYP17 inhibitors',
+      D: 'GnRH antagonists'
+    },
+    correct: 'B',
+    explanation: 'Androgen receptor antagonists such as bicalutamide, flutamide, nilutamide, enzalutamide, apalutamide, and darolutamide block T/DHT signaling at the receptor.',
+    optionExplanations: {
+      A: '5 alpha reductase inhibitors decrease DHT synthesis but do not directly block the receptor.',
+      B: 'Correct. AR antagonists block androgen receptor mediated transcription.',
+      C: 'CYP17 inhibitors decrease androgen production.',
+      D: 'GnRH antagonists suppress LH/FSH centrally.'
+    }
+  },
+  {
+    id: 16,
+    stem: 'A second generation androgen receptor antagonist is selected because it has stronger AR blockade than first generation agents. Which drug belongs to this second generation group',
+    topic: 'Second generation AR antagonists',
+    options: {
+      A: 'Flutamide',
+      B: 'Bicalutamide',
+      C: 'Enzalutamide',
+      D: 'Finasteride'
+    },
+    correct: 'C',
+    explanation: 'Second generation AR antagonists include enzalutamide, apalutamide, and darolutamide and provide stronger androgen receptor blockade than first generation agents.',
+    optionExplanations: {
+      A: 'Flutamide is a first generation AR antagonist.',
+      B: 'Bicalutamide is a first generation AR antagonist.',
+      C: 'Correct. Enzalutamide is second generation.',
+      D: 'Finasteride is a 5 alpha reductase inhibitor, not an AR antagonist.'
+    }
+  },
+  {
+    id: 17,
+    stem: 'A symptomatic male has suspected hypogonadism. Which lab finding supports the diagnosis according to the notes',
+    topic: 'Hypogonadism diagnosis',
+    options: {
+      A: 'Morning testosterone below 300 ng/dL',
+      B: 'Evening testosterone above 900 ng/dL',
+      C: 'Normal sperm count only',
+      D: 'Low hematocrit only'
+    },
+    correct: 'A',
+    explanation: 'Male hypogonadism is diagnosed with symptoms plus low morning testosterone, with the notes using morning testosterone below 300 ng/dL.',
+    optionExplanations: {
+      A: 'Correct. Testosterone is measured in the morning and <300 ng/dL supports hypogonadism.',
+      B: 'Evening testosterone is not preferred due to diurnal rhythm.',
+      C: 'Normal sperm count does not diagnose hypogonadism.',
+      D: 'Low hematocrit can occur but does not diagnose hypogonadism alone.'
+    }
+  },
+  {
+    id: 18,
+    stem: 'A patient using daily testosterone gel asks about a unique practical risk of this formulation. Which counseling point is most important',
+    topic: 'Testosterone formulations',
+    options: {
+      A: 'It must be taken with prednisone',
+      B: 'It can transfer to others through skin contact',
+      C: 'It causes no HPG feedback suppression',
+      D: 'It works only if taken orally'
+    },
+    correct: 'B',
+    explanation: 'Transdermal testosterone gel or solution is used daily and carries a transfer risk to others through skin contact.',
+    optionExplanations: {
+      A: 'Prednisone is paired with abiraterone, not testosterone gel.',
+      B: 'Correct. Transdermal testosterone can transfer to contacts.',
+      C: 'All exogenous testosterone can suppress the HPG axis.',
+      D: 'Testosterone gel is transdermal, not oral.'
+    }
+  },
+  {
+    id: 19,
+    stem: 'A patient asks why classic natural testosterone is not reliably given orally. What is the reason',
+    topic: 'Testosterone oral limitation',
+    options: {
+      A: 'Rapid hepatic first pass metabolism',
+      B: 'Complete renal filtration before absorption',
+      C: 'No androgen receptor binding',
+      D: 'Irreversible CYP17 blockade'
+    },
+    correct: 'A',
+    explanation: 'Natural testosterone undergoes rapid hepatic metabolism, creating the classic first pass limitation that prevents reliable oral use.',
+    optionExplanations: {
+      A: 'Correct. Hepatic first pass metabolism limits oral natural testosterone.',
+      B: 'Renal filtration is not the reason oral testosterone is unreliable.',
+      C: 'Testosterone binds androgen receptors.',
+      D: 'CYP17 blockade describes abiraterone, not testosterone metabolism.'
+    }
+  },
+  {
+    id: 20,
+    stem: 'A patient with androgen driven prostate cancer is treated with a medication that directly blocks pituitary GnRH receptors. Which drug fits this mechanism',
+    topic: 'GnRH antagonist examples',
+    options: {
+      A: 'Leuprolide',
+      B: 'Goserelin',
+      C: 'Degarelix',
+      D: 'Finasteride'
+    },
+    correct: 'C',
+    explanation: 'Degarelix is a GnRH antagonist that directly blocks pituitary GnRH receptors, causing rapid LH/FSH shutdown without flare.',
+    optionExplanations: {
+      A: 'Leuprolide is a GnRH agonist and can cause initial flare.',
+      B: 'Goserelin is a GnRH agonist and can cause initial flare.',
+      C: 'Correct. Degarelix is a GnRH antagonist.',
+      D: 'Finasteride inhibits 5 alpha reductase.'
+    }
+  }
+]
+;
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>

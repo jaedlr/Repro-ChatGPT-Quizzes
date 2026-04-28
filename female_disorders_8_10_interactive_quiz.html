@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Female Disorders Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = 
+[
+  {
+    id: 1,
+    stem: 'A woman presents with painful vulvar ulcers, fever, malaise, and tender inguinal lymph nodes 5 days after sexual exposure. Pap smear shows multinucleated giant cells with nuclear molding and ground glass nuclei. Which pathogen is most likely',
+    topic: 'HSV lower genital tract infection',
+    options: {
+      A: 'Candida albicans',
+      B: 'Trichomonas vaginalis',
+      C: 'Herpes simplex virus',
+      D: 'Gardnerella vaginalis'
+    },
+    correct: 'C',
+    explanation: 'HSV infection causes red papules that progress to vesicles and painful ulcers, often with systemic symptoms and tender lymphadenopathy. Cytology may show multinucleated giant cells, nuclear molding, intranuclear inclusions, and ground glass nuclei.',
+    optionExplanations: {
+      A: 'Candida causes intense pruritus with curdlike discharge and pseudohyphae, not painful ulcers with multinucleated giant cells.',
+      B: 'Trichomonas causes frothy yellow discharge, dysuria, and strawberry cervix.',
+      C: 'Correct. Painful ulcers plus multinucleated giant cells and ground glass nuclei indicate HSV.',
+      D: 'Gardnerella causes bacterial vaginosis with clue cells and malodorous discharge.'
+    }
+  },
+  {
+    id: 2,
+    stem: 'A pregnant patient develops symptomatic vulvovaginal infection with intense pruritus and curdlike white discharge. Wet mount KOH smear shows pseudohyphae. What predisposing factor best explains this infection',
+    topic: 'Candida vulvovaginitis',
+    options: {
+      A: 'Disturbance in vaginal microbiota from pregnancy or antibiotics',
+      B: 'Ascending spread from endocervix to fallopian tubes',
+      C: 'HPV infection of immature squamous metaplastic cells',
+      D: 'Obstruction of the Bartholin duct'
+    },
+    correct: 'A',
+    explanation: 'Vulvovaginal candidiasis is favored by diabetes, antibiotics, and pregnancy due to disruption of normal vaginal microbiota and fungal overgrowth.',
+    optionExplanations: {
+      A: 'Correct. Pregnancy, antibiotics, diabetes, HIV, and OCPs predispose to Candida overgrowth.',
+      B: 'Ascending infection describes PID, not Candida vaginitis.',
+      C: 'HPV infection of metaplastic squamous cells causes cervical precursor lesions or warts.',
+      D: 'Bartholin duct obstruction causes a Bartholin cyst.'
+    }
+  },
+  {
+    id: 3,
+    stem: 'A woman presents with yellow frothy discharge, dysuria, dyspareunia, and vulvovaginal discomfort. Colposcopic exam shows a strawberry cervix. Which diagnostic test is most appropriate',
+    topic: 'Trichomonas vaginalis',
+    options: {
+      A: 'Wet mount showing trophozoites',
+      B: 'KOH prep showing pseudohyphae',
+      C: 'Pap smear showing clue cells',
+      D: 'Dark field microscopy showing spirochetes'
+    },
+    correct: 'A',
+    explanation: 'Trichomonas vaginalis causes yellow frothy discharge, dysuria, dyspareunia, and strawberry cervix. Diagnosis is by wet mount identifying trophozoites.',
+    optionExplanations: {
+      A: 'Correct. Motile trophozoites on wet mount support Trichomonas.',
+      B: 'KOH prep with pseudohyphae indicates Candida.',
+      C: 'Clue cells indicate bacterial vaginosis caused by Gardnerella and mixed flora.',
+      D: 'Dark field microscopy is used for primary syphilis.'
+    }
+  },
+  {
+    id: 4,
+    stem: 'A woman has thin green gray malodorous vaginal discharge. Pap smear shows squamous epithelial cells coated with bacteria. Which finding is most expected',
+    topic: 'Gardnerella bacterial vaginosis',
+    options: {
+      A: 'Normal vaginal pH',
+      B: 'Clue cells',
+      C: 'Painful vesicles',
+      D: 'Pseudohyphae'
+    },
+    correct: 'B',
+    explanation: 'Gardnerella-associated bacterial vaginosis presents with thin green-gray malodorous discharge and clue cells, which are squamous cells coated with bacteria.',
+    optionExplanations: {
+      A: 'Bacterial vaginosis usually has elevated vaginal pH, not normal pH.',
+      B: 'Correct. Clue cells are the classic microscopic finding.',
+      C: 'Painful vesicles suggest HSV.',
+      D: 'Pseudohyphae suggest Candida.'
+    }
+  },
+  {
+    id: 5,
+    stem: 'A patient has fever, pelvic pain, adnexal tenderness, and vaginal discharge. Infection began in the lower genital tract and spread upward to involve fallopian tubes and ovaries. Which complication results from chronic salpingitis',
+    topic: 'Pelvic inflammatory disease',
+    options: {
+      A: 'Permanent infertility or ectopic pregnancy',
+      B: 'Precocious puberty',
+      C: 'Cystic hygroma',
+      D: 'Postmenopausal virilization only'
+    },
+    correct: 'A',
+    explanation: 'Chronic salpingitis causes scarring and fusion of tubal plicae, which can lead to permanent infertility or ectopic tubal pregnancy.',
+    optionExplanations: {
+      A: 'Correct. Tubal scarring from PID predisposes to infertility and ectopic pregnancy.',
+      B: 'Precocious puberty may occur with estrogen-producing follicular cysts, not chronic salpingitis.',
+      C: 'Cystic hygroma is associated with Turner syndrome.',
+      D: 'Postmenopausal virilization suggests androgen-producing ovarian lesions such as stromal hyperthecosis.'
+    }
+  },
+  {
+    id: 6,
+    stem: 'A postpartum patient develops puerperal PID. Compared with gonococcal PID, which route of spread is most characteristic',
+    topic: 'Puerperal PID',
+    options: {
+      A: 'Along mucosal surfaces only',
+      B: 'Through lymphatics or veins from the uterus',
+      C: 'Through retrograde menstruation into the peritoneum',
+      D: 'Through the inguinal canal'
+    },
+    correct: 'B',
+    explanation: 'Puerperal PID spreads upward from the uterus through lymphatics or veins and more often causes bacteremia than gonococcal PID.',
+    optionExplanations: {
+      A: 'Gonococcal PID spreads along mucosal surfaces.',
+      B: 'Correct. Puerperal PID spreads through lymphatics or veins.',
+      C: 'Retrograde menstruation is a theory for endometriosis.',
+      D: 'The inguinal canal is relevant to indirect inguinal hernias, not PID.'
+    }
+  },
+  {
+    id: 7,
+    stem: 'A woman has a 4 cm painful cystic mass at the vaginal introitus. The lesion is lined by transitional epithelium or metaplastic squamous epithelium. What is the most likely cause',
+    topic: 'Bartholin cyst',
+    options: {
+      A: 'Obstruction of the Bartholin duct',
+      B: 'Autoimmune thinning of vulvar epidermis',
+      C: 'HPV types 6 and 11',
+      D: 'Endometrial tissue within myometrium'
+    },
+    correct: 'A',
+    explanation: 'Bartholin cysts result from obstruction of the Bartholin duct and may cause pain and local discomfort.',
+    optionExplanations: {
+      A: 'Correct. Duct obstruction causes the cyst.',
+      B: 'Autoimmune inflammatory thinning is seen in lichen sclerosus.',
+      C: 'HPV 6 and 11 cause condyloma acuminatum.',
+      D: 'Endometrial tissue within myometrium defines adenomyosis.'
+    }
+  },
+  {
+    id: 8,
+    stem: 'A postmenopausal woman has vulvar pruritus and dyspareunia. Exam shows white parchment-like patches with labial atrophy and narrowing of the vaginal orifice. Which complication is increased',
+    topic: 'Lichen sclerosus',
+    options: {
+      A: 'Squamous cell carcinoma of the vulva',
+      B: 'Ovarian dysgerminoma',
+      C: 'Endometrial stromal sarcoma',
+      D: 'Choriocarcinoma'
+    },
+    correct: 'A',
+    explanation: 'Lichen sclerosus is a slowly progressive inflammatory disorder, likely autoimmune, common after menopause and associated with increased risk of vulvar squamous cell carcinoma.',
+    optionExplanations: {
+      A: 'Correct. Lichen sclerosus increases risk of vulvar SCC.',
+      B: 'Dysgerminoma is an ovarian germ cell tumor and unrelated.',
+      C: 'Endometrial stromal sarcoma is a uterine mesenchymal tumor.',
+      D: 'Choriocarcinoma is a trophoblastic/germ cell malignancy.'
+    }
+  },
+  {
+    id: 9,
+    stem: 'A woman has benign sexually transmitted verrucous lesions on the vulva and perianal region. Histology shows exophytic papillary architecture, parakeratosis, acanthosis, and koilocytes. Which HPV types are most likely',
+    topic: 'Condyloma acuminatum',
+    options: {
+      A: 'HPV 16 and 18',
+      B: 'HPV 6 and 11',
+      C: 'HSV 1 and 2',
+      D: 'EBV'
+    },
+    correct: 'B',
+    explanation: 'Condyloma acuminatum is caused principally by HPV types 6 and 11 and shows koilocytes with perinuclear halos.',
+    optionExplanations: {
+      A: 'HPV 16 and 18 are high-risk oncogenic types rather than typical genital wart types.',
+      B: 'Correct. HPV 6 and 11 cause condyloma acuminatum.',
+      C: 'HSV causes painful vesicles and ulcers.',
+      D: 'EBV is associated with several lymphoid and epithelial malignancies, not condyloma acuminatum.'
+    }
+  },
+  {
+    id: 10,
+    stem: 'A Pap smear shows abnormal reactive cellular changes from a reddened cervix with mucosal erosions and reparative atypia. Histology shows mononuclear cell infiltrate and squamous metaplasia. Which diagnosis best fits',
+    topic: 'Chronic cervicitis',
+    options: {
+      A: 'Acute cervicitis',
+      B: 'Chronic cervicitis',
+      C: 'Endocervical polyp',
+      D: 'CIN III'
+    },
+    correct: 'B',
+    explanation: 'Chronic cervicitis presents with an erythematous ectocervix and histology showing mononuclear infiltrate, squamous metaplasia, mucosal erosions, and reparative atypia.',
+    optionExplanations: {
+      A: 'Acute cervicitis is characterized by neutrophil infiltrate and edema.',
+      B: 'Correct. Mononuclear inflammation plus squamous metaplasia supports chronic cervicitis.',
+      C: 'Endocervical polyps are benign exophytic growths with fibroconnective tissue core lined by columnar epithelium.',
+      D: 'CIN III shows severe dysplasia/carcinoma in situ with high N/C ratio and loss of maturation.'
+    }
+  },
+  {
+    id: 11,
+    stem: 'A benign exophytic growth protrudes through the cervical os and causes intermenstrual spotting. It has a fibroconnective tissue core lined by columnar epithelium with chronic inflammation and squamous metaplasia. What is the diagnosis',
+    topic: 'Endocervical polyp',
+    options: {
+      A: 'Endocervical polyp',
+      B: 'Bartholin cyst',
+      C: 'Condyloma acuminatum',
+      D: 'Lichen sclerosus'
+    },
+    correct: 'A',
+    explanation: 'Endocervical polyps are common benign exophytic growths from the endocervical canal that may cause spotting or bleeding and are lined by columnar epithelium over a fibroconnective core.',
+    optionExplanations: {
+      A: 'Correct. The location, bleeding, and histology fit an endocervical polyp.',
+      B: 'Bartholin cyst occurs at the vaginal introitus from duct obstruction.',
+      C: 'Condyloma is an HPV wart with papillary architecture and koilocytes.',
+      D: 'Lichen sclerosus causes white vulvar plaques and atrophy.'
+    }
+  },
+  {
+    id: 12,
+    stem: 'A 15 year old girl has irregular heavy uterine bleeding soon after menarche. Biopsy shows proliferative-type glands with stromal breakdown, fragmentation, and hemorrhage, but no secretory or predecidual changes. What is the underlying process',
+    topic: 'Anovulatory dysfunctional uterine bleeding',
+    options: {
+      A: 'Anovulatory cycle',
+      B: 'Inadequate luteal phase',
+      C: 'Acute endometritis',
+      D: 'Chronic endometritis'
+    },
+    correct: 'A',
+    explanation: 'Anovulatory cycles are the most common cause of dysfunctional uterine bleeding and show proliferative glands with stromal breakdown and hemorrhage without secretory/predecidual changes.',
+    optionExplanations: {
+      A: 'Correct. Lack of ovulation causes prolonged estrogen stimulation without progesterone.',
+      B: 'Inadequate luteal phase is due to low progesterone from poor corpus luteum function and is diagnosed by out-of-sync postovulatory biopsy.',
+      C: 'Acute endometritis shows neutrophils, often after delivery or abortion.',
+      D: 'Chronic endometritis shows plasma cells in the endometrium.'
+    }
+  },
+  {
+    id: 13,
+    stem: 'A woman has postpartum fever and uterine tenderness after retained products of conception. Endometrial biopsy shows neutrophilic infiltrates. What is the best treatment principle',
+    topic: 'Acute endometritis',
+    options: {
+      A: 'Remove retained products of conception and give antibiotics',
+      B: 'Give estrogen only',
+      C: 'Perform cervical curettage only',
+      D: 'Observe because plasma cells are normal'
+    },
+    correct: 'A',
+    explanation: 'Acute endometritis follows delivery, miscarriage, or induced abortion and is treated by removing retained products of conception plus antibiotics.',
+    optionExplanations: {
+      A: 'Correct. Source control plus antibiotics is curative treatment.',
+      B: 'Estrogen does not treat infectious endometritis.',
+      C: 'Cervical curettage does not address retained intrauterine products if present.',
+      D: 'Plasma cells are not normal in endometrium and indicate chronic endometritis.'
+    }
+  },
+  {
+    id: 14,
+    stem: 'A woman has abnormal uterine bleeding, pelvic pain, discharge, and infertility. Endometrial biopsy identifies plasma cells. Which associated condition can cause this',
+    topic: 'Chronic endometritis',
+    options: {
+      A: 'Chronic PID or retained products of conception',
+      B: 'Normal menstrual phase',
+      C: 'Physiologic ovulation',
+      D: 'Isolated follicular cyst only'
+    },
+    correct: 'A',
+    explanation: 'Chronic endometritis is associated with chronic PID, retained products of conception, IUDs, and tuberculosis. Diagnosis requires plasma cells in the endometrium.',
+    optionExplanations: {
+      A: 'Correct. Chronic PID and retained products are classic associations.',
+      B: 'Plasma cells are never seen in normal endometrium.',
+      C: 'Physiologic ovulation does not cause plasma cell endometritis.',
+      D: 'A follicular cyst does not explain plasma cells in the endometrium.'
+    }
+  },
+  {
+    id: 15,
+    stem: 'A multiparous woman has menometrorrhagia, dysmenorrhea, pelvic pain, and dyspareunia. Pathology shows endometrial glands and stroma within the myometrium in continuity with the endometrium. What is the diagnosis',
+    topic: 'Adenomyosis',
+    options: {
+      A: 'Endometriosis',
+      B: 'Adenomyosis',
+      C: 'Endometrial polyp',
+      D: 'Endometrial hyperplasia'
+    },
+    correct: 'B',
+    explanation: 'Adenomyosis is endometrial glands and stroma within the myometrium, remaining in continuity with the endometrium. It causes menometrorrhagia, dysmenorrhea, pelvic pain, and dyspareunia.',
+    optionExplanations: {
+      A: 'Endometriosis is endometrial glands and stroma outside the uterus.',
+      B: 'Correct. Endometrial tissue within myometrium defines adenomyosis.',
+      C: 'Endometrial polyps protrude into the endometrial cavity.',
+      D: 'Endometrial hyperplasia is increased gland proliferation relative to stroma.'
+    }
+  },
+  {
+    id: 16,
+    stem: 'A woman in her 30s has infertility, dysmenorrhea, dyspareunia, pelvic pain, dysuria, and pain with defecation. Ovarian serosa shows dark hemorrhagic implants. Which pathogenesis theory explains peritoneal cavity disease but not distant lung or brain lesions',
+    topic: 'Endometriosis pathogenesis',
+    options: {
+      A: 'Regurgitation theory',
+      B: 'Benign metastasis theory',
+      C: 'Metaplastic theory',
+      D: 'Lymphatic obstruction theory'
+    },
+    correct: 'A',
+    explanation: 'Regurgitation theory proposes retrograde menstruation through fallopian tubes with peritoneal implantation. It explains peritoneal disease but not distant sites or cases in amenorrhea.',
+    optionExplanations: {
+      A: 'Correct. Retrograde menstruation explains pelvic/peritoneal implantation.',
+      B: 'Benign metastasis theory explains distant sites via blood or lymphatics.',
+      C: 'Metaplastic theory proposes coelomic epithelium transforming into endometrial tissue.',
+      D: 'Lymphatic obstruction is not the named endometriosis theory here.'
+    }
+  },
+  {
+    id: 17,
+    stem: 'An endometrial lesion shows markedly increased gland-to-stroma ratio, glandular crowding, vesicular nuclei, and prominent nucleoli. Which molecular alteration is commonly involved and increases sensitivity to estrogen',
+    topic: 'Atypical endometrial hyperplasia',
+    options: {
+      A: 'PTEN loss',
+      B: 'E-cadherin loss',
+      C: 'SRY translocation',
+      D: 'JAK2 mutation'
+    },
+    correct: 'A',
+    explanation: 'Endometrial hyperplasia is associated with prolonged estrogen stimulation. PTEN loss makes cells more sensitive to estrogen and is found in hyperplasia and endometrial carcinoma.',
+    optionExplanations: {
+      A: 'Correct. PTEN is a tumor suppressor frequently altered in endometrial hyperplasia/carcinoma.',
+      B: 'E-cadherin loss is associated with lobular breast carcinoma.',
+      C: 'SRY translocation is involved in 46,XX testicular DSD.',
+      D: 'JAK2 mutation is associated with myeloproliferative neoplasms.'
+    }
+  },
+  {
+    id: 18,
+    stem: 'A young girl develops premature secondary sexual characteristics without increased gonadotropins. Ovarian cyst histology shows an inner granulosa layer and outer theca interna layer. Which cyst is most likely',
+    topic: 'Follicular cyst',
+    options: {
+      A: 'Follicular cyst',
+      B: 'Luteal cyst',
+      C: 'Cortical inclusion cyst',
+      D: 'Paratubal cyst'
+    },
+    correct: 'A',
+    explanation: 'Follicular cysts arise from Graafian follicles, may produce estrogen, and can cause pseudoprecocious puberty. They are lined by granulosa cells and theca interna cells.',
+    optionExplanations: {
+      A: 'Correct. Estrogen-producing follicular cysts can cause pseudoprecocious puberty.',
+      B: 'Luteal cysts arise from corpora lutea and can cause menstrual irregularities through progesterone synthesis.',
+      C: 'Cortical inclusion cysts are small cysts from entrapped epithelium in ovarian cortex.',
+      D: 'Paratubal cysts arise from Müllerian remnants near the fimbrial end and are usually clinically insignificant.'
+    }
+  },
+  {
+    id: 19,
+    stem: 'A reproductive age woman has obesity, insulin resistance, hirsutism, acne, infertility, persistent anovulation, multiple ovarian follicular cysts, and endometrial hyperplasia. Which sequence best explains the endometrial risk',
+    topic: 'PCOS',
+    options: {
+      A: 'No ovulation → no corpus luteum → decreased progesterone with increased estrone effect',
+      B: 'Excess progesterone → secretory exhaustion → endometrial carcinoma',
+      C: 'AMH deficiency → Müllerian agenesis → carcinoma',
+      D: 'Low LH → decreased androgens → endometrial atrophy'
+    },
+    correct: 'A',
+    explanation: 'In PCOS, anovulation means no corpus luteum and decreased progesterone. Androgens are converted to estrone in adipose tissue, creating unopposed estrogenic stimulation and increasing risk of endometrial hyperplasia/carcinoma.',
+    optionExplanations: {
+      A: 'Correct. Chronic anovulation causes unopposed estrogen effect.',
+      B: 'Progesterone is decreased, not excessive.',
+      C: 'AMH deficiency is not the PCOS mechanism described.',
+      D: 'LH and androgens are increased, not decreased.'
+    }
+  },
+  {
+    id: 20,
+    stem: 'A postmenopausal woman develops virilization, obesity, insulin resistance, and endometrial hyperplasia. Ovaries are bilaterally enlarged with solid yellow-brown cut surfaces and nests of luteinized stromal cells. What is the diagnosis',
+    topic: 'Stromal hyperthecosis',
+    options: {
+      A: 'Polycystic ovarian syndrome',
+      B: 'Stromal hyperthecosis',
+      C: 'Luteal cyst',
+      D: 'Cortical inclusion cyst'
+    },
+    correct: 'B',
+    explanation: 'Stromal hyperthecosis is stromal hyperplasia with nests of luteinized stromal cells, often in postmenopausal women. It produces androgens causing virilization and can cause endometrial hyperplasia/carcinoma.',
+    optionExplanations: {
+      A: 'PCOS is common in reproductive age women and shows multiple follicular cysts with anovulation.',
+      B: 'Correct. Postmenopausal virilization with luteinized stromal cells indicates stromal hyperthecosis.',
+      C: 'Luteal cysts arise from corpora lutea and can cause menstrual irregularities.',
+      D: 'Cortical inclusion cysts are usually small and common postmenopausal cysts, not androgen-producing solid enlarged ovaries.'
+    }
+  }
+]
+;
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>

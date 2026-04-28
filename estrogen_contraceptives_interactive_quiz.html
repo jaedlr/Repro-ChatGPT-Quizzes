@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Estrogen and Contraceptives Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = 
+[
+  {
+    id: 1,
+    stem: 'A patient is prescribed estrogen-containing contraception. Which receptor subtype is most associated with reproductive and hepatic effects such as endometrial proliferation and increased hepatic protein synthesis',
+    topic: 'Estrogen receptors',
+    options: {
+      A: 'ER alpha',
+      B: 'ER beta',
+      C: 'Androgen receptor',
+      D: 'Progesterone receptor only'
+    },
+    correct: 'A',
+    explanation: 'ER alpha is highly expressed in the uterus, breast, and liver and mediates endometrial proliferation and important hepatic effects such as increased clotting proteins and SHBG.',
+    optionExplanations: {
+      A: 'Correct. ER alpha is the main reproductive and hepatic estrogen receptor subtype emphasized in the notes.',
+      B: 'ER beta is more associated with bone and CNS modulatory effects.',
+      C: 'Androgen receptor mediates testosterone/DHT effects, not estrogen hepatic effects.',
+      D: 'Progesterone receptor is not the estrogen receptor subtype responsible for these effects.'
+    }
+  },
+  {
+    id: 2,
+    stem: 'A patient takes estrogen and develops changes in gene transcription over hours to days. Which mechanism best describes this classic signaling pathway',
+    topic: 'Estrogen genomic signaling',
+    options: {
+      A: 'Membrane receptor activation causing ion channel changes within seconds',
+      B: 'ER alpha or ER beta dimerization followed by DNA binding',
+      C: 'Direct CYP17 inhibition',
+      D: 'Irreversible progesterone receptor degradation'
+    },
+    correct: 'B',
+    explanation: 'Classic genomic estrogen signaling occurs when estrogen binds ER alpha or ER beta, causing receptor dimerization, DNA binding, and transcriptional changes over hours to days.',
+    optionExplanations: {
+      A: 'This describes rapid non-genomic estrogen signaling, not classic genomic signaling.',
+      B: 'Correct. Genomic signaling involves ER dimerization and DNA binding.',
+      C: 'CYP17 inhibition is the mechanism of abiraterone, an anti-androgen.',
+      D: 'SERDs degrade estrogen receptors, not progesterone receptors.'
+    }
+  },
+  {
+    id: 3,
+    stem: 'A patient with PCOS is started on a combined hormonal contraceptive. Which estrogen-mediated hepatic effect helps improve hyperandrogenic symptoms',
+    topic: 'CHC in PCOS',
+    options: {
+      A: 'Decreased SHBG leading to increased free testosterone',
+      B: 'Increased SHBG leading to decreased free testosterone',
+      C: 'Increased CYP17 activity leading to decreased androgens',
+      D: 'Increased DHT production in skin'
+    },
+    correct: 'B',
+    explanation: 'Estrogen increases hepatic SHBG production, which binds testosterone and decreases free testosterone, helping improve acne and hirsutism in PCOS.',
+    optionExplanations: {
+      A: 'Estrogen increases, not decreases, SHBG.',
+      B: 'Correct. Increased SHBG lowers free testosterone.',
+      C: 'CYP17 inhibition is caused by abiraterone, not CHCs.',
+      D: 'DHT production would worsen androgenic symptoms.'
+    }
+  },
+  {
+    id: 4,
+    stem: 'A woman with an intact uterus is prescribed estrogen therapy alone for menopausal symptoms. What major risk occurs if no progestin is added',
+    topic: 'Unopposed estrogen',
+    options: {
+      A: 'Endometrial hyperplasia and cancer',
+      B: 'Ovarian torsion',
+      C: 'Cervical stenosis',
+      D: 'Vaginal candidiasis only'
+    },
+    correct: 'A',
+    explanation: 'Unopposed estrogen in a patient with a uterus causes continuous endometrial stimulation, increasing the risk of endometrial hyperplasia and carcinoma. A progestin is added to protect the endometrium.',
+    optionExplanations: {
+      A: 'Correct. Unopposed estrogen increases endometrial hyperplasia/cancer risk.',
+      B: 'Ovarian torsion is not caused by estrogen-only therapy.',
+      C: 'Cervical stenosis is not the major risk of unopposed estrogen.',
+      D: 'Vaginal candidiasis is not the main risk.'
+    }
+  },
+  {
+    id: 5,
+    stem: 'A 38 year old woman with migraine with aura asks about combined hormonal contraceptives. What is the best recommendation',
+    topic: 'CHC contraindications',
+    options: {
+      A: 'Use combined hormonal contraception because migraine with aura is not relevant',
+      B: 'Avoid estrogen-containing contraception and choose progestin-only or nonhormonal contraception',
+      C: 'Use estrogen only without progestin',
+      D: 'Use high dose estrogen to suppress aura'
+    },
+    correct: 'B',
+    explanation: 'Migraine with aura is a contraindication to estrogen-containing combined hormonal contraceptives because of increased stroke risk. Progestin-only or nonhormonal contraception is preferred.',
+    optionExplanations: {
+      A: 'Migraine with aura is a key contraindication to CHCs.',
+      B: 'Correct. Avoid estrogen-containing contraception.',
+      C: 'Estrogen alone is not contraceptive in this context and increases endometrial risk if uterus is present.',
+      D: 'High dose estrogen would increase vascular risk.'
+    }
+  },
+  {
+    id: 6,
+    stem: 'A 37 year old woman who smokes heavily requests combined oral contraceptives. Which issue makes estrogen-containing contraception inappropriate',
+    topic: 'CHC contraindications',
+    options: {
+      A: 'Smoker age 35 or older',
+      B: 'History of regular menses',
+      C: 'Age below 40 alone',
+      D: 'Prior uncomplicated UTI'
+    },
+    correct: 'A',
+    explanation: 'Smoking at age 35 or older is a contraindication to combined hormonal contraceptives due to increased cardiovascular and thrombotic risk.',
+    optionExplanations: {
+      A: 'Correct. Smoker age 35 or older should avoid estrogen-containing contraception.',
+      B: 'Regular menses is not a contraindication.',
+      C: 'Age below 40 alone is not the issue; smoking age 35 or older is.',
+      D: 'Prior uncomplicated UTI is not a contraindication.'
+    }
+  },
+  {
+    id: 7,
+    stem: 'A patient taking combined oral contraceptives is started on rifampin for tuberculosis. What is the most likely consequence',
+    topic: 'CHC drug interactions',
+    options: {
+      A: 'Increased estrogen levels and toxicity',
+      B: 'Decreased contraceptive efficacy due to enzyme induction',
+      C: 'No interaction because rifampin is not hepatic',
+      D: 'Increased lamotrigine levels'
+    },
+    correct: 'B',
+    explanation: 'Rifampin and rifabutin are enzyme inducers that decrease ethinyl estradiol levels and reduce combined hormonal contraceptive efficacy.',
+    optionExplanations: {
+      A: 'Rifampin decreases, not increases, estrogen exposure.',
+      B: 'Correct. Enzyme induction can cause contraceptive failure.',
+      C: 'Rifampin is a strong enzyme inducer and does interact.',
+      D: 'CHCs decrease lamotrigine levels; rifampin does not increase CHC efficacy.'
+    }
+  },
+  {
+    id: 8,
+    stem: 'A patient with epilepsy takes lamotrigine and starts combined hormonal contraception. Which interaction is important',
+    topic: 'CHC and lamotrigine',
+    options: {
+      A: 'CHCs decrease lamotrigine levels and may increase seizure risk',
+      B: 'CHCs increase lamotrigine levels and cause toxicity',
+      C: 'Lamotrigine completely blocks estrogen receptors',
+      D: 'Lamotrigine prevents ovulation independently'
+    },
+    correct: 'A',
+    explanation: 'Combined hormonal contraceptives can decrease lamotrigine levels, increasing seizure risk.',
+    optionExplanations: {
+      A: 'Correct. CHCs lower lamotrigine levels.',
+      B: 'The interaction is decreased lamotrigine, not increased.',
+      C: 'Lamotrigine is an antiseizure medication and does not block estrogen receptors.',
+      D: 'Lamotrigine does not function as contraception.'
+    }
+  },
+  {
+    id: 9,
+    stem: 'A patient with ER positive breast cancer is treated with tamoxifen. Which tissue action explains both benefit and one major risk',
+    topic: 'Tamoxifen',
+    options: {
+      A: 'ER antagonist in breast and agonist in uterus',
+      B: 'ER agonist in breast and antagonist in uterus',
+      C: 'ER degradation in all tissues',
+      D: 'Aromatase inhibition in adipose tissue'
+    },
+    correct: 'A',
+    explanation: 'Tamoxifen is a SERM that acts as an ER antagonist in breast tissue, treating ER positive breast cancer, but acts as an agonist in uterus and bone, increasing endometrial cancer risk.',
+    optionExplanations: {
+      A: 'Correct. Breast antagonism provides benefit; uterine agonism increases risk.',
+      B: 'This is the opposite of tamoxifen’s clinically important pattern.',
+      C: 'Fulvestrant is a SERD that degrades estrogen receptors.',
+      D: 'Aromatase inhibitors decrease estrogen synthesis.'
+    }
+  },
+  {
+    id: 10,
+    stem: 'A patient on tamoxifen is prescribed fluoxetine for depression. Why is this problematic',
+    topic: 'Tamoxifen CYP2D6 interaction',
+    options: {
+      A: 'Fluoxetine inhibits CYP2D6 and decreases formation of active endoxifen',
+      B: 'Fluoxetine increases aromatase activity',
+      C: 'Fluoxetine directly activates uterine estrogen receptors',
+      D: 'Fluoxetine induces CYP3A and decreases ulipristal'
+    },
+    correct: 'A',
+    explanation: 'Tamoxifen is a prodrug activated by CYP2D6 to endoxifen. CYP2D6 inhibitors such as fluoxetine, paroxetine, and bupropion can reduce efficacy.',
+    optionExplanations: {
+      A: 'Correct. CYP2D6 inhibition reduces active tamoxifen metabolite formation.',
+      B: 'Fluoxetine does not increase aromatase activity.',
+      C: 'The issue is impaired tamoxifen activation, not direct uterine receptor activation by fluoxetine.',
+      D: 'CYP3A induction is relevant to ulipristal, but fluoxetine is a CYP2D6 inhibitor.'
+    }
+  },
+  {
+    id: 11,
+    stem: 'A postmenopausal woman with osteoporosis is treated with raloxifene. Which receptor activity pattern is most accurate',
+    topic: 'Raloxifene',
+    options: {
+      A: 'Bone agonist with uterus and breast antagonist effects',
+      B: 'Breast agonist with uterus agonist effects',
+      C: 'Complete estrogen receptor degradation',
+      D: 'Progesterone receptor modulation only'
+    },
+    correct: 'A',
+    explanation: 'Raloxifene is a SERM used for postmenopausal osteoporosis. It acts as an estrogen agonist in bone and antagonist in uterus and breast.',
+    optionExplanations: {
+      A: 'Correct. This pattern helps bone while avoiding uterine and breast stimulation.',
+      B: 'Tamoxifen is uterine agonist, but raloxifene is not.',
+      C: 'Fulvestrant degrades ER; raloxifene modulates it.',
+      D: 'Ulipristal is a selective progesterone receptor modulator.'
+    }
+  },
+  {
+    id: 12,
+    stem: 'A woman with infertility is treated with clomiphene. Which mechanism induces ovulation',
+    topic: 'Clomiphene',
+    options: {
+      A: 'ER antagonism in hypothalamus and pituitary causing increased GnRH, FSH, and LH',
+      B: 'Direct inhibition of FSH release',
+      C: 'Continuous GnRH receptor downregulation',
+      D: 'Direct progesterone receptor activation in the uterus'
+    },
+    correct: 'A',
+    explanation: 'Clomiphene is a SERM that blocks estrogen negative feedback at the hypothalamus/pituitary, increasing GnRH pulses and FSH/LH to induce ovulation.',
+    optionExplanations: {
+      A: 'Correct. Removing estrogen negative feedback raises gonadotropins.',
+      B: 'Clomiphene increases FSH/LH rather than inhibiting them.',
+      C: 'Continuous GnRH agonists downregulate receptors; clomiphene does not.',
+      D: 'Clomiphene is an estrogen receptor modulator, not a progesterone receptor agonist.'
+    }
+  },
+  {
+    id: 13,
+    stem: 'A patient with ER positive breast cancer is treated with a drug that binds the estrogen receptor and drives receptor degradation and downregulation. Which drug is this',
+    topic: 'Fulvestrant',
+    options: {
+      A: 'Tamoxifen',
+      B: 'Raloxifene',
+      C: 'Fulvestrant',
+      D: 'Clomiphene'
+    },
+    correct: 'C',
+    explanation: 'Fulvestrant is a selective estrogen receptor degrader (SERD) that binds ER and promotes receptor degradation/downregulation.',
+    optionExplanations: {
+      A: 'Tamoxifen is a SERM, not a SERD.',
+      B: 'Raloxifene is a SERM used for osteoporosis.',
+      C: 'Correct. Fulvestrant degrades/downregulates ER.',
+      D: 'Clomiphene is a SERM used for ovulation induction.'
+    }
+  },
+  {
+    id: 14,
+    stem: 'A postmenopausal woman with ER positive breast cancer is treated with anastrozole. Which adverse effect profile is most expected',
+    topic: 'Aromatase inhibitors',
+    options: {
+      A: 'Hot flashes, bone loss, vaginal dryness, and arthralgia',
+      B: 'Endometrial cancer and marked uterine stimulation',
+      C: 'Initial tumor flare from LH increase',
+      D: 'Severe mineralocorticoid excess with hypokalemia'
+    },
+    correct: 'A',
+    explanation: 'Aromatase inhibitors such as anastrozole and letrozole decrease estrogen synthesis and cause hypoestrogenic effects including hot flashes, bone loss, vaginal dryness, arthralgia, osteoporosis, and fractures.',
+    optionExplanations: {
+      A: 'Correct. Aromatase inhibitors create low estrogen effects.',
+      B: 'Endometrial stimulation is a tamoxifen risk, not typical of aromatase inhibitors.',
+      C: 'Tumor flare is associated with GnRH agonists.',
+      D: 'Mineralocorticoid excess is associated with abiraterone.'
+    }
+  },
+  {
+    id: 15,
+    stem: 'A patient with endometriosis is treated with elagolix. Which mechanism explains its rapid effect without flare',
+    topic: 'GnRH antagonist',
+    options: {
+      A: 'Direct GnRH receptor antagonism causing decreased LH and FSH',
+      B: 'Initial pituitary stimulation followed by downregulation',
+      C: 'Selective estrogen receptor degradation',
+      D: 'Increased hepatic SHBG production'
+    },
+    correct: 'A',
+    explanation: 'Elagolix and relugolix are GnRH antagonists. They rapidly suppress LH and FSH without the initial flare seen with GnRH agonists.',
+    optionExplanations: {
+      A: 'Correct. GnRH antagonists rapidly suppress gonadotropins without flare.',
+      B: 'This describes GnRH agonists such as leuprolide.',
+      C: 'Fulvestrant causes ER degradation.',
+      D: 'Estrogen increases SHBG; this is not elagolix’s mechanism.'
+    }
+  },
+  {
+    id: 16,
+    stem: 'A patient receives continuous leuprolide for fibroid-related symptoms. Which early and late endocrine effects are expected',
+    topic: 'GnRH agonist',
+    options: {
+      A: 'Immediate receptor blockade with no flare',
+      B: 'Initial flare followed by pituitary downregulation and decreased LH/FSH',
+      C: 'Increased estrogen production indefinitely',
+      D: 'Selective progesterone receptor modulation'
+    },
+    correct: 'B',
+    explanation: 'Continuous GnRH agonists such as leuprolide initially cause a flare, then downregulate pituitary receptors, decreasing LH/FSH and estrogen.',
+    optionExplanations: {
+      A: 'GnRH antagonists cause immediate blockade with no flare.',
+      B: 'Correct. Continuous leuprolide causes initial flare then suppression.',
+      C: 'Estrogen ultimately decreases after pituitary downregulation.',
+      D: 'Ulipristal is a selective progesterone receptor modulator.'
+    }
+  },
+  {
+    id: 17,
+    stem: 'A woman uses combined hormonal contraception. Which combination of mechanisms best explains pregnancy prevention',
+    topic: 'Combined hormonal contraceptives',
+    options: {
+      A: 'Suppress ovulation, thicken cervical mucus, and cause endometrial atrophy',
+      B: 'Increase LH surge and increase endometrial proliferation',
+      C: 'Block androgen receptors and inhibit CYP17',
+      D: 'Cause immediate implantation after fertilization'
+    },
+    correct: 'A',
+    explanation: 'CHCs suppress ovulation by decreasing GnRH, FSH, and LH so there is no LH surge. Progestin thickens cervical mucus and causes endometrial atrophy.',
+    optionExplanations: {
+      A: 'Correct. These are the major CHC contraceptive mechanisms.',
+      B: 'CHCs suppress the LH surge and do not promote endometrial proliferation as a contraceptive mechanism.',
+      C: 'These are anti-androgen mechanisms, not CHC contraception.',
+      D: 'Contraceptives prevent pregnancy; they do not cause implantation.'
+    }
+  },
+  {
+    id: 18,
+    stem: 'A postpartum breastfeeding patient asks about combined hormonal contraceptives soon after delivery. Why should estrogen-containing contraception generally be avoided early postpartum',
+    topic: 'Postpartum CHC contraindication',
+    options: {
+      A: 'Estrogen decreases VTE risk and increases milk supply',
+      B: 'Baseline VTE risk is increased postpartum and estrogen can reduce milk supply',
+      C: 'Estrogen causes immediate infertility',
+      D: 'Estrogen prevents uterine involution by blocking progesterone receptors'
+    },
+    correct: 'B',
+    explanation: 'Early postpartum use of estrogen-containing contraception is avoided because baseline VTE risk is increased postpartum, and estrogen can decrease milk supply during lactation.',
+    optionExplanations: {
+      A: 'Estrogen increases, not decreases, VTE risk and may decrease milk supply.',
+      B: 'Correct. VTE risk and decreased lactation are key concerns.',
+      C: 'Estrogen-containing CHCs suppress ovulation but do not cause immediate permanent infertility.',
+      D: 'This is not the mechanism of postpartum CHC concern.'
+    }
+  },
+  {
+    id: 19,
+    stem: 'A patient takes ulipristal for emergency contraception. Which mechanism best explains its effect',
+    topic: 'Ulipristal',
+    options: {
+      A: 'Selective progesterone receptor modulation delaying ovulation',
+      B: 'Irreversible CYP17 inhibition',
+      C: 'ER degradation and downregulation',
+      D: 'Direct 5 alpha reductase inhibition'
+    },
+    correct: 'A',
+    explanation: 'Ulipristal is a selective progesterone receptor modulator used for emergency contraception. It delays ovulation.',
+    optionExplanations: {
+      A: 'Correct. Ulipristal delays ovulation through progesterone receptor modulation.',
+      B: 'CYP17 inhibition describes abiraterone.',
+      C: 'ER degradation describes fulvestrant.',
+      D: '5 alpha reductase inhibition describes finasteride/dutasteride.'
+    }
+  },
+  {
+    id: 20,
+    stem: 'A patient taking ulipristal also takes a strong CYP3A inducer. What is the expected effect',
+    topic: 'Ulipristal interaction',
+    options: {
+      A: 'Increased ulipristal efficacy',
+      B: 'Decreased ulipristal levels and reduced efficacy',
+      C: 'No interaction because ulipristal is not metabolized',
+      D: 'Increased estrogen receptor degradation'
+    },
+    correct: 'B',
+    explanation: 'CYP3A inducers decrease ulipristal exposure, reducing emergency contraceptive efficacy.',
+    optionExplanations: {
+      A: 'CYP3A induction decreases rather than increases ulipristal levels.',
+      B: 'Correct. Lower ulipristal levels can reduce efficacy.',
+      C: 'Ulipristal is affected by CYP3A inducers.',
+      D: 'Ulipristal modulates progesterone receptors, not estrogen receptor degradation.'
+    }
+  }
+]
+;
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Breast Disease Interactive Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #111827;
+    }
+    .container {
+      padding: 24px;
+      max-width: 896px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-wrap { flex: 1; }
+    .segments {
+      display: flex;
+      gap: 4px;
+    }
+    .segment {
+      height: 8px;
+      border-radius: 9999px;
+      flex: 1;
+      min-width: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .segment.active { background: #e2e8f0; }
+    .segment.answered { background: #6fa8dc; }
+    .segment.unanswered { background: #334155; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .count {
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .wrong {
+      background: rgba(127, 29, 29, 0.6);
+      color: #fee2e2;
+    }
+    .right {
+      background: rgba(6, 78, 59, 0.6);
+      color: #d1fae5;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .stem {
+      font-weight: 700;
+      margin: 4px 0 0;
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .option:hover { background: #f3f4f6; }
+    .option.correct {
+      background: #dcfce7;
+      border-color: #22c55e;
+    }
+    .option.incorrect {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+    .explanation {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .explanation p { margin: 0 0 8px; }
+    .green-text { color: #15803d; }
+    .red-text { color: #b91c1c; }
+    .why-title {
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .nav button {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav button:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="progress-wrap">
+        <div id="segments" class="segments"></div>
+      </div>
+      <div class="status">
+        <div id="counter" class="count"></div>
+        <div class="badges">
+          <div class="badge wrong"><span>×</span><span id="wrongCount">0</span></div>
+          <div class="badge right"><span>✓</span><span id="rightCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <span id="questionNumber"></span>
+        <span id="topic"></span>
+      </div>
+      <p id="stem" class="stem"></p>
+      <div id="options" class="options"></div>
+      <div id="explanation" class="explanation" style="display:none;"></div>
+      <div class="nav">
+        <button onclick="handlePrev()">Previous</button>
+        <button onclick="handleNext()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = 
+[
+  {
+    id: 1,
+    stem: 'A breast biopsy shows ducts filled with atypical epithelial cells, but an intact basement membrane and preserved myoepithelial layer. Which interpretation is most accurate',
+    topic: 'In situ vs invasive breast carcinoma',
+    options: {
+      A: 'Invasive carcinoma',
+      B: 'Non-invasive in situ carcinoma',
+      C: 'Metastatic carcinoma',
+      D: 'Phyllodes tumor'
+    },
+    correct: 'B',
+    explanation: 'Presence of a myoepithelial layer and intact basement membrane indicates a non-invasive in situ lesion. Loss of the myoepithelial layer supports invasive carcinoma.',
+    optionExplanations: {
+      A: 'Invasive carcinoma invades through basement membrane and lacks the myoepithelial layer.',
+      B: 'Correct. Myoepithelial cells mean the lesion is still in situ.',
+      C: 'Metastatic carcinoma is not defined by intact duct myoepithelial layer.',
+      D: 'Phyllodes tumor is a stromal tumor with leaflike architecture.'
+    }
+  },
+  {
+    id: 2,
+    stem: 'A pathologist uses actin immunostaining on a breast biopsy. What is the purpose of this stain',
+    topic: 'Myoepithelial cells',
+    options: {
+      A: 'Identify myoepithelial cells to distinguish invasive from in situ disease',
+      B: 'Detect HER2 amplification',
+      C: 'Identify mucin pools',
+      D: 'Confirm BRCA1 mutation'
+    },
+    correct: 'A',
+    explanation: 'Myoepithelial cells contain actin and myosin. Actin immunostaining helps identify the myoepithelial layer, which is key for distinguishing invasive from in situ lesions.',
+    optionExplanations: {
+      A: 'Correct. Actin-positive myoepithelial cells support non-invasive/in situ disease.',
+      B: 'HER2 is assessed by immunostaining or amplification testing, not actin.',
+      C: 'Mucin pools are seen on routine histology or mucin stains, not actin specifically.',
+      D: 'BRCA mutation status requires genetic testing.'
+    }
+  },
+  {
+    id: 3,
+    stem: 'A 42 year old woman has cyclic breast tenderness and lumpy bumpy breasts. Biopsy shows cysts, fibrosis, adenosis, apocrine metaplasia, and calcifications without epithelial proliferation. What is her relative cancer risk category',
+    topic: 'Nonproliferative breast changes',
+    options: {
+      A: 'No or minimal increased risk',
+      B: 'Slightly increased risk 1.5 to 2 times',
+      C: 'Moderately increased risk 4 to 5 times',
+      D: 'High increased risk 8 to 10 times'
+    },
+    correct: 'A',
+    explanation: 'Nonproliferative fibrocystic changes such as cysts, fibrosis, adenosis, and apocrine metaplasia carry no or minimal increased cancer risk.',
+    optionExplanations: {
+      A: 'Correct. Nonproliferative breast changes have essentially no increased risk.',
+      B: 'Proliferative disease without atypia has slight increased risk.',
+      C: 'Proliferative disease with atypia has moderate increased risk.',
+      D: 'Carcinoma in situ carries high increased risk.'
+    }
+  },
+  {
+    id: 4,
+    stem: 'A breast biopsy shows epithelial hyperplasia with a mixed population of luminal and myoepithelial cells forming irregular slit-like spaces. There is no atypia. What is the cancer risk category',
+    topic: 'Proliferative disease without atypia',
+    options: {
+      A: 'No increased risk',
+      B: 'Slightly increased risk',
+      C: 'Moderately increased risk',
+      D: 'Always malignant'
+    },
+    correct: 'B',
+    explanation: 'Proliferative breast disease without atypia shows increased epithelial or stromal proliferation but normal cytology and carries a slight increased cancer risk, about 1.5 to 2 times.',
+    optionExplanations: {
+      A: 'No/minimal increased risk applies to nonproliferative changes.',
+      B: 'Correct. Proliferative disease without atypia slightly increases risk.',
+      C: 'Moderate risk applies to atypical hyperplasia.',
+      D: 'This is not malignant.'
+    }
+  },
+  {
+    id: 5,
+    stem: 'A woman has spontaneous bloody nipple discharge. Biopsy shows arborizing papillae with fibrovascular cores within a duct. What is the diagnosis',
+    topic: 'Intraductal papilloma',
+    options: {
+      A: 'Intraductal papilloma',
+      B: 'Fibroadenoma',
+      C: 'Medullary carcinoma',
+      D: 'Lobular carcinoma in situ'
+    },
+    correct: 'A',
+    explanation: 'Intraductal papilloma is a proliferative lesion without atypia that often presents with bloody nipple discharge and shows papillae with fibrovascular cores.',
+    optionExplanations: {
+      A: 'Correct. Bloody discharge plus fibrovascular papillae fits intraductal papilloma.',
+      B: 'Fibroadenoma is a mobile rubbery stromal tumor in young women.',
+      C: 'Medullary carcinoma is an invasive carcinoma with lymphoplasmacytic infiltrate.',
+      D: 'LCIS is usually incidental and involves lobules.'
+    }
+  },
+  {
+    id: 6,
+    stem: 'A biopsy shows partially monomorphic cells involving ducts with some round lumina and irregular slit-like spaces. The lesion falls short of DCIS. What is the diagnosis',
+    topic: 'Atypical ductal hyperplasia',
+    options: {
+      A: 'Atypical ductal hyperplasia',
+      B: 'Atypical lobular hyperplasia',
+      C: 'Radial scar',
+      D: 'Nonproliferative fibrocystic change'
+    },
+    correct: 'A',
+    explanation: 'Atypical ductal hyperplasia involves ducts and has atypical features that are similar to but insufficient for DCIS.',
+    optionExplanations: {
+      A: 'Correct. ADH is a ductal atypical proliferation that is considered pre-DCIS.',
+      B: 'ALH involves lobules with monomorphic small loosely cohesive cells.',
+      C: 'Radial scar has central fibrosis and entrapped glands.',
+      D: 'Nonproliferative changes lack atypical epithelial proliferation.'
+    }
+  },
+  {
+    id: 7,
+    stem: 'A biopsy shows monomorphic small, rounded, loosely cohesive cells partially filling a lobule. A few residual lumina remain. What lesion is most likely',
+    topic: 'Atypical lobular hyperplasia',
+    options: {
+      A: 'Ductal carcinoma in situ',
+      B: 'Atypical lobular hyperplasia',
+      C: 'Sclerosing adenosis',
+      D: 'Intraductal papilloma'
+    },
+    correct: 'B',
+    explanation: 'Atypical lobular hyperplasia consists of monomorphic small cells partially filling lobular acini and is related to LCIS.',
+    optionExplanations: {
+      A: 'DCIS fills ducts with malignant cells and remains confined by basement membrane.',
+      B: 'Correct. Partial lobular involvement by monomorphic loosely cohesive cells fits ALH.',
+      C: 'Sclerosing adenosis shows increased acini with sclerosis and dual cell layers.',
+      D: 'Intraductal papilloma has arborizing papillae with fibrovascular cores.'
+    }
+  },
+  {
+    id: 8,
+    stem: 'A mammogram shows clustered microcalcifications. Biopsy shows ducts lined by pleomorphic malignant cells with central necrosis and calcified debris. Which diagnosis is most likely',
+    topic: 'Comedo DCIS',
+    options: {
+      A: 'Comedo ductal carcinoma in situ',
+      B: 'Lobular carcinoma in situ',
+      C: 'Mucinous carcinoma',
+      D: 'Fibroadenoma'
+    },
+    correct: 'A',
+    explanation: 'Comedo DCIS is high grade DCIS with pleomorphic cells, central necrosis, and microcalcifications; it has higher progression risk than lower-grade non-comedo patterns.',
+    optionExplanations: {
+      A: 'Correct. Central necrosis and calcifications are classic for comedo DCIS.',
+      B: 'LCIS is usually incidental and not typically detected by calcifications.',
+      C: 'Mucinous carcinoma shows tumor clusters floating in mucin pools.',
+      D: 'Fibroadenoma is a benign mobile mass and not a malignant intraductal lesion.'
+    }
+  },
+  {
+    id: 9,
+    stem: 'A breast biopsy performed for another indication incidentally shows malignant cells filling lobules. The lesion is bilateral in 20 to 40 percent of cases and increases risk of invasive carcinoma in either breast. What is the diagnosis',
+    topic: 'Lobular carcinoma in situ',
+    options: {
+      A: 'DCIS',
+      B: 'LCIS',
+      C: 'Invasive ductal carcinoma',
+      D: 'Phyllodes tumor'
+    },
+    correct: 'B',
+    explanation: 'LCIS is commonly an incidental finding, often bilateral, and is a risk marker for later invasive carcinoma.',
+    optionExplanations: {
+      A: 'DCIS is ductal and often detected by calcifications.',
+      B: 'Correct. LCIS is a lobular in situ lesion and bilateral risk marker.',
+      C: 'Invasive ductal carcinoma invades stroma and usually presents as mass or density.',
+      D: 'Phyllodes tumor is a fibroepithelial stromal tumor.'
+    }
+  },
+  {
+    id: 10,
+    stem: 'A woman has eczematous changes of the nipple. Biopsy shows malignant cells with clear cytoplasm infiltrating the epidermis from an underlying DCIS through lactiferous ducts. What is the diagnosis',
+    topic: 'Paget disease of breast',
+    options: {
+      A: 'Paget disease of the breast',
+      B: 'Mastitis',
+      C: 'Fibrocystic change',
+      D: 'Medullary carcinoma'
+    },
+    correct: 'A',
+    explanation: 'Paget disease of the breast represents malignant cells spreading from underlying DCIS up lactiferous ducts into the epidermis, causing nipple/areolar changes.',
+    optionExplanations: {
+      A: 'Correct. Epidermal malignant cells from underlying DCIS define Paget disease.',
+      B: 'Mastitis is inflammation/infection and does not show malignant epidermal cells from DCIS.',
+      C: 'Fibrocystic change is benign and does not involve malignant epidermal spread.',
+      D: 'Medullary carcinoma is an invasive carcinoma with lymphoplasmacytic infiltrate.'
+    }
+  },
+  {
+    id: 11,
+    stem: 'A breast mass is firm and gritty due to desmoplasia. Histology shows malignant glands invading stroma with loss of myoepithelial layer. What is the most common invasive breast carcinoma subtype',
+    topic: 'Invasive ductal carcinoma',
+    options: {
+      A: 'Invasive lobular carcinoma',
+      B: 'Invasive ductal carcinoma NST',
+      C: 'Mucinous carcinoma',
+      D: 'Tubular carcinoma'
+    },
+    correct: 'B',
+    explanation: 'Invasive ductal carcinoma NST is the most common invasive breast carcinoma, often firm and gritty due to desmoplastic stromal response.',
+    optionExplanations: {
+      A: 'Invasive lobular carcinoma often presents with subtle thickening and single-file infiltration.',
+      B: 'Correct. IDC NST accounts for most invasive breast carcinomas.',
+      C: 'Mucinous carcinoma is soft/gelatinous with mucin pools and good prognosis.',
+      D: 'Tubular carcinoma is well differentiated with excellent prognosis.'
+    }
+  },
+  {
+    id: 12,
+    stem: 'A breast carcinoma infiltrates as individual cells in linear arrays called Indian files. Tumor cells are E-cadherin negative. Which metastatic pattern is associated with this subtype',
+    topic: 'Invasive lobular carcinoma',
+    options: {
+      A: 'Peritoneum, retroperitoneum, bone, ovaries, and uterus',
+      B: 'Only lung parenchyma',
+      C: 'Only skin of nipple',
+      D: 'Only ipsilateral axillary nodes without distant spread'
+    },
+    correct: 'A',
+    explanation: 'Invasive lobular carcinoma is E-cadherin negative and infiltrates as single cells or Indian files. It can metastasize to peritoneum, retroperitoneum, bone, ovaries, and uterus.',
+    optionExplanations: {
+      A: 'Correct. This unusual metastatic distribution is associated with invasive lobular carcinoma.',
+      B: 'Lung-only spread is not the classic pattern described.',
+      C: 'Nipple epidermis involvement is Paget disease.',
+      D: 'Any invasive carcinoma can spread beyond axillary nodes.'
+    }
+  },
+  {
+    id: 13,
+    stem: 'A breast carcinoma is ER negative, PR negative, and HER2 negative but has a prominent lymphoplasmacytic infiltrate and a relatively better prognosis than expected. Which subtype is most likely',
+    topic: 'Medullary carcinoma',
+    options: {
+      A: 'Medullary carcinoma',
+      B: 'Mucinous carcinoma',
+      C: 'Tubular carcinoma',
+      D: 'Invasive lobular carcinoma'
+    },
+    correct: 'A',
+    explanation: 'Medullary carcinoma is often triple negative but has a lymphoplasmacytic infiltrate and better prognosis than many other triple-negative tumors.',
+    optionExplanations: {
+      A: 'Correct. Triple-negative tumor with prominent lymphoplasmacytic infiltrate fits medullary carcinoma.',
+      B: 'Mucinous carcinoma occurs in older women, is usually ER positive, and has mucin pools.',
+      C: 'Tubular carcinoma is ER positive and well differentiated.',
+      D: 'Invasive lobular carcinoma is E-cadherin negative with Indian file pattern.'
+    }
+  },
+  {
+    id: 14,
+    stem: 'An older woman has a soft, well-circumscribed gelatinous breast mass. Histology shows small clusters of tumor cells floating in abundant extracellular mucin. Which prognosis and receptor pattern is most likely',
+    topic: 'Mucinous carcinoma',
+    options: {
+      A: 'Poor prognosis and HER2 positive',
+      B: 'Good prognosis and ER positive',
+      C: 'Poor prognosis and ER negative PR negative HER2 negative',
+      D: 'Always bilateral and E-cadherin negative'
+    },
+    correct: 'B',
+    explanation: 'Mucinous carcinoma usually occurs in older women, is soft/gelatinous, grows slowly, is often ER positive, and has a good prognosis.',
+    optionExplanations: {
+      A: 'HER2 overexpression is a poor prognostic factor but not the classic mucinous pattern.',
+      B: 'Correct. Mucinous carcinoma is typically ER positive with good prognosis.',
+      C: 'Triple-negative pattern is more associated with medullary carcinoma.',
+      D: 'E-cadherin negativity and bilaterality are associated with lobular carcinoma.'
+    }
+  },
+  {
+    id: 15,
+    stem: 'A breast carcinoma is composed of well-formed tubules but lacks a myoepithelial layer. It appears as an irregular mammographic density and has excellent prognosis. Which subtype is this',
+    topic: 'Tubular carcinoma',
+    options: {
+      A: 'Tubular carcinoma',
+      B: 'Comedo DCIS',
+      C: 'Phyllodes tumor',
+      D: 'Fibroadenoma'
+    },
+    correct: 'A',
+    explanation: 'Tubular carcinoma is a well-differentiated invasive carcinoma composed of well-formed tubules without myoepithelial layer, often ER positive and associated with excellent prognosis.',
+    optionExplanations: {
+      A: 'Correct. Well-formed invasive tubules without myoepithelial layer fit tubular carcinoma.',
+      B: 'Comedo DCIS remains within ducts and has central necrosis.',
+      C: 'Phyllodes tumor is stromal and leaflike.',
+      D: 'Fibroadenoma is benign and sharply circumscribed with compressed ducts.'
+    }
+  },
+  {
+    id: 16,
+    stem: 'A 23 year old woman has a mobile, rubbery, sharply circumscribed breast mass. Histology shows a benign stromal tumor compressing ducts. What is the most likely diagnosis',
+    topic: 'Fibroadenoma',
+    options: {
+      A: 'Fibroadenoma',
+      B: 'Phyllodes tumor',
+      C: 'Invasive ductal carcinoma',
+      D: 'Paget disease'
+    },
+    correct: 'A',
+    explanation: 'Fibroadenoma is the most common benign breast tumor, typically occurring in young women as a mobile, rubbery, sharply circumscribed mass that compresses ducts.',
+    optionExplanations: {
+      A: 'Correct. Young woman with mobile rubbery mass fits fibroadenoma.',
+      B: 'Phyllodes tumor occurs in older women and has leaflike architecture with stromal cellularity.',
+      C: 'Invasive ductal carcinoma is usually firm/gritty and invasive.',
+      D: 'Paget disease affects nipple epidermis from underlying DCIS.'
+    }
+  },
+  {
+    id: 17,
+    stem: 'A 60 year old woman has a large breast tumor with leaflike architecture, stromal cellularity, cytologic atypia, and stromal overgrowth. High-grade forms can metastasize, but lymph node dissection is not typically performed. What is the treatment',
+    topic: 'Phyllodes tumor',
+    options: {
+      A: 'Wide excision',
+      B: 'Lymph node dissection only',
+      C: 'Tamoxifen only',
+      D: 'Observation only'
+    },
+    correct: 'A',
+    explanation: 'Phyllodes tumors are treated with wide excision. Lymph node dissection is not typically needed because spread is hematogenous rather than lymphatic.',
+    optionExplanations: {
+      A: 'Correct. Wide excision is the treatment.',
+      B: 'Lymph node dissection is not indicated as primary therapy.',
+      C: 'Tamoxifen treats ER-positive disease and risk reduction, not phyllodes as primary therapy.',
+      D: 'Observation alone is not appropriate for phyllodes tumor.'
+    }
+  },
+  {
+    id: 18,
+    stem: 'A woman has a breast carcinoma. Which feature is the most important major prognostic factor used in staging',
+    topic: 'Breast cancer prognostic factors',
+    options: {
+      A: 'Tumor size and lymph node status',
+      B: 'Color of nipple discharge only',
+      C: 'Presence of breast pain only',
+      D: 'Patient height'
+    },
+    correct: 'A',
+    explanation: 'Major prognostic factors used in staging include invasive versus in situ status, tumor size, lymph node status, distant metastasis, and inflammatory carcinoma.',
+    optionExplanations: {
+      A: 'Correct. Tumor size and lymph node status are key staging/prognostic factors.',
+      B: 'Nipple discharge can be clinically important but is not a staging factor by itself.',
+      C: 'Pain alone does not stage breast cancer.',
+      D: 'Patient height is not a prognostic factor.'
+    }
+  },
+  {
+    id: 19,
+    stem: 'A breast cancer overexpresses HER2. Which statement best describes this biomarker',
+    topic: 'HER2',
+    options: {
+      A: 'It predicts poor prognosis but provides a target for trastuzumab',
+      B: 'It means the tumor is always benign',
+      C: 'It indicates E-cadherin loss',
+      D: 'It is treated with imatinib'
+    },
+    correct: 'A',
+    explanation: 'HER2 overexpression is associated with poor prognosis but is targetable with trastuzumab.',
+    optionExplanations: {
+      A: 'Correct. HER2 is both a poor prognostic marker and a therapeutic target.',
+      B: 'HER2 overexpression occurs in malignant tumors, not benign lesions.',
+      C: 'E-cadherin loss is associated with lobular carcinoma.',
+      D: 'Imatinib targets BCR-ABL and other kinases, not HER2.'
+    }
+  },
+  {
+    id: 20,
+    stem: 'A patient has multiple relatives with breast and ovarian cancer. Genetic testing reveals a BRCA1 mutation. Which chromosome and cancer association is most accurate',
+    topic: 'Hereditary breast cancer',
+    options: {
+      A: 'BRCA1 on chromosome 17 with increased ovarian cancer risk',
+      B: 'BRCA1 on chromosome 13 with increased male breast cancer only',
+      C: 'BRCA2 on chromosome 17 with no ovarian cancer risk',
+      D: 'BRCA2 on chromosome 22 with only lung cancer risk'
+    },
+    correct: 'A',
+    explanation: 'BRCA1 is on chromosome 17 and is associated with markedly increased breast cancer risk and increased ovarian cancer risk. BRCA2 is on chromosome 13 and is associated with male breast cancer and ovarian cancer risk.',
+    optionExplanations: {
+      A: 'Correct. BRCA1 is chromosome 17 and increases ovarian cancer risk.',
+      B: 'BRCA1 is not on chromosome 13; BRCA2 is.',
+      C: 'BRCA2 is on chromosome 13, and both BRCA1 and BRCA2 increase ovarian cancer risk.',
+      D: 'BRCA2 is not on chromosome 22 and is not limited to lung cancer.'
+    }
+  }
+]
+;
+
+    let currentIndex = 0;
+    const answers = {};
+
+    function render() {
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice = answers[currentQuestion.id] || null;
+      const showExplanation = selectedChoice !== null;
+
+      document.getElementById('counter').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('questionNumber').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('topic').textContent = currentQuestion.topic ? `Topic: ${currentQuestion.topic}` : '';
+      document.getElementById('stem').textContent = `${currentQuestion.stem}?`;
+
+      const segments = document.getElementById('segments');
+      segments.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'segment ' + (idx === currentIndex ? 'active' : answers[q.id] !== undefined ? 'answered' : 'unanswered');
+        btn.title = q.topic || `Question ${idx + 1}`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          render();
+        };
+        segments.appendChild(btn);
+      });
+
+      const options = document.getElementById('options');
+      options.innerHTML = '';
+      Object.entries(currentQuestion.options).forEach(([letter, text]) => {
+        const btn = document.createElement('button');
+        const isSelected = selectedChoice === letter;
+        const isAnswer = letter === currentQuestion.correct;
+        btn.className = 'option';
+        if (showExplanation && isAnswer) btn.className += ' correct';
+        else if (showExplanation && isSelected && !isAnswer) btn.className += ' incorrect';
+        btn.innerHTML = `<strong>${letter}.</strong> ${text}`;
+        btn.onclick = () => {
+          answers[currentQuestion.id] = letter;
+          render();
+        };
+        options.appendChild(btn);
+      });
+
+      const explanation = document.getElementById('explanation');
+      if (showExplanation) {
+        const isCorrect = selectedChoice === currentQuestion.correct;
+        const optionExplanationHtml = Object.entries(currentQuestion.optionExplanations)
+          .map(([letter, text]) => `<p><strong>${letter}.</strong> ${text}</p>`)
+          .join('');
+
+        explanation.style.display = 'block';
+        explanation.innerHTML = `
+          <p><strong>Correct answer: ${currentQuestion.correct}</strong> (${currentQuestion.options[currentQuestion.correct]})</p>
+          <p class="${isCorrect ? 'green-text' : 'red-text'}">${isCorrect ? 'Nice job. ' : 'Good attempt. '}${currentQuestion.explanation}</p>
+          <div class="why-title">Why each option is right or wrong:</div>
+          ${optionExplanationHtml}
+        `;
+      } else {
+        explanation.style.display = 'none';
+        explanation.innerHTML = '';
+      }
+
+      let wrong = 0;
+      let right = 0;
+      Object.entries(answers).forEach(([qid, choice]) => {
+        const q = questions.find((qq) => qq.id === Number(qid));
+        if (q && choice === q.correct) right += 1;
+        if (q && choice !== q.correct) wrong += 1;
+      });
+      document.getElementById('wrongCount').textContent = wrong;
+      document.getElementById('rightCount').textContent = right;
+    }
+
+    function handleNext() {
+      currentIndex += 1;
+      if (currentIndex >= questions.length) currentIndex = 0;
+      render();
+    }
+
+    function handlePrev() {
+      currentIndex -= 1;
+      if (currentIndex < 0) currentIndex = questions.length - 1;
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>
