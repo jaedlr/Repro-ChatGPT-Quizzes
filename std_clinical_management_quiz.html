@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>STD Clinical Management Interactive Quiz</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-slate-900 min-h-screen">
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState } = React;
+
+    const questions = [
+      {
+        id: 1,
+        stem: "A 24-year-old sexually active woman comes for a wellness visit. She has no symptoms, has had two new partners this year, and uses condoms inconsistently. Which screening plan best matches the lecture recommendations",
+        topic: "Screening under age 25",
+        options: {
+          A: "No STI screening unless symptomatic",
+          B: "Annual gonorrhea/chlamydia screening and at least once HIV screening",
+          C: "Routine lumbar puncture for syphilis screening",
+          D: "Routine screening only for men, not women"
+        },
+        correct: "B",
+        explanation: "Women younger than 25 should be screened at least annually for gonorrhea/chlamydia and at least once for HIV. Additional screening for syphilis, trichomonas, HBV, and HCV is based on increased risk.",
+        optionExplanations: {
+          A: "Incorrect. Many STIs are asymptomatic, especially in women.",
+          B: "Correct. This is the lecture recommendation for women under 25.",
+          C: "Incorrect. LP is for suspected neurosyphilis, not screening.",
+          D: "Incorrect. Routine screening is emphasized for women, especially under 25 or high-risk."
+        }
+      },
+      {
+        id: 2,
+        stem: "A 31-year-old woman asks whether she still needs yearly gonorrhea and chlamydia screening. She has one long-term partner, no STI history, and no increased-risk criteria. What is the best answer",
+        topic: "Screening age 25 or older",
+        options: {
+          A: "Screen GC/CT only if she has increased risk",
+          B: "Screen GC/CT every 3 months regardless of risk",
+          C: "Screen only with dark-field microscopy",
+          D: "Do not screen HIV at any point"
+        },
+        correct: "A",
+        explanation: "Women 25 or older should receive HIV screening at least once, while GC/CT, syphilis, trichomonas, HBV, and HCV screening are recommended only if increased risk is present.",
+        optionExplanations: {
+          A: "Correct. For women ≥25, GC/CT screening is risk-based.",
+          B: "Incorrect. Three-month follow-up applies to test of reinfection after GC/CT treatment, not routine low-risk screening.",
+          C: "Incorrect. Dark-field microscopy is for suspected primary syphilis lesions.",
+          D: "Incorrect. HIV screening is recommended at least once."
+        }
+      },
+      {
+        id: 3,
+        stem: "A woman is diagnosed with chlamydia. She asks whether she should be checked for other infections. What is the best counseling point",
+        topic: "Coexisting STIs",
+        options: {
+          A: "No, chlamydia almost never coexists with other STIs",
+          B: "Yes, because 20%-50% of patients may have coexisting infection",
+          C: "Only if she develops genital ulcers",
+          D: "Only her partner needs additional testing"
+        },
+        correct: "B",
+        explanation: "The lecture emphasizes that 20%-50% of patients have coexisting infection, so if one STI is confirmed, others should be suspected and tested for.",
+        optionExplanations: {
+          A: "Incorrect. Co-infection is common.",
+          B: "Correct. Diagnosis of one STI should prompt testing for others.",
+          C: "Incorrect. Co-infection can occur without ulcers.",
+          D: "Incorrect. Both patient evaluation and partner management matter."
+        }
+      },
+      {
+        id: 4,
+        stem: "A 19-year-old woman has mucopurulent cervicitis. You suspect chlamydia. Which diagnostic approach is preferred",
+        topic: "Chlamydia testing",
+        options: {
+          A: "NAAT from endocervical secretions or urine",
+          B: "Special culture medium only",
+          C: "FTA-ABS as the screening test",
+          D: "Donovan body smear"
+        },
+        correct: "A",
+        explanation: "NAAT is the most sensitive and recommended test for chlamydia. Female specimens include endocervical secretions or urine.",
+        optionExplanations: {
+          A: "Correct. NAAT is preferred for chlamydia.",
+          B: "Incorrect. Special culture media is used for chancroid and has limited sensitivity.",
+          C: "Incorrect. FTA-ABS confirms syphilis.",
+          D: "Incorrect. Donovan bodies diagnose granuloma inguinale."
+        }
+      },
+      {
+        id: 5,
+        stem: "A 27-year-old man has dysuria and white-green urethral discharge 5 days after unprotected sex. NAAT confirms uncomplicated gonorrhea. Which treatment matches the lecture",
+        topic: "Uncomplicated gonorrhea treatment",
+        options: {
+          A: "Acyclovir for 7 days",
+          B: "Penicillin G IM weekly for 3 weeks",
+          C: "Ceftriaxone IM single dose plus azithromycin PO single dose",
+          D: "Doxycycline for 21 days"
+        },
+        correct: "C",
+        explanation: "Uncomplicated gonorrhea treatment in the lecture is ceftriaxone 250 mg IM single dose plus azithromycin 1 g orally single dose.",
+        optionExplanations: {
+          A: "Incorrect. Acyclovir treats HSV.",
+          B: "Incorrect. Penicillin regimens are for syphilis.",
+          C: "Correct. Ceftriaxone plus azithromycin is the listed uncomplicated gonorrhea treatment.",
+          D: "Incorrect. Doxycycline for 21 days treats LGV."
+        }
+      },
+      {
+        id: 6,
+        stem: "A 20-year-old woman is diagnosed with uncomplicated chlamydia. Which treatment option from the lecture is appropriate",
+        topic: "Chlamydia treatment",
+        options: {
+          A: "Azithromycin 1 g orally once",
+          B: "IV ceftriaxone every 4 hours for 10-14 days",
+          C: "Azithromycin weekly until healed",
+          D: "No treatment if asymptomatic"
+        },
+        correct: "A",
+        explanation: "Chlamydia treatment options listed are azithromycin 1 g orally single dose or doxycycline 100 mg twice daily for 7 days.",
+        optionExplanations: {
+          A: "Correct. Single-dose azithromycin is a listed treatment.",
+          B: "Incorrect. IV penicillin, not ceftriaxone, is used for neurosyphilis in the lecture.",
+          C: "Incorrect. Weekly azithromycin until healed is used for granuloma inguinale.",
+          D: "Incorrect. Asymptomatic infection still requires treatment."
+        }
+      },
+      {
+        id: 7,
+        stem: "A young sexually active woman has pelvic pain. Exam shows cervical motion tenderness but no alternative cause is identified. What should be done",
+        topic: "PID empiric treatment",
+        options: {
+          A: "Wait for all STI results before treatment",
+          B: "Start empiric PID treatment",
+          C: "Treat only if all three tenderness findings are present",
+          D: "Treat only with acyclovir"
+        },
+        correct: "B",
+        explanation: "In a young sexually active woman with no other cause, empiric PID treatment should begin if at least one of cervical motion tenderness, uterine tenderness, or adnexal tenderness is present.",
+        optionExplanations: {
+          A: "Incorrect. PID can be treated empirically to prevent complications.",
+          B: "Correct. Cervical motion tenderness alone meets the minimum clinical criterion.",
+          C: "Incorrect. Only one minimum criterion is needed.",
+          D: "Incorrect. Acyclovir treats HSV, not PID."
+        }
+      },
+      {
+        id: 8,
+        stem: "A patient with PID is stable for outpatient treatment. Which regimen best matches the lecture",
+        topic: "PID outpatient treatment",
+        options: {
+          A: "Ceftriaxone IM plus doxycycline for 14 days, with or without metronidazole",
+          B: "Azithromycin weekly until ulcers heal",
+          C: "Penicillin G IM once only",
+          D: "Acyclovir suppressive therapy only"
+        },
+        correct: "A",
+        explanation: "Outpatient PID treatment in the lecture is ceftriaxone 250 mg IM plus doxycycline 100 mg PO BID for 14 days, with or without metronidazole 500 mg BID.",
+        optionExplanations: {
+          A: "Correct. This is the listed PID regimen.",
+          B: "Incorrect. This is for granuloma inguinale.",
+          C: "Incorrect. Penicillin treats syphilis.",
+          D: "Incorrect. Acyclovir treats herpes."
+        }
+      },
+      {
+        id: 9,
+        stem: "A patient with PID has high fever, nausea, vomiting, and a tubo-ovarian abscess on ultrasound. What is the best management category",
+        topic: "PID hospitalization",
+        options: {
+          A: "Oral therapy only with no follow-up",
+          B: "Hospitalization with high-dose IV antibiotics covering aerobic and anaerobic organisms",
+          C: "No antibiotics unless pregnancy test is positive",
+          D: "Single-dose azithromycin only"
+        },
+        correct: "B",
+        explanation: "Hospitalization criteria include severe toxicity and tubo-ovarian abscess. Inpatient therapy uses high-dose IV antibiotics covering aerobic and anaerobic organisms.",
+        optionExplanations: {
+          A: "Incorrect. Severe toxicity and TOA require inpatient management.",
+          B: "Correct. This patient meets hospitalization criteria.",
+          C: "Incorrect. Pregnancy is one criterion, but not the only one.",
+          D: "Incorrect. Single-dose azithromycin is insufficient for PID/TOA."
+        }
+      },
+      {
+        id: 10,
+        stem: "A woman treated for gonorrhea asks when she can resume sex. Which instruction is best",
+        topic: "Abstinence after treatment",
+        options: {
+          A: "Immediately after taking medication",
+          B: "After 24 hours if symptoms improve",
+          C: "After 7 days from single-dose therapy, symptoms resolve, and all current sex partners are treated",
+          D: "Only after a lumbar puncture is negative"
+        },
+        correct: "C",
+        explanation: "Patients treated for gonorrhea/chlamydia should abstain until 7 days after single-dose therapy, symptoms have resolved, and all current sex partners are treated.",
+        optionExplanations: {
+          A: "Incorrect. This risks reinfection/transmission.",
+          B: "Incorrect. The lecture specifies 7 days plus symptom resolution and partner treatment.",
+          C: "Correct. This is the listed counseling instruction.",
+          D: "Incorrect. LP is not part of routine GC/CT management."
+        }
+      },
+      {
+        id: 11,
+        stem: "A woman was treated for chlamydia with the recommended regimen. She is not pregnant, symptoms resolved, and adherence is reliable. What follow-up testing is recommended",
+        topic: "Test of cure vs reinfection",
+        options: {
+          A: "Test of cure at 3-4 weeks for everyone",
+          B: "No follow-up testing ever",
+          C: "Test for reinfection in 3 months",
+          D: "Immediate FTA-ABS confirmation"
+        },
+        correct: "C",
+        explanation: "Routine test of cure is not recommended after appropriate treatment except in pregnancy, questionable adherence, persistent symptoms, or suspected reinfection. Men and women with GC/CT should return in 3 months for test of reinfection.",
+        optionExplanations: {
+          A: "Incorrect. Test of cure is not routine for all nonpregnant patients.",
+          B: "Incorrect. Test of reinfection at 3 months is recommended.",
+          C: "Correct. Reinfection testing is recommended at 3 months.",
+          D: "Incorrect. FTA-ABS is for syphilis confirmation."
+        }
+      },
+      {
+        id: 12,
+        stem: "A pregnant woman completes treatment for chlamydia. What follow-up is specifically recommended",
+        topic: "Test of cure in pregnancy",
+        options: {
+          A: "Test of cure 3-4 weeks after completing therapy",
+          B: "No testing because pregnancy lowers reinfection risk",
+          C: "CSF RPR",
+          D: "Dark-field microscopy of urine"
+        },
+        correct: "A",
+        explanation: "Test of cure with repeat testing 3-4 weeks after completing therapy is recommended in pregnant women.",
+        optionExplanations: {
+          A: "Correct. Pregnancy is an exception requiring test of cure.",
+          B: "Incorrect. Pregnancy is specifically listed as an indication for test of cure.",
+          C: "Incorrect. CSF RPR is for suspected neurosyphilis.",
+          D: "Incorrect. Dark-field microscopy is not performed on urine for chlamydia follow-up."
+        }
+      },
+      {
+        id: 13,
+        stem: "A patient diagnosed with gonorrhea says her partner refuses to come in for evaluation. Which approach is described as giving the partner STI medication without physical evaluation or testing",
+        topic: "Expedited partner therapy",
+        options: {
+          A: "Test of cure",
+          B: "Expedited partner therapy",
+          C: "Dark-field confirmation",
+          D: "Latent-stage treatment"
+        },
+        correct: "B",
+        explanation: "Expedited partner therapy means a patient’s sexual partner receives STI drug therapy without undergoing physical evaluation or testing. ACOG supports its use according to CDC guidelines, although some states restrict it.",
+        optionExplanations: {
+          A: "Incorrect. Test of cure checks for eradication after treatment.",
+          B: "Correct. This is expedited partner therapy.",
+          C: "Incorrect. Dark-field confirmation applies to syphilis diagnosis.",
+          D: "Incorrect. Latent-stage treatment refers to syphilis management."
+        }
+      },
+      {
+        id: 14,
+        stem: "A patient has recurrent painful genital herpes outbreaks with prodromal tingling and burning. What medication strategy should be offered if recurrences are frequent or severe",
+        topic: "HSV management",
+        options: {
+          A: "Long-term acyclovir or valacyclovir therapy",
+          B: "Weekly penicillin injections",
+          C: "Ceftriaxone plus azithromycin",
+          D: "No treatment because recurrent episodes are always harmless"
+        },
+        correct: "A",
+        explanation: "Acyclovir or valacyclovir decreases severity and duration of primary and secondary HSV outbreaks. Long-term therapy should be offered for frequent or severe recurrences.",
+        optionExplanations: {
+          A: "Correct. Suppressive antiviral therapy is appropriate for frequent/severe recurrences.",
+          B: "Incorrect. Penicillin treats syphilis.",
+          C: "Incorrect. Ceftriaxone plus azithromycin treats gonorrhea in the lecture.",
+          D: "Incorrect. Treatment can reduce severity and duration."
+        }
+      },
+      {
+        id: 15,
+        stem: "A patient has a first episode of painful genital vesicles and ulcers. What diagnostic principle is emphasized in the lecture",
+        topic: "HSV diagnostic management",
+        options: {
+          A: "Initial episodes should be laboratory-confirmed, preferably by PCR from ulcers or mucocutaneous sites",
+          B: "Diagnosis should never be confirmed in initial episodes",
+          C: "RPR is the most sensitive HSV test",
+          D: "Urine culture is diagnostic"
+        },
+        correct: "A",
+        explanation: "PCR specimens from ulcers or mucocutaneous sites are the most sensitive test for HSV, and all initial episodes should be laboratory-confirmed.",
+        optionExplanations: {
+          A: "Correct. PCR is preferred and initial episodes should be confirmed.",
+          B: "Incorrect. The lecture specifically says initial episodes should be laboratory-confirmed.",
+          C: "Incorrect. RPR is a syphilis screening test.",
+          D: "Incorrect. Urine culture is not the recommended HSV diagnostic test."
+        }
+      },
+      {
+        id: 16,
+        stem: "A man with a painless hard chancre is diagnosed with primary syphilis. What treatment is listed for primary syphilis",
+        topic: "Primary syphilis treatment",
+        options: {
+          A: "Penicillin G 2.4 million units IM once",
+          B: "Penicillin G 2.4 million units IM weekly for 3 weeks",
+          C: "IV penicillin every 4 hours for 10-14 days",
+          D: "Doxycycline 100 mg BID for 21 days"
+        },
+        correct: "A",
+        explanation: "Primary, secondary, and early latent syphilis are treated with penicillin G 2.4 million units IM as a single dose.",
+        optionExplanations: {
+          A: "Correct. This is the regimen for primary syphilis.",
+          B: "Incorrect. This is for late latent or tertiary syphilis without neurologic signs.",
+          C: "Incorrect. This is for tertiary syphilis with neurologic signs/neurosyphilis.",
+          D: "Incorrect. This treats LGV."
+        }
+      },
+      {
+        id: 17,
+        stem: "A patient has positive syphilis serology but no symptoms. The infection occurred more than one year after the secondary stage. What treatment is listed",
+        topic: "Late latent syphilis treatment",
+        options: {
+          A: "Acyclovir for 7 days",
+          B: "Penicillin G 2.4 million units IM weekly for 3 weeks",
+          C: "Ceftriaxone IM once plus azithromycin once",
+          D: "Azithromycin weekly until healed"
+        },
+        correct: "B",
+        explanation: "Late latent syphilis, defined as more than one year after the secondary stage, is treated with penicillin G 2.4 million units IM weekly for 3 weeks.",
+        optionExplanations: {
+          A: "Incorrect. Acyclovir treats HSV.",
+          B: "Correct. Late latent syphilis requires weekly IM penicillin for 3 weeks.",
+          C: "Incorrect. This is uncomplicated gonorrhea treatment in the lecture.",
+          D: "Incorrect. This treats granuloma inguinale."
+        }
+      },
+      {
+        id: 18,
+        stem: "A patient has suspected neurosyphilis with seizures. Which diagnostic approach is listed in the lecture",
+        topic: "Neurosyphilis diagnosis",
+        options: {
+          A: "Lumbar puncture with CSF RPR and FTA-ABS",
+          B: "Urine NAAT only",
+          C: "Special culture media from ulcer",
+          D: "Donovan body identification"
+        },
+        correct: "A",
+        explanation: "For neurosyphilis, the lecture lists lumbar puncture with RPR of CSF and FTA-ABS.",
+        optionExplanations: {
+          A: "Correct. CSF testing is used for neurosyphilis.",
+          B: "Incorrect. Urine NAAT is for GC/CT.",
+          C: "Incorrect. Special culture media is for chancroid.",
+          D: "Incorrect. Donovan bodies are for granuloma inguinale."
+        }
+      },
+      {
+        id: 19,
+        stem: "A patient has a painful genital ulcer and painful suppurative inguinal buboes. Special culture media is available but has sensitivity below 80%. Which treatment is listed",
+        topic: "Chancroid management",
+        options: {
+          A: "Azithromycin 1 g orally once",
+          B: "Doxycycline for 21 days",
+          C: "Penicillin G IM once",
+          D: "Acyclovir long-term suppression"
+        },
+        correct: "A",
+        explanation: "Chancroid due to Haemophilus ducreyi presents with painful genital ulcer and painful suppurative adenopathy. Treatment is azithromycin 1 g orally as a single dose.",
+        optionExplanations: {
+          A: "Correct. This is listed treatment for chancroid.",
+          B: "Incorrect. Doxycycline 21 days treats LGV.",
+          C: "Incorrect. Penicillin G treats syphilis.",
+          D: "Incorrect. Acyclovir treats HSV."
+        }
+      },
+      {
+        id: 20,
+        stem: "A patient has a painless beefy-red ulcer that bleeds easily. Smear shows Donovan bodies. Which management is listed",
+        topic: "Granuloma inguinale management",
+        options: {
+          A: "IV ceftriaxone for at least 24 hours",
+          B: "Azithromycin 1 g orally weekly until healed",
+          C: "Penicillin G 2.4 million units IM once",
+          D: "No treatment because it heals spontaneously"
+        },
+        correct: "B",
+        explanation: "Granuloma inguinale due to Klebsiella granulomatis causes painless beefy-red ulcers that bleed easily. Treatment is azithromycin 1 g orally weekly until healed.",
+        optionExplanations: {
+          A: "Incorrect. This is for disseminated gonococcal infection.",
+          B: "Correct. Weekly azithromycin until healed is listed for granuloma inguinale.",
+          C: "Incorrect. Penicillin G treats syphilis.",
+          D: "Incorrect. Treatment is recommended."
+        }
+      }
+    ];
+
+    function Quiz() {
+      const [currentIndex, setCurrentIndex] = useState(0);
+      const [answers, setAnswers] = useState({});
+
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice =
+        answers[currentQuestion.id] !== undefined ? answers[currentQuestion.id] : null;
+      const showExplanation = selectedChoice !== null;
+
+      const handleSelect = (letter) => {
+        setAnswers((prev) => ({ ...prev, [currentQuestion.id]: letter }));
+      };
+
+      const goToQuestion = (index) => {
+        let newIndex = index;
+        if (newIndex < 0) newIndex = questions.length - 1;
+        if (newIndex >= questions.length) newIndex = 0;
+        setCurrentIndex(newIndex);
+      };
+
+      const handleNext = () => goToQuestion(currentIndex + 1);
+      const handlePrev = () => goToQuestion(currentIndex - 1);
+
+      const isCorrect =
+        selectedChoice !== null && selectedChoice === currentQuestion.correct;
+
+      return (
+        <div className="p-6 max-w-4xl mx-auto space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex-1">
+              <div className="flex gap-1">
+                {questions.map((q, idx) => {
+                  const answered = answers[q.id] !== undefined;
+                  const isActive = idx === currentIndex;
+                  const cls =
+                    "h-2 rounded-full transition-colors cursor-pointer flex-1 min-w-[4px] " +
+                    (isActive
+                      ? "bg-slate-200"
+                      : answered
+                      ? "bg-[#6fa8dc]"
+                      : "bg-slate-700");
+                  return (
+                    <button
+                      key={q.id}
+                      className={cls}
+                      onClick={() => setCurrentIndex(idx)}
+                      aria-label={`Go to question ${idx + 1}`}
+                      title={q.topic || `Question ${idx + 1}`}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <div className="text-slate-200 text-sm font-semibold">
+                {currentIndex + 1} / {questions.length}
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-red-900/60 text-red-100 text-sm font-semibold">
+                  <span className="text-base">×</span>
+                  <span>
+                    {Object.entries(answers).filter(([qid, choice]) => {
+                      const q = questions.find((qq) => qq.id === Number(qid));
+                      return q && choice !== q.correct;
+                    }).length}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-900/60 text-emerald-100 text-sm font-semibold">
+                  <span className="text-base">✓</span>
+                  <span>
+                    {Object.entries(answers).filter(([qid, choice]) => {
+                      const q = questions.find((qq) => qq.id === Number(qid));
+                      return q && choice === q.correct;
+                    }).length}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="border rounded-xl p-4 shadow-md bg-white space-y-4">
+            <div className="flex justify-between text-xs text-gray-500">
+              <span>Question {currentIndex + 1} of {questions.length}</span>
+              {currentQuestion.topic ? <span>Topic: {currentQuestion.topic}</span> : null}
+            </div>
+            <p className="font-semibold mt-1">{currentQuestion.stem}?</p>
+            <div className="mt-3 space-y-2">
+              {Object.entries(currentQuestion.options).map(([letter, text]) => {
+                const isSelected = selectedChoice === letter;
+                const isAnswer = letter === currentQuestion.correct;
+                let classes =
+                  "w-full text-left p-2 rounded-lg border bg-gray-50 hover:bg-gray-100";
+                if (showExplanation && isAnswer) {
+                  classes =
+                    "w-full text-left p-2 rounded-lg border bg-green-100 border-green-500";
+                } else if (showExplanation && isSelected && !isAnswer) {
+                  classes =
+                    "w-full text-left p-2 rounded-lg border bg-red-100 border-red-500";
+                } else if (isSelected && !showExplanation) {
+                  classes = "w-full text-left p-2 rounded-lg border bg-gray-100";
+                }
+                return (
+                  <button key={letter} onClick={() => handleSelect(letter)} className={classes}>
+                    <strong>{letter}.</strong> {" "}{text}
+                  </button>
+                );
+              })}
+            </div>
+            {showExplanation && (
+              <div className="mt-4 p-3 rounded-lg bg-gray-50 border text-sm space-y-2">
+                <p><strong>Correct answer: {currentQuestion.correct}</strong>{" "}({currentQuestion.options[currentQuestion.correct]})</p>
+                <p className={isCorrect ? "text-green-700" : "text-red-700"}>
+                  {isCorrect ? "Nice job. " : "Good attempt. "}{currentQuestion.explanation}
+                </p>
+                {currentQuestion.optionExplanations ? (
+                  <div className="mt-2 space-y-1">
+                    <p className="font-semibold">Why each option is right or wrong:</p>
+                    {Object.entries(currentQuestion.optionExplanations).map(([letter, text]) => (
+                      <p key={letter}><strong>{letter}.</strong> {" "}{text}</p>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            )}
+            <div className="flex justify-between mt-4">
+              <button onClick={handlePrev} className="inline-flex items-center px-3 py-2 rounded-lg border text-xs font-medium hover:bg-gray-100">Previous</button>
+              <button onClick={handleNext} className="inline-flex items-center px-3 py-2 rounded-lg border text-xs font-medium hover:bg-gray-100">Next</button>
+            </div>
+          </div>
+          <p className="text-xs text-gray-500"></p>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<Quiz />);
+  </script>
+</body>
+</html>

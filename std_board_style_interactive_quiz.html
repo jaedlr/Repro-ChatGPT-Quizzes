@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sexually Transmitted Diseases Interactive Quiz</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-slate-900 min-h-screen">
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState } = React;
+
+    const questions = [
+      {
+        id: 1,
+        stem: 'A 22-year-old sexually active woman presents for routine care. She has no genitourinary symptoms and uses condoms inconsistently. Which screening is recommended at least annually based on her age',
+        topic: 'Screening recommendations',
+        options: { A: 'Gonorrhea and chlamydia screening', B: 'Routine chancroid culture', C: 'Routine dark-field microscopy', D: 'Lumbar puncture for CSF RPR' },
+        correct: 'A',
+        explanation: 'Women younger than 25 should receive at least annual gonorrhea and chlamydia screening. Many STIs are asymptomatic in women, especially early.',
+        optionExplanations: {
+          A: 'Correct. GC/CT screening is recommended annually for women under 25.',
+          B: 'Chancroid testing is not routine screening.',
+          C: 'Dark-field microscopy is used for suspected primary syphilis lesions, not routine screening.',
+          D: 'CSF testing is reserved for suspected neurosyphilis.'
+        }
+      },
+      {
+        id: 2,
+        stem: 'A sexually active woman presents with dysuria. Urinalysis shows pyuria, but Gram stain and bacterial culture show no organisms. Which infection category should be strongly suspected',
+        topic: 'Sterile pyuria and STI urethritis',
+        options: { A: 'Candida vaginitis', B: 'Chlamydia or gonorrhea urethritis', C: 'Granuloma inguinale', D: 'Primary syphilis' },
+        correct: 'B',
+        explanation: 'Pyuria without bacteriuria in a sexually active woman should prompt suspicion for chlamydia or gonorrhea infection of the urethra.',
+        optionExplanations: {
+          A: 'Candida is not the board pearl associated with sterile pyuria in this lecture.',
+          B: 'Correct. Sterile pyuria in this setting points toward GC/CT urethritis.',
+          C: 'Granuloma inguinale causes painless beefy-red ulcers.',
+          D: 'Primary syphilis causes a painless hard chancre.'
+        }
+      },
+      {
+        id: 3,
+        stem: 'A 20-year-old woman has mucopurulent cervicitis and pelvic tenderness. NAAT is positive for the most common bacterial STI in the United States. Which organism is most likely',
+        topic: 'Chlamydia trachomatis',
+        options: { A: 'Neisseria gonorrhoeae', B: 'Haemophilus ducreyi', C: 'Chlamydia trachomatis', D: 'Treponema pallidum' },
+        correct: 'C',
+        explanation: 'Chlamydia trachomatis is described as the most common bacterial STI in the U.S. It commonly causes mucopurulent cervicitis, urethritis, PID, and may be asymptomatic.',
+        optionExplanations: {
+          A: 'Gonorrhea can mimic or coexist with chlamydia, but the lecture identifies chlamydia as the most common bacterial STI.',
+          B: 'H. ducreyi causes chancroid with painful ulcer and painful buboes.',
+          C: 'Correct. Chlamydia is the most common bacterial STI and causes cervicitis/PID.',
+          D: 'T. pallidum causes syphilis.'
+        }
+      },
+      {
+        id: 4,
+        stem: 'A patient is diagnosed with chlamydia. Which diagnostic test is most sensitive and recommended according to the lecture',
+        topic: 'Chlamydia diagnosis',
+        options: { A: 'Nucleic acid amplification testing', B: 'Dark-field microscopy', C: 'Special culture media with low sensitivity', D: 'Identification of Donovan bodies' },
+        correct: 'A',
+        explanation: 'NAAT is the most sensitive and recommended diagnostic test for chlamydia, using endocervical secretions or urine in females and urethral swab or urine in males.',
+        optionExplanations: {
+          A: 'Correct. NAAT is the recommended screening/diagnostic test for chlamydia.',
+          B: 'Dark-field microscopy is used to identify spirochetes in primary syphilis.',
+          C: 'Special culture media is used for chancroid and has sensitivity under 80%.',
+          D: 'Donovan bodies are seen in granuloma inguinale.'
+        }
+      },
+      {
+        id: 5,
+        stem: 'A man develops urethritis followed by conjunctivitis and arthritis after an untreated STI. Which complication is this',
+        topic: 'Reactive arthritis',
+        options: { A: 'Fitz-Hugh-Curtis syndrome', B: 'Disseminated gonococcal infection', C: 'Reiter syndrome', D: 'Jarisch-Herxheimer reaction' },
+        correct: 'C',
+        explanation: 'Reactive arthritis/Reiter syndrome is the triad of urethritis, conjunctivitis, and arthritis and is listed as a complication of chlamydia.',
+        optionExplanations: {
+          A: 'Fitz-Hugh-Curtis syndrome is perihepatitis with violin-string adhesions after PID.',
+          B: 'DGI causes arthritis, tenosynovitis, and/or dermatitis from untreated gonorrhea.',
+          C: 'Correct. Reiter syndrome is urethritis, conjunctivitis, and arthritis.',
+          D: 'Jarisch-Herxheimer reaction is fever/myalgia after starting penicillin for syphilis.'
+        }
+      },
+      {
+        id: 6,
+        stem: 'A 23-year-old sexually active college student has fever, acute right knee pain, warmth, erythema, limited range of motion, leukocytosis, and elevated ESR. Which STI is the most likely cause of infectious arthritis in this patient',
+        topic: 'Disseminated gonococcal infection',
+        options: { A: 'Neisseria gonorrhoeae', B: 'Klebsiella granulomatis', C: 'HSV-2', D: 'Treponema pallidum' },
+        correct: 'A',
+        explanation: 'A young sexually active college student with knee pain and fever should raise suspicion for infectious arthritis caused by gonorrhea.',
+        optionExplanations: {
+          A: 'Correct. Disseminated gonococcal infection can cause arthritis.',
+          B: 'K. granulomatis causes painless beefy-red ulcers.',
+          C: 'HSV-2 causes painful genital vesicles/ulcers.',
+          D: 'Syphilis can affect joints in later disease, but this presentation points to gonorrhea.'
+        }
+      },
+      {
+        id: 7,
+        stem: 'A patient with untreated gonorrhea develops arthritis, tenosynovitis, and dermatitis. What treatment is recommended for this disseminated infection according to the lecture',
+        topic: 'DGI treatment',
+        options: { A: 'Doxycycline 100 mg BID for 21 days', B: 'IV ceftriaxone for at least 24 hours plus azithromycin 1 g', C: 'Azithromycin 1 g weekly until healed', D: 'Acyclovir or valacyclovir' },
+        correct: 'B',
+        explanation: 'Disseminated gonococcal infection is treated with IV ceftriaxone for a minimum of 24 hours plus azithromycin 1 g.',
+        optionExplanations: {
+          A: 'This is the treatment for LGV.',
+          B: 'Correct. DGI requires IV ceftriaxone plus azithromycin.',
+          C: 'This is the treatment for granuloma inguinale.',
+          D: 'Acyclovir/valacyclovir treats HSV.'
+        }
+      },
+      {
+        id: 8,
+        stem: 'A young sexually active woman has lower abdominal pain, purulent cervical discharge, fever, adnexal tenderness, and cervical motion tenderness. Which finding alone is sufficient to begin empiric PID treatment if no other cause is identified',
+        topic: 'PID empiric treatment',
+        options: { A: 'Single painless chancre', B: 'Cervical motion tenderness', C: 'Beefy-red friable ulcer', D: 'Painless shallow ulcer that heals' },
+        correct: 'B',
+        explanation: 'Empiric PID treatment should be started in a young sexually active woman with no other cause if cervical motion tenderness, uterine tenderness, or adnexal tenderness is present.',
+        optionExplanations: {
+          A: 'Single painless chancre suggests primary syphilis.',
+          B: 'Correct. Cervical motion tenderness/chandelier sign is one minimum criterion for empiric PID treatment.',
+          C: 'Beefy-red friable ulcer suggests granuloma inguinale.',
+          D: 'A painless shallow ulcer that heals suggests LGV.'
+        }
+      },
+      {
+        id: 9,
+        stem: 'A woman with PID develops right upper quadrant tenderness. Laparoscopy shows violin-string-like adhesions on the anterior liver surface. Which syndrome is this',
+        topic: 'Fitz-Hugh-Curtis syndrome',
+        options: { A: 'Fitz-Hugh-Curtis syndrome', B: 'Reiter syndrome', C: 'Jarisch-Herxheimer reaction', D: 'Disseminated gonococcal infection' },
+        correct: 'A',
+        explanation: 'Fitz-Hugh-Curtis syndrome is perihepatitis from PID, classically with violin-string adhesions on the liver surface, most often associated with chlamydia PID in the lecture.',
+        optionExplanations: {
+          A: 'Correct. PID with RUQ pain and violin-string adhesions is Fitz-Hugh-Curtis syndrome.',
+          B: 'Reiter syndrome is urethritis, conjunctivitis, and arthritis.',
+          C: 'Jarisch-Herxheimer reaction occurs after penicillin treatment for syphilis.',
+          D: 'DGI causes arthritis, tenosynovitis, and/or dermatitis.'
+        }
+      },
+      {
+        id: 10,
+        stem: 'A pregnant patient has PID. Which management category does this fall under according to the lecture',
+        topic: 'PID hospitalization criteria',
+        options: { A: 'No treatment unless NAAT is positive', B: 'Outpatient azithromycin only', C: 'Hospitalization and IV treatment', D: 'Routine test of reinfection only' },
+        correct: 'C',
+        explanation: 'Pregnancy is a hospitalization criterion for PID. Other criteria include surgical emergency not ruled out, failure of oral therapy, severe toxicity, or tubo-ovarian abscess.',
+        optionExplanations: {
+          A: 'PID can be treated empirically when criteria are met.',
+          B: 'PID requires broader therapy, not azithromycin alone.',
+          C: 'Correct. Pregnancy with PID requires hospitalization and IV therapy.',
+          D: 'Test of reinfection does not replace acute treatment.'
+        }
+      },
+      {
+        id: 11,
+        stem: 'A patient has painful grouped vesicles on an erythematous base that progress to ulcers, with fever, malaise, myalgias, and regional lymphadenopathy. Where does the virus become latent after primary infection',
+        topic: 'Genital herpes',
+        options: { A: 'Dorsal root ganglia', B: 'Anterior horn cells', C: 'Mullerian ducts', D: 'Liver capsule' },
+        correct: 'A',
+        explanation: 'HSV causes painful vesicles that become ulcers on an erythematous base. After primary infection, it remains dormant in the dorsal root ganglia.',
+        optionExplanations: {
+          A: 'Correct. HSV latency occurs in dorsal root ganglia.',
+          B: 'Anterior horn cells are not the latency site given in the lecture.',
+          C: 'Mullerian ducts are reproductive embryologic structures, not HSV latency sites.',
+          D: 'The liver capsule is involved in Fitz-Hugh-Curtis syndrome.'
+        }
+      },
+      {
+        id: 12,
+        stem: 'A patient has a first episode of genital herpes. Which diagnostic test from ulcer or mucocutaneous sites is most sensitive',
+        topic: 'HSV diagnosis',
+        options: { A: 'FTA-ABS', B: 'PCR', C: 'RPR', D: 'Special culture media' },
+        correct: 'B',
+        explanation: 'PCR from ulcers or mucocutaneous sites is the most sensitive test for HSV, and all initial episodes should be laboratory confirmed.',
+        optionExplanations: {
+          A: 'FTA-ABS is a treponemal confirmatory test for syphilis.',
+          B: 'Correct. PCR is the most sensitive HSV test.',
+          C: 'RPR is a nontreponemal syphilis screening test.',
+          D: 'Special culture media is used for chancroid.'
+        }
+      },
+      {
+        id: 13,
+        stem: 'A man has a single painless genital ulcer with firm punched-out appearance and rolled edges, plus regional lymphadenopathy. The lesion began several weeks after exposure and heals spontaneously. Which test is definitive for this stage',
+        topic: 'Primary syphilis',
+        options: { A: 'Dark-field microscopy', B: 'NAAT of urine', C: 'Donovan body identification', D: 'CSF RPR' },
+        correct: 'A',
+        explanation: 'Primary syphilis presents with a hard chancre: a single painless firm punched-out ulcer with rolled edges. Dark-field microscopy can directly show the spirochete.',
+        optionExplanations: {
+          A: 'Correct. Dark-field microscopy is definitive for visualizing spirochetes in primary syphilis.',
+          B: 'NAAT of urine is used for chlamydia/gonorrhea.',
+          C: 'Donovan bodies diagnose granuloma inguinale.',
+          D: 'CSF RPR is used in neurosyphilis evaluation.'
+        }
+      },
+      {
+        id: 14,
+        stem: 'A patient develops a rough red-brown maculopapular rash on the palms and soles, mucous patches, condylomata lata, fever, malaise, and generalized lymphadenopathy. Which testing sequence is appropriate',
+        topic: 'Secondary syphilis testing',
+        options: { A: 'RPR/VDRL screening followed by FTA-ABS confirmation', B: 'PCR from vesicle followed by acyclovir response', C: 'Special culture media followed by azithromycin response', D: 'Urine NAAT only' },
+        correct: 'A',
+        explanation: 'Secondary syphilis is diagnosed with nontreponemal screening tests such as RPR or VDRL followed by treponemal confirmation with FTA-ABS.',
+        optionExplanations: {
+          A: 'Correct. This is the lecture testing sequence for secondary and latent syphilis.',
+          B: 'PCR from vesicles is for HSV.',
+          C: 'Special culture is for chancroid.',
+          D: 'Urine NAAT is used for chlamydia/gonorrhea.'
+        }
+      },
+      {
+        id: 15,
+        stem: 'A patient with syphilis is treated with penicillin and develops fever and myalgias within hours. He has no urticaria or airway symptoms. What explains this reaction',
+        topic: 'Jarisch-Herxheimer reaction',
+        options: { A: 'IgE-mediated penicillin allergy', B: 'Toxin release from dying spirochetes', C: 'Disseminated gonococcal infection', D: 'Viral shedding from HSV' },
+        correct: 'B',
+        explanation: 'Jarisch-Herxheimer reaction is a flu-like syndrome with fever and myalgia occurring hours after starting penicillin due to dying spirochetes, not allergy.',
+        optionExplanations: {
+          A: 'The lecture specifically notes this is not an allergy.',
+          B: 'Correct. Dying spirochetes trigger the reaction.',
+          C: 'DGI causes arthritis, tenosynovitis, and dermatitis.',
+          D: 'HSV shedding is unrelated to penicillin treatment.'
+        }
+      },
+      {
+        id: 16,
+        stem: 'A patient with tertiary syphilis has pupils that constrict during accommodation but do not react to light. What is this finding called',
+        topic: 'Tertiary syphilis',
+        options: { A: 'Chandelier sign', B: 'Argyll Robertson pupils', C: 'Prehn sign', D: 'Violin-string adhesions' },
+        correct: 'B',
+        explanation: 'Argyll Robertson pupils accommodate but do not react to light and are associated with tertiary syphilis/neurosyphilis.',
+        optionExplanations: {
+          A: 'Chandelier sign is cervical motion tenderness in PID.',
+          B: 'Correct. Argyll Robertson pupils accommodate but do not react to light.',
+          C: 'Prehn sign is relief of epididymitis pain with lifting the testes.',
+          D: 'Violin-string adhesions occur in Fitz-Hugh-Curtis syndrome.'
+        }
+      },
+      {
+        id: 17,
+        stem: 'A patient with neurosyphilis requires treatment. According to the lecture, which regimen is appropriate',
+        topic: 'Syphilis treatment',
+        options: { A: 'Penicillin G 2.4 million units IM once', B: 'Penicillin G 2.4 million units IM weekly for 3 weeks', C: 'IV penicillin every 4 hours for 10-14 days', D: 'Azithromycin 1 g orally once' },
+        correct: 'C',
+        explanation: 'Tertiary syphilis with neurologic signs is treated with IV penicillin every 4 hours for 10-14 days.',
+        optionExplanations: {
+          A: 'This is for primary, secondary, or early latent syphilis.',
+          B: 'This is for late latent or tertiary syphilis without neurologic signs.',
+          C: 'Correct. Neurosyphilis requires IV penicillin for 10-14 days.',
+          D: 'Azithromycin 1 g once treats chancroid in this lecture.'
+        }
+      },
+      {
+        id: 18,
+        stem: 'A patient has a painful genital ulcer with painful suppurative inguinal lymphadenopathy. Which organism is most likely',
+        topic: 'Chancroid',
+        options: { A: 'Haemophilus ducreyi', B: 'Klebsiella granulomatis', C: 'Treponema pallidum', D: 'Chlamydia trachomatis L1-L3' },
+        correct: 'A',
+        explanation: 'Chancroid due to Haemophilus ducreyi always causes a painful genital ulcer with painful suppurative inguinal adenopathy or buboes.',
+        optionExplanations: {
+          A: 'Correct. H. ducreyi causes painful ulcer and painful buboes.',
+          B: 'K. granulomatis causes painless beefy-red ulcers that bleed easily.',
+          C: 'T. pallidum causes painless chancre in primary syphilis.',
+          D: 'LGV causes an initially painless shallow ulcer followed by painful lymphadenopathy.'
+        }
+      },
+      {
+        id: 19,
+        stem: 'A patient has a painless beefy-red genital ulcer that bleeds easily. Smear shows organisms with a safety-pin appearance due to bipolar staining. What is the diagnosis',
+        topic: 'Granuloma inguinale',
+        options: { A: 'Chancroid', B: 'Granuloma inguinale', C: 'Genital herpes', D: 'Lymphogranuloma venereum' },
+        correct: 'B',
+        explanation: 'Granuloma inguinale is caused by Klebsiella granulomatis and presents with painless beefy-red friable ulcers. Diagnosis is by Donovan bodies with safety-pin appearance.',
+        optionExplanations: {
+          A: 'Chancroid causes painful ulcer with painful buboes.',
+          B: 'Correct. Beefy-red friable ulcer with Donovan bodies is granuloma inguinale.',
+          C: 'HSV causes painful vesicles/ulcers on an erythematous base.',
+          D: 'LGV begins with a small painless shallow ulcer then painful lymphadenopathy.'
+        }
+      },
+      {
+        id: 20,
+        stem: 'A patient has a small painless shallow genital ulcer that heals, followed by fever, malaise, and painful inguinal lymphadenopathy. Detection of C. trachomatis from lymph node aspirate confirms the diagnosis. Which treatment is recommended',
+        topic: 'Lymphogranuloma venereum',
+        options: { A: 'Doxycycline 100 mg BID for 21 days', B: 'Acyclovir or valacyclovir', C: 'Azithromycin 1 g PO weekly until healed', D: 'Penicillin G IM once' },
+        correct: 'A',
+        explanation: 'LGV is caused by C. trachomatis L1-L3 and presents with an initial small painless ulcer followed by painful lymphadenopathy. Treatment is doxycycline 100 mg BID for 21 days.',
+        optionExplanations: {
+          A: 'Correct. LGV treatment is doxycycline for 21 days.',
+          B: 'This treats HSV.',
+          C: 'This treats granuloma inguinale.',
+          D: 'Penicillin treats syphilis, with regimen depending on stage.'
+        }
+      }
+    ];
+
+    function Quiz() {
+      const [currentIndex, setCurrentIndex] = useState(0);
+      const [answers, setAnswers] = useState({});
+
+      const currentQuestion = questions[currentIndex];
+      const selectedChoice =
+        answers[currentQuestion.id] !== undefined ? answers[currentQuestion.id] : null;
+      const showExplanation = selectedChoice !== null;
+
+      const handleSelect = (letter) => {
+        setAnswers((prev) => ({ ...prev, [currentQuestion.id]: letter }));
+      };
+
+      const goToQuestion = (index) => {
+        let newIndex = index;
+        if (newIndex < 0) newIndex = questions.length - 1;
+        if (newIndex >= questions.length) newIndex = 0;
+        setCurrentIndex(newIndex);
+      };
+
+      const handleNext = () => goToQuestion(currentIndex + 1);
+      const handlePrev = () => goToQuestion(currentIndex - 1);
+
+      const isCorrect =
+        selectedChoice !== null && selectedChoice === currentQuestion.correct;
+
+      return (
+        <div className="p-6 max-w-4xl mx-auto space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex-1">
+              <div className="flex gap-1">
+                {questions.map((q, idx) => {
+                  const answered = answers[q.id] !== undefined;
+                  const isActive = idx === currentIndex;
+
+                  const cls =
+                    "h-2 rounded-full transition-colors cursor-pointer flex-1 min-w-[4px] " +
+                    (isActive
+                      ? "bg-slate-200"
+                      : answered
+                      ? "bg-[#6fa8dc]"
+                      : "bg-slate-700");
+
+                  return (
+                    <button
+                      key={q.id}
+                      className={cls}
+                      onClick={() => setCurrentIndex(idx)}
+                      aria-label={`Go to question ${idx + 1}`}
+                      title={q.topic || `Question ${idx + 1}`}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <div className="text-slate-200 text-sm font-semibold">
+                {currentIndex + 1} / {questions.length}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-red-900/60 text-red-100 text-sm font-semibold">
+                  <span className="text-base">×</span>
+                  <span>
+                    {Object.entries(answers).filter(([qid, choice]) => {
+                      const q = questions.find((qq) => qq.id === Number(qid));
+                      return q && choice !== q.correct;
+                    }).length}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-900/60 text-emerald-100 text-sm font-semibold">
+                  <span className="text-base">✓</span>
+                  <span>
+                    {Object.entries(answers).filter(([qid, choice]) => {
+                      const q = questions.find((qq) => qq.id === Number(qid));
+                      return q && choice === q.correct;
+                    }).length}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="border rounded-xl p-4 shadow-md bg-white space-y-4">
+            <div className="flex justify-between text-xs text-gray-500">
+              <span>
+                Question {currentIndex + 1} of {questions.length}
+              </span>
+              {currentQuestion.topic ? <span>Topic: {currentQuestion.topic}</span> : null}
+            </div>
+
+            <p className="font-semibold mt-1">{currentQuestion.stem}?</p>
+
+            <div className="mt-3 space-y-2">
+              {Object.entries(currentQuestion.options).map(([letter, text]) => {
+                const isSelected = selectedChoice === letter;
+                const isAnswer = letter === currentQuestion.correct;
+                let classes =
+                  "w-full text-left p-2 rounded-lg border bg-gray-50 hover:bg-gray-100";
+
+                if (showExplanation && isAnswer) {
+                  classes =
+                    "w-full text-left p-2 rounded-lg border bg-green-100 border-green-500";
+                } else if (showExplanation && isSelected && !isAnswer) {
+                  classes =
+                    "w-full text-left p-2 rounded-lg border bg-red-100 border-red-500";
+                } else if (isSelected && !showExplanation) {
+                  classes = "w-full text-left p-2 rounded-lg border bg-gray-100";
+                }
+
+                return (
+                  <button
+                    key={letter}
+                    onClick={() => handleSelect(letter)}
+                    className={classes}
+                  >
+                    <strong>{letter}.</strong> {" "}
+                    {text}
+                  </button>
+                );
+              })}
+            </div>
+
+            {showExplanation && (
+              <div className="mt-4 p-3 rounded-lg bg-gray-50 border text-sm space-y-2">
+                <p>
+                  <strong>
+                    Correct answer: {currentQuestion.correct}
+                  </strong>{" "}
+                  ({currentQuestion.options[currentQuestion.correct]})
+                </p>
+                <p className={isCorrect ? "text-green-700" : "text-red-700"}>
+                  {isCorrect ? "Nice job. " : "Good attempt. "}
+                  {currentQuestion.explanation}
+                </p>
+                {currentQuestion.optionExplanations ? (
+                  <div className="mt-2 space-y-1">
+                    <p className="font-semibold">Why each option is right or wrong:</p>
+                    {Object.entries(currentQuestion.optionExplanations).map(
+                      ([letter, text]) => (
+                        <p key={letter}>
+                          <strong>{letter}.</strong> {" "}
+                          {text}
+                        </p>
+                      )
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            )}
+
+            <div className="flex justify-between mt-4">
+              <button
+                onClick={handlePrev}
+                className="inline-flex items-center px-3 py-2 rounded-lg border text-xs font-medium hover:bg-gray-100"
+              >
+                Previous
+              </button>
+              <button
+                onClick={handleNext}
+                className="inline-flex items-center px-3 py-2 rounded-lg border text-xs font-medium hover:bg-gray-100"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+
+          <p className="text-xs text-gray-500"></p>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<Quiz />);
+  </script>
+</body>
+</html>
